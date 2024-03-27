@@ -3,6 +3,7 @@
     "vscode": {
       "extensions": [
         "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
         "Orta.vscode-jest",
         "unional.vscode-sort-package-json"
       ]

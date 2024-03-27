@@ -5,10 +5,10 @@
     "moduleNameMapper": {
         "fx": "<rootDir>/src"
     },
-    "transform": {
-        "\\.tsx?$": "@swc/jest"
-    },
     "testPathIgnorePatterns": [
         "<rootDir>/dist"
-    ]
+    ],
+    "transform": {
+        "\\.tsx?$": "@swc/jest"
+    }
 }
