@@ -24,6 +24,11 @@ test:
 _test: _deps
 	npm test
 
+release:
+	${_MAKE} _release
+_release: _build
+	npm run release
+
 clean:
 	${_MAKE} _clean
 _clean:
