@@ -2,6 +2,14 @@
   "name": "fx",
   "version": "0.0.0",
   "description": "",
+  "homepage": "https://github.com/xzhavilla/fx#readme",
+  "bugs": {
+    "url": "https://github.com/xzhavilla/fx/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xzhavilla/fx.git"
+  },
   "license": "MIT",
   "author": "Alberto Villa <villa.alberto@gmail.com>",
   "main": "dist/src/index.js",
