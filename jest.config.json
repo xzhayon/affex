@@ -1,0 +1,14 @@
+{
+    "collectCoverageFrom": [
+        "<rootDir>/src/**.ts"
+    ],
+    "moduleNameMapper": {
+        "fx": "<rootDir>/src"
+    },
+    "transform": {
+        "\\.tsx?$": "@swc/jest"
+    },
+    "testPathIgnorePatterns": [
+        "<rootDir>/dist"
+    ]
+}

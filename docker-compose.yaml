@@ -1,0 +1,10 @@
+services:
+  workspace:
+    build:
+      context: .docker/workspace
+      args:
+        NODEJS_VERSION: ${NODEJS_VERSION:-20}
+    user: root
+    volumes:
+      - .:/opt/${COMPOSE_PROJECT_NAME}:cached
+    working_dir: /opt/${COMPOSE_PROJECT_NAME}

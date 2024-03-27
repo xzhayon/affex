@@ -1,0 +1,14 @@
+{
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "Orta.vscode-jest",
+        "unional.vscode-sort-package-json"
+      ]
+    }
+  },
+  "dockerComposeFile": ["../docker-compose.yaml", "docker-compose.yaml"],
+  "service": "workspace",
+  "workspaceFolder": "/opt/${localWorkspaceFolderBasename}"
+}

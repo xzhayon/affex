@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "module": "commonjs",
+    "paths": { "fx": ["./src"] },
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "target": "es2022",
+    "skipLibCheck": true
+  }
+}
