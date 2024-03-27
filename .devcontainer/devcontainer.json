@@ -10,5 +10,6 @@
   },
   "dockerComposeFile": ["../docker-compose.yaml", "docker-compose.yaml"],
   "service": "workspace",
-  "workspaceFolder": "/opt/${localWorkspaceFolderBasename}"
+  "workspaceFolder": "/opt/${localWorkspaceFolderBasename}",
+  "postCreateCommand": ["apk", "--update", "add", "git"]
 }
