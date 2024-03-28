@@ -9,7 +9,7 @@ import { Tag } from './Tag'
 
 const R = Symbol()
 export class Builder<R, A, S = never> {
-  private readonly [R]!: R
+  readonly [R]!: R
   private readonly handlers: Record<symbol, Handler<any>> = {}
 
   static create<G extends Generator>(generator: G) {
