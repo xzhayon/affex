@@ -3,6 +3,7 @@ import { Effect } from './Effect'
 import { Function } from './Function'
 import { Handler } from './Handler'
 import { Struct } from './Struct'
+import * as T from './Tag'
 import { Tag } from './Tag'
 
 const R = Symbol()
@@ -19,7 +20,7 @@ export class Layer<R, A> {
   private constructor() {}
 
   with<_R, H extends Handler<_R>>(
-    tag: Tag<_R>,
+    tag: Tag<_R> | { tag: Tag<_R> },
     handler: H,
   ): Layer<
     | Exclude<R, _R>
@@ -45,12 +46,17 @@ export class Layer<R, A> {
     _R | A
   >
   with<_R, _A>(layer: Layer<_R, _A>): Layer<Exclude<_R | R, _A | A>, _A | A>
-  with(tagOrLayer: Tag<any> | Layer<any, any>, handler?: any) {
+  with(
+    tagOrLayer: Tag<unknown> | { tag: Tag<any> } | Layer<any, any>,
+    handler?: any,
+  ) {
     this.handlers = {
       ...this.handlers,
       ...(tagOrLayer instanceof Layer
         ? tagOrLayer.handlers
-        : { [tagOrLayer.key]: handler }),
+        : {
+            [T.is(tagOrLayer) ? tagOrLayer.key : tagOrLayer.tag.key]: handler,
+          }),
     }
 
     return this as any

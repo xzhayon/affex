@@ -30,16 +30,16 @@ describe('FlyStarshipUseCase', () => {
 
   const layer = fx
     .layer()
-    .with(Id.tag, CryptoUuid.random)
-    .with(Log.tag, inMemoryLog(log))
+    .with(Id, CryptoUuid.random)
+    .with(Log, inMemoryLog(log))
 
   test('running use case with mocks', async () => {
     const mockLayer = fx
       .layer()
-      .with(CharacterRepository.tag, MockCharacterRepository)
-      .with(GetCharacterByNameQuery.tag, getMockCharacterByName)
-      .with(GetStarshipByNameQuery.tag, getMockStarshipByName)
-      .with(StarshipRepository.tag, MockStarshipRepository)
+      .with(CharacterRepository, MockCharacterRepository)
+      .with(GetCharacterByNameQuery, getMockCharacterByName)
+      .with(GetStarshipByNameQuery, getMockStarshipByName)
+      .with(StarshipRepository, MockStarshipRepository)
 
     await expect(
       fx.run(flyStarship('luke', 'x-wing'), layer.with(mockLayer)),
@@ -48,12 +48,9 @@ describe('FlyStarshipUseCase', () => {
   test('running use case with in-memory storage', async () => {
     const inMemoryLayer = fx
       .layer()
+      .with(CharacterRepository, inMemoryCharacterRepository(characterStorage))
       .with(
-        CharacterRepository.tag,
-        inMemoryCharacterRepository(characterStorage),
-      )
-      .with(
-        GetCharacterByNameQuery.tag,
+        GetCharacterByNameQuery,
         getCharacterByNameFromMemory([
           {
             name: 'Luke Skywalker',
@@ -66,12 +63,12 @@ describe('FlyStarshipUseCase', () => {
         ]),
       )
       .with(
-        GetStarshipByNameQuery.tag,
+        GetStarshipByNameQuery,
         getStarshipByNameFromMemory([
           { name: 'X-wing', url: 'https://swapi.dev/api/starships/12/' },
         ]),
       )
-      .with(StarshipRepository.tag, inMemoryStarshipRepository(starshipStorage))
+      .with(StarshipRepository, inMemoryStarshipRepository(starshipStorage))
 
     await expect(
       fx.run(flyStarship('luke', 'x-wing'), layer.with(inMemoryLayer)),
