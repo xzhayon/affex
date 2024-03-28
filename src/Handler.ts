@@ -1,4 +1,5 @@
 import { Function } from './Function'
+import { Layer } from './Layer'
 import { Struct } from './Struct'
 
 type ConstantHandler<R> = R | Promise<R> | Generator<any, R, any>
@@ -16,3 +17,7 @@ export type Handler<R> = R extends Function
   : R extends Struct
   ? StructHandler<R>
   : never
+
+export function layer() {
+  return Layer.empty()
+}
