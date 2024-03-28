@@ -1,6 +1,6 @@
-import { URI } from 'fx'
 import * as String from './String'
 import * as Struct from './Struct'
+import { URI } from './Type'
 
 declare const R: unique symbol
 export interface Tag<R> {
