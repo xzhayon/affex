@@ -1,5 +1,3 @@
-import { Builder } from './Builder'
-
 export type YOf<G extends Generator> = G extends Generator<infer Y> ? Y : never
 export type ROf<G extends Generator> = G extends Generator<any, infer R>
   ? R
@@ -18,8 +16,4 @@ export function* traverse<A, G extends Generator>(
   }
 
   return bs
-}
-
-export function run<G extends Generator>(generator: G) {
-  return Builder.create(generator)
 }

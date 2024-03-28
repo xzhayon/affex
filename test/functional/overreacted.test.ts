@@ -1,5 +1,5 @@
 import * as fx from 'fx'
-import { URI, perform } from 'fx'
+import { Effector, perform } from 'fx'
 
 type UserName = string
 interface User {
@@ -8,7 +8,7 @@ interface User {
 }
 
 interface AskName {
-  readonly [URI]?: unique symbol
+  readonly [fx.URI]?: unique symbol
   (): UserName
 }
 const tagAskName = fx.tag<AskName>()
@@ -22,21 +22,21 @@ interface DirContents {
 }
 
 interface OpenDirectory {
-  readonly [URI]?: unique symbol
+  readonly [fx.URI]?: unique symbol
   (dirName: DirName): DirContents
 }
 const tagOpenDirectory = fx.tag<OpenDirectory>()
 const openDirectory = fx.function(tagOpenDirectory)
 
 interface Log {
-  readonly [URI]?: unique symbol
+  readonly [fx.URI]?: unique symbol
   (message: string): void
 }
 const tagLog = fx.tag<Log>()
 const log = fx.function(tagLog)
 
 interface HandleFile {
-  readonly [URI]?: unique symbol
+  readonly [fx.URI]?: unique symbol
   (fileName: FileName): void
 }
 const tagHandleFile = fx.tag<HandleFile>()
@@ -56,15 +56,13 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
     }
 
     await expect(
-      fx
-        .run(
-          makeFriends(
-            { name: null, friendNames: [] },
-            { name: 'Gendry', friendNames: [] },
-          ),
-        )
-        .with(tagAskName, () => 'Arya Stark')
-        .build(),
+      fx.run(
+        makeFriends(
+          { name: null, friendNames: [] },
+          { name: 'Gendry', friendNames: [] },
+        ),
+        fx.layer().with(tagAskName, () => 'Arya Stark'),
+      ),
     ).resolves.toStrictEqual([
       { name: null, friendNames: ['Gendry'] },
       { name: 'Gendry', friendNames: ['Arya Stark'] },
@@ -83,21 +81,21 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
     }
 
     await expect(
-      fx
-        .run(
-          makeFriends(
-            { name: null, friendNames: [] },
-            { name: 'Gendry', friendNames: [] },
+      fx.run(
+        makeFriends(
+          { name: null, friendNames: [] },
+          { name: 'Gendry', friendNames: [] },
+        ),
+        fx
+          .layer()
+          .with(
+            tagAskName,
+            () =>
+              new Promise((resolve) =>
+                setTimeout(() => resolve('Arya Stark'), 1000),
+              ),
           ),
-        )
-        .with(
-          tagAskName,
-          () =>
-            new Promise((resolve) =>
-              setTimeout(() => resolve('Arya Stark'), 1000),
-            ),
-        )
-        .build(),
+      ),
     ).resolves.toStrictEqual([
       { name: null, friendNames: ['Gendry'] },
       { name: 'Gendry', friendNames: ['Arya Stark'] },
@@ -106,7 +104,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
   test('A Note on Purity', async () => {
     function* enumerateFiles(
       dir: DirName,
-    ): fx.Effector<OpenDirectory | Log | HandleFile, void> {
+    ): Effector<OpenDirectory | Log | HandleFile, void> {
       const contents = yield* perform(openDirectory(dir))
       yield* perform(log(`Enumerating files in ${dir}`))
       for (const file of contents.files) {
@@ -122,26 +120,28 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
     const _log: string[] = []
     const dirs: string[] = []
     const files: string[] = []
-    await fx
-      .run(enumerateFiles('/dev'))
-      .with(tagOpenDirectory, (dirName) => {
-        dirs.push(dirName)
+    await fx.run(
+      enumerateFiles('/dev'),
+      fx
+        .layer()
+        .with(tagOpenDirectory, (dirName) => {
+          dirs.push(dirName)
 
-        return {
-          dirs: dirName === '/dev' ? ['/dev/fd'] : [],
-          files:
-            dirName === '/dev'
-              ? ['/dev/stderr', '/dev/stdin', '/dev/stdout']
-              : ['/dev/fd/0', '/dev/fd/1', '/dev/fd/2'],
-        }
-      })
-      .with(tagLog, (message) => {
-        _log.push(message)
-      })
-      .with(tagHandleFile, (fileName) => {
-        files.push(fileName)
-      })
-      .build()
+          return {
+            dirs: dirName === '/dev' ? ['/dev/fd'] : [],
+            files:
+              dirName === '/dev'
+                ? ['/dev/stderr', '/dev/stdin', '/dev/stdout']
+                : ['/dev/fd/0', '/dev/fd/1', '/dev/fd/2'],
+          }
+        })
+        .with(tagLog, (message) => {
+          _log.push(message)
+        })
+        .with(tagHandleFile, (fileName) => {
+          files.push(fileName)
+        }),
+    )
 
     expect(_log).toStrictEqual([
       'Enumerating files in /dev',
@@ -164,7 +164,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
   test('A Note on Purity (with nested effects)', async () => {
     function* enumerateFiles(
       dir: DirName,
-    ): fx.Effector<OpenDirectory | Log | HandleFile, void> {
+    ): Effector<OpenDirectory | Log | HandleFile, void> {
       const contents = yield* perform(openDirectory(dir))
       yield* perform(log(`Enumerating files in ${dir}`))
       for (const file of contents.files) {
@@ -180,27 +180,29 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
     const _log: string[] = []
     const dirs: string[] = []
     const files: string[] = []
-    await fx
-      .run(enumerateFiles('/dev'))
-      .with(tagOpenDirectory, (dirName) => {
-        dirs.push(dirName)
+    await fx.run(
+      enumerateFiles('/dev'),
+      fx
+        .layer()
+        .with(tagOpenDirectory, (dirName) => {
+          dirs.push(dirName)
 
-        return {
-          dirs: dirName === '/dev' ? ['/dev/fd'] : [],
-          files:
-            dirName === '/dev'
-              ? ['/dev/stderr', '/dev/stdin', '/dev/stdout']
-              : ['/dev/fd/0', '/dev/fd/1', '/dev/fd/2'],
-        }
-      })
-      .with(tagLog, (message) => {
-        _log.push(message)
-      })
-      .with(tagHandleFile, function* (fileName) {
-        yield* perform(log(`Handling ${fileName}`))
-        files.push(fileName)
-      })
-      .build()
+          return {
+            dirs: dirName === '/dev' ? ['/dev/fd'] : [],
+            files:
+              dirName === '/dev'
+                ? ['/dev/stderr', '/dev/stdin', '/dev/stdout']
+                : ['/dev/fd/0', '/dev/fd/1', '/dev/fd/2'],
+          }
+        })
+        .with(tagLog, (message) => {
+          _log.push(message)
+        })
+        .with(tagHandleFile, function* (fileName) {
+          yield* perform(log(`Handling ${fileName}`))
+          files.push(fileName)
+        }),
+    )
 
     expect(_log).toStrictEqual([
       'Enumerating files in /dev',

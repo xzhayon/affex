@@ -18,7 +18,7 @@ import * as Log from '../../kernel/Log'
 import { flyStarship } from './FlyStarshipUseCase'
 
 describe('FlyStarshipUseCase', () => {
-  let log: any[]
+  let log: any[] = []
   let characterStorage: object
   let starshipStorage: object
 
@@ -28,53 +28,53 @@ describe('FlyStarshipUseCase', () => {
     starshipStorage = {}
   })
 
+  const layer = fx
+    .layer()
+    .with(Id.tag, CryptoUuid.random)
+    .with(Log.tag, inMemoryLog(log))
+
   test('running use case with mocks', async () => {
+    const mockLayer = fx
+      .layer()
+      .with(CharacterRepository.tag, MockCharacterRepository)
+      .with(GetCharacterByNameQuery.tag, getMockCharacterByName)
+      .with(GetStarshipByNameQuery.tag, getMockStarshipByName)
+      .with(StarshipRepository.tag, MockStarshipRepository)
+
     await expect(
-      fx
-        .run(flyStarship('luke', 'x-wing'))
-        .with(CharacterRepository.tag, MockCharacterRepository)
-        .with(GetCharacterByNameQuery.tag, getMockCharacterByName)
-        .with(Id.tag, CryptoUuid.random)
-        .with(Log.tag, inMemoryLog(log))
-        .with(GetStarshipByNameQuery.tag, getMockStarshipByName)
-        .with(StarshipRepository.tag, MockStarshipRepository)
-        .build(),
+      fx.run(flyStarship('luke', 'x-wing'), layer.with(mockLayer)),
     ).rejects.toThrow(/Character "[^"]+" cannot fly starship "[^"]+"/)
   })
   test('running use case with in-memory storage', async () => {
+    const inMemoryLayer = fx
+      .layer()
+      .with(
+        CharacterRepository.tag,
+        inMemoryCharacterRepository(characterStorage),
+      )
+      .with(
+        GetCharacterByNameQuery.tag,
+        getCharacterByNameFromMemory([
+          {
+            name: 'Luke Skywalker',
+            starshipUrls: [
+              'https://swapi.dev/api/starships/12/',
+              'https://swapi.dev/api/starships/22/',
+            ],
+            url: 'https://swapi.dev/api/people/1/',
+          },
+        ]),
+      )
+      .with(
+        GetStarshipByNameQuery.tag,
+        getStarshipByNameFromMemory([
+          { name: 'X-wing', url: 'https://swapi.dev/api/starships/12/' },
+        ]),
+      )
+      .with(StarshipRepository.tag, inMemoryStarshipRepository(starshipStorage))
+
     await expect(
-      fx
-        .run(flyStarship('luke', 'x-wing'))
-        .with(
-          CharacterRepository.tag,
-          inMemoryCharacterRepository(characterStorage),
-        )
-        .with(
-          GetCharacterByNameQuery.tag,
-          getCharacterByNameFromMemory([
-            {
-              name: 'Luke Skywalker',
-              starshipUrls: [
-                'https://swapi.dev/api/starships/12/',
-                'https://swapi.dev/api/starships/22/',
-              ],
-              url: 'https://swapi.dev/api/people/1/',
-            },
-          ]),
-        )
-        .with(Id.tag, CryptoUuid.random)
-        .with(Log.tag, inMemoryLog(log))
-        .with(
-          GetStarshipByNameQuery.tag,
-          getStarshipByNameFromMemory([
-            { name: 'X-wing', url: 'https://swapi.dev/api/starships/12/' },
-          ]),
-        )
-        .with(
-          StarshipRepository.tag,
-          inMemoryStarshipRepository(starshipStorage),
-        )
-        .build(),
+      fx.run(flyStarship('luke', 'x-wing'), layer.with(inMemoryLayer)),
     ).resolves.toMatchObject({
       character: { searchTerms: ['luke'] },
       starship: { searchTerms: ['x-wing'] },
