@@ -4,7 +4,6 @@
     "module": "commonjs",
     "paths": { "fx": ["./src"] },
     "declaration": true,
-    "declarationMap": true,
     "outDir": "dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
