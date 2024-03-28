@@ -20,4 +20,11 @@ describe('Layer', () => {
       ).toStrictEqual(handler)
     })
   })
+  describe('do', () => {
+    test('forwarding layer', () => {
+      const layer = Layer.empty().with(T.tag<() => number>(), () => 42)
+
+      expect(layer.do()).toStrictEqual(layer)
+    })
+  })
 })
