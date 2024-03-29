@@ -1,7 +1,7 @@
 import * as E from './Effect'
-import { Effect } from './Effect'
 import { Function } from './Function'
 import { Handler } from './Handler'
+import { Has } from './Has'
 import { Struct } from './Struct'
 import * as T from './Tag'
 import { Tag } from './Tag'
@@ -25,22 +25,28 @@ export class Layer<R, A> {
   ): Layer<
     | Exclude<R, _R>
     | (H extends Function
-        ? ReturnType<H> extends Generator<infer E extends Effect<any, any>>
+        ? ReturnType<H> extends
+            | Generator<infer E extends Has<any>>
+            | AsyncGenerator<infer E extends Has<any>>
           ? Exclude<E.ROf<E>, A>
           : never
         : H extends Struct
         ? {
             [K in keyof H]: H[K] extends Function
-              ? ReturnType<H[K]> extends Generator<
-                  infer E extends Effect<any, any>
-                >
+              ? ReturnType<H[K]> extends
+                  | Generator<infer E extends Has<any>>
+                  | AsyncGenerator<infer E extends Has<any>>
                 ? Exclude<E.ROf<E>, A>
                 : never
-              : H[K] extends Generator<infer E extends Effect<any, any>>
+              : H[K] extends
+                  | Generator<infer E extends Has<any>>
+                  | AsyncGenerator<infer E extends Has<any>>
               ? Exclude<E.ROf<E>, A>
               : never
           }[keyof H]
-        : H extends Generator<infer E extends Effect<any, any>>
+        : H extends
+            | Generator<infer E extends Has<any>>
+            | AsyncGenerator<infer E extends Has<any>>
         ? Exclude<E.ROf<E>, A>
         : never),
     _R | A
