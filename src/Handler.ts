@@ -5,7 +5,7 @@ import { Struct } from './Struct'
 type ConstantHandler<R> = R | Promise<R> | Generator<any, R, any>
 type FunctionHandler<R extends Function> = (
   ...args: Parameters<R>
-) => ConstantHandler<Awaited<ReturnType<R>>>
+) => ConstantHandler<ReturnType<R>>
 type StructHandler<R extends Struct> = {
   [K in keyof R as R[K] extends Function ? K : never]: R[K] extends Function
     ? FunctionHandler<R[K]>

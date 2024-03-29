@@ -16,8 +16,11 @@ export type ROf<E extends Effect<any, any>> = E extends Effect<infer R, any>
   ? R
   : never
 
-function effect<R, A>({ key }: Tag<R>, f: (r: R) => A): Effect<R, A> {
-  return { [URI]: 'Effect', key, f }
+function effect<R, A>(
+  { key }: Tag<R>,
+  f: (r: R) => A,
+): Effect<R, A extends Promise<any> ? Awaited<A> : A> {
+  return { [URI]: 'Effect', key, f: f as any }
 }
 
 export function functionA<R extends Function>(tag: Tag<R>) {
@@ -42,7 +45,11 @@ export function structA<R extends Struct>(tag: Tag<R>) {
         [key]: <A>(f: (r: R[K]) => A) => effect(tag, (r) => f(r[key])),
       }),
       {},
-    ) as { [_K in K]: <A>(f: (r: R[_K]) => A) => Effect<R, A> }
+    ) as {
+      [_K in K]: <A>(
+        f: (r: R[_K]) => A,
+      ) => Effect<R, A extends Promise<any> ? Awaited<A> : A>
+    }
 }
 
 export function struct<R extends Struct>(tag: Tag<R>) {
@@ -59,7 +66,14 @@ export function struct<R extends Struct>(tag: Tag<R>) {
       {},
     ) as {
       [_K in K]: R[_K] extends Function
-        ? (...args: Parameters<R[_K]>) => Effect<R, ReturnType<R[_K]>>
+        ? (
+            ...args: Parameters<R[_K]>
+          ) => Effect<
+            R,
+            ReturnType<R[_K]> extends Promise<any>
+              ? Awaited<ReturnType<R[_K]>>
+              : ReturnType<R[_K]>
+          >
         : never
     }
 }
