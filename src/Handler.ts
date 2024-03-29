@@ -2,7 +2,11 @@ import { Function } from './Function'
 import { Layer } from './Layer'
 import { Struct } from './Struct'
 
-type ConstantHandler<R> = R | Promise<R> | Generator<any, R, any>
+type ConstantHandler<R> =
+  | R
+  | Promise<R>
+  | Generator<any, R, any>
+  | AsyncGenerator<any, R, any>
 type FunctionHandler<R extends Function> = (
   ...args: Parameters<R>
 ) => ConstantHandler<Awaited<ReturnType<R>>>

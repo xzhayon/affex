@@ -37,6 +37,9 @@ describe('Effector', () => {
       function* (a: number, b: number) {
         return a + b
       },
+      async function* (a: number, b: number) {
+        return a + b
+      },
     ])('handling effect from function "%s"', async (handler) => {
       interface Add {
         (a: number, b: number): number
@@ -57,6 +60,9 @@ describe('Effector', () => {
       <A>(a: A) => a,
       async <A>(a: A) => a,
       function* <A>(a: A) {
+        return a
+      },
+      async function* <A>(a: A) {
         return a
       },
     ])('handling effect from generic function "%s"', async (handler) => {
@@ -83,6 +89,11 @@ describe('Effector', () => {
           return a + b
         },
       },
+      {
+        async *add(a: number, b: number) {
+          return a + b
+        },
+      },
     ])('handling effect from struct "%s"', async (handler) => {
       interface Calculator {
         add(a: number, b: number): number
@@ -104,6 +115,11 @@ describe('Effector', () => {
       { trace: async <A>(a: A) => a },
       {
         *trace<A>(a: A) {
+          return a
+        },
+      },
+      {
+        async *trace<A>(a: A) {
           return a
         },
       },

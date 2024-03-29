@@ -8,11 +8,20 @@ import * as T from './Tag'
 
 export type Effector<R, A> = Generator<R extends any ? Has<R> : never, A, any>
 
-async function _run(iterator: Iterator<any>, layer: Layer<any, any>) {
-  let next = iterator.next()
+export type AsyncEffector<R, A> = AsyncGenerator<
+  R extends any ? Has<R> : never,
+  A,
+  any
+>
+
+async function _run(
+  iterator: Iterator<any> | AsyncIterator<any>,
+  layer: Layer<any, any>,
+) {
+  let next = await iterator.next()
   while (!next.done) {
     if (!E.is(next.value)) {
-      next = iterator.next()
+      next = await iterator.next()
 
       continue
     }
@@ -28,13 +37,13 @@ async function _run(iterator: Iterator<any>, layer: Layer<any, any>) {
     }
 
     const a = await f(handler)
-    next = iterator.next(I.is(a) ? await _run(a, layer) : a)
+    next = await iterator.next(I.is(a) ? await _run(a, layer) : a)
   }
 
   return next.value
 }
 
-export async function run<G extends Generator>(
+export async function run<G extends Generator | AsyncGenerator>(
   effector: G,
   layer: Layer<
     never,
