@@ -1,5 +1,6 @@
 import * as _E from './Effect'
 import * as E from './Effector'
+import * as G from './Generator'
 import { Layer } from './Layer'
 import * as T from './Tag'
 
@@ -15,22 +16,27 @@ describe('Effector', () => {
 
       await expect(E.run(f(), Layer.empty())).resolves.toStrictEqual(42 + 1337)
     })
-    test('running effector without providing handler', async () => {
-      interface Add {
-        (a: number, b: number): number
-      }
+    test.each([undefined, 'Add'])(
+      'running effector without providing handler',
+      async (description) => {
+        interface Add {
+          (a: number, b: number): number
+        }
 
-      const tag = T.tag<Add>('Add')
-      const effect = _E.function(tag)
+        const tag = T.tag<Add>(description)
+        const effect = _E.function(tag)
 
-      function* f() {
-        return yield* _E.perform(effect(42, 1337))
-      }
+        function* f() {
+          return yield* _E.perform(effect(42, 1337))
+        }
 
-      await expect(E.run(f(), Layer.empty() as any)).rejects.toThrow(
-        'Cannot find handler for effect "Add"',
-      )
-    })
+        await expect(E.run(f(), Layer.empty() as any)).rejects.toThrow(
+          `Cannot find handler for effect${
+            description ? ` "${description}"` : ''
+          }`,
+        )
+      },
+    )
     test.each([
       (a: number, b: number) => a + b,
       async (a: number, b: number) => a + b,
@@ -172,6 +178,65 @@ describe('Effector', () => {
             .with(tagClock, { now: () => date }),
         ),
       ).resolves.toStrictEqual(`${date}\tfoo`)
+    })
+    test('handling effect with callback', async () => {
+      interface Decoder<A> {
+        (u: unknown): A
+      }
+
+      interface Crypto {
+        number(): number
+      }
+
+      interface Cache {
+        get<A, G extends Generator<unknown, A>>(
+          key: string,
+          decoder: Decoder<A>,
+          onMiss: () => G,
+        ): Generator<G.YOf<G>, A>
+      }
+
+      const tagCrypto = T.tag<Crypto>()
+      const crypto = _E.struct(tagCrypto)('number')
+
+      const tagCache = T.tag<Cache>()
+      const { get } = _E.structA(tagCache)('get')
+      const cache = {
+        get: <A, G extends Generator<unknown, A>>(
+          key: string,
+          decoder: Decoder<A>,
+          onMiss: () => G,
+        ) => get((f) => f(key, decoder, onMiss)),
+      }
+
+      const numberDecoder = (u: unknown) => {
+        if (typeof u !== 'number') {
+          throw new Error()
+        }
+
+        return u
+      }
+
+      function* f() {
+        return yield* _E.perform(
+          cache.get('foo', numberDecoder, function* () {
+            return yield* _E.perform(crypto.number())
+          }),
+        )
+      }
+
+      await expect(
+        E.run(
+          f(),
+          Layer.empty()
+            .with(tagCrypto, { number: () => 42 })
+            .with(tagCache, {
+              *get(_key, _decoder, onMiss) {
+                return yield* onMiss()
+              },
+            }),
+        ),
+      ).resolves.toStrictEqual(42)
     })
   })
 })

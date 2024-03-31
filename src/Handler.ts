@@ -1,4 +1,5 @@
 import { Function } from './Function'
+import { Generated } from './Generator'
 import { Layer } from './Layer'
 import { Struct } from './Struct'
 
@@ -9,7 +10,7 @@ type ConstantHandler<R> =
   | AsyncGenerator<any, R, any>
 type FunctionHandler<R extends Function> = (
   ...args: Parameters<R>
-) => ConstantHandler<Awaited<ReturnType<R>>>
+) => ConstantHandler<Generated<Awaited<ReturnType<R>>>>
 type StructHandler<R extends Struct> = {
   [K in keyof R as R[K] extends Function ? K : never]: R[K] extends Function
     ? FunctionHandler<R[K]>

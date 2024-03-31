@@ -1,6 +1,6 @@
 export { function, functionA, perform, struct, structA } from './Effect'
 export { Effector, run } from './Effector'
-export { traverse } from './Generator'
+export { YOf, traverse } from './Generator'
 export { Handler, layer } from './Handler'
 export { tag } from './Tag'
 export { URI } from './Type'

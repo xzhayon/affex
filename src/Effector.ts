@@ -47,7 +47,7 @@ export async function run<G extends Generator | AsyncGenerator>(
   effector: G,
   layer: Layer<
     never,
-    G.YOf<G> extends infer E ? (E extends Has<any> ? E.ROf<E> : never) : never
+    G.YOf<G> extends infer E extends Has<any> ? E.ROf<E> : never
   >,
 ): Promise<G.ROf<G>> {
   return _run(effector, layer)

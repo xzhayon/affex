@@ -1,5 +1,8 @@
 import { Effector } from './Effector'
 import { Function } from './Function'
+import * as G from './Generator'
+import { Generated } from './Generator'
+import { Has } from './Has'
 import { NonEmptyArray } from './NonEmptyArray'
 import * as S from './Struct'
 import { Struct } from './Struct'
@@ -19,7 +22,15 @@ export type ROf<E extends Effect<any, any>> = E extends Effect<infer R, any>
 function effect<R, A>(
   { key }: Tag<R>,
   f: (r: R) => A,
-): Effect<R, A extends Promise<any> ? Awaited<A> : A> {
+): Effect<
+  | R
+  | (A extends Generator | AsyncGenerator
+      ? G.YOf<A> extends infer E extends Has<any>
+        ? ROf<E>
+        : never
+      : never),
+  Generated<Awaited<A>>
+> {
   return { [URI]: 'Effect', key, f: f as any }
 }
 
@@ -48,7 +59,15 @@ export function structA<R extends Struct>(tag: Tag<R>) {
     ) as {
       [_K in K]: <A>(
         f: (r: R[_K]) => A,
-      ) => Effect<R, A extends Promise<any> ? Awaited<A> : A>
+      ) => Effect<
+        | R
+        | (A extends Generator | AsyncGenerator
+            ? G.YOf<A> extends infer E extends Has<any>
+              ? ROf<E>
+              : never
+            : never),
+        Generated<Awaited<A>>
+      >
     }
 }
 
@@ -69,10 +88,13 @@ export function struct<R extends Struct>(tag: Tag<R>) {
         ? (
             ...args: Parameters<R[_K]>
           ) => Effect<
-            R,
-            ReturnType<R[_K]> extends Promise<any>
-              ? Awaited<ReturnType<R[_K]>>
-              : ReturnType<R[_K]>
+            | R
+            | (ReturnType<R[_K]> extends Generator | AsyncGenerator
+                ? G.YOf<ReturnType<R[_K]>> extends infer E extends Has<any>
+                  ? ROf<E>
+                  : never
+                : never),
+            Generated<Awaited<ReturnType<R[_K]>>>
           >
         : never
     }

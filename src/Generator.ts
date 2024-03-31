@@ -14,6 +14,8 @@ export type NOf<G extends Generator | AsyncGenerator> = G extends
   ? N
   : never
 
+export type Generated<A> = A extends Generator | AsyncGenerator ? ROf<A> : A
+
 export function* traverse<A, G extends Generator>(
   as: ReadonlyArray<A>,
   f: (a: A) => G,
