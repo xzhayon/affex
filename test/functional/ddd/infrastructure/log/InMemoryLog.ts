@@ -27,8 +27,8 @@ export function inMemoryLog(
     notice: _log('notice', log),
     warning: _log('warning', log),
     error: _log('error', log),
-    alert: _log('alert', log),
     critical: _log('critical', log),
+    alert: _log('alert', log),
     emergency: _log('emergency', log),
   } satisfies Handler<Log>
 }
