@@ -11,6 +11,7 @@ describe('Layer', () => {
         handler,
       )
     })
+
     test('merging layers', () => {
       const tag = T.tag<() => number>()
       const handler = () => 42
@@ -20,6 +21,7 @@ describe('Layer', () => {
       ).toStrictEqual(handler)
     })
   })
+
   describe('do', () => {
     test('forwarding layer', () => {
       const layer = Layer.empty().with(T.tag<() => number>(), () => 42)

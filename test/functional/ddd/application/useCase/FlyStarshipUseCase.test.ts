@@ -45,6 +45,7 @@ describe('FlyStarshipUseCase', () => {
       fx.run(flyStarship('luke', 'x-wing'), layer.with(mockLayer)),
     ).rejects.toThrow(/Character "[^"]+" cannot fly starship "[^"]+"/)
   })
+
   test('running use case with in-memory storage', async () => {
     const inMemoryLayer = fx
       .layer()

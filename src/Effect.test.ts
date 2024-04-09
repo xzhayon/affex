@@ -49,6 +49,7 @@ describe('Effect', () => {
 
       expect(effect.add(42, 1337).f(calculator)).toStrictEqual(42 + 1337)
     })
+
     test('creating effect from generic struct', () => {
       interface Repository<A> {
         find(id: string): A

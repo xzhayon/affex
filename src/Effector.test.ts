@@ -16,6 +16,7 @@ describe('Effector', () => {
 
       await expect(E.run(f(), Layer.empty())).resolves.toStrictEqual(42 + 1337)
     })
+
     test.each([undefined, 'Add'])(
       'running effector without providing handler',
       async (description) => {
@@ -37,6 +38,7 @@ describe('Effector', () => {
         )
       },
     )
+
     test.each([
       (a: number, b: number) => a + b,
       async (a: number, b: number) => a + b,
@@ -62,6 +64,7 @@ describe('Effector', () => {
         E.run(f(), Layer.empty().with(tag, handler)),
       ).resolves.toStrictEqual(42 + 1337)
     })
+
     test.each([
       <A>(a: A) => a,
       async <A>(a: A) => a,
@@ -87,6 +90,7 @@ describe('Effector', () => {
         E.run(f(), Layer.empty().with(tag, handler)),
       ).resolves.toStrictEqual(42)
     })
+
     test.each([
       { add: (a: number, b: number) => a + b },
       { add: async (a: number, b: number) => a + b },
@@ -116,6 +120,7 @@ describe('Effector', () => {
         E.run(f(), Layer.empty().with(tag, handler)),
       ).resolves.toStrictEqual(42 + 1337)
     })
+
     test.each([
       { trace: <A>(a: A) => a },
       { trace: async <A>(a: A) => a },
@@ -146,6 +151,7 @@ describe('Effector', () => {
         E.run(f(), Layer.empty().with(tag, handler)),
       ).resolves.toStrictEqual(42)
     })
+
     test('concatenating effects', async () => {
       interface Log {
         trace(message: string): string
@@ -179,6 +185,7 @@ describe('Effector', () => {
         ),
       ).resolves.toStrictEqual(`${date}\tfoo`)
     })
+
     test('handling effect with callback', async () => {
       interface Decoder<A> {
         (u: unknown): A
