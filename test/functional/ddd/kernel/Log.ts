@@ -6,8 +6,8 @@ export type Severity =
   | 'notice'
   | 'warning'
   | 'error'
-  | 'alert'
   | 'critical'
+  | 'alert'
   | 'emergency'
 
 export type Log = {
@@ -24,8 +24,8 @@ export const {
   notice,
   warning,
   error,
-  alert,
   critical,
+  alert,
   emergency,
 } = fx.struct(tag)(
   'debug',
@@ -33,7 +33,7 @@ export const {
   'notice',
   'warning',
   'error',
-  'alert',
   'critical',
+  'alert',
   'emergency',
 )
