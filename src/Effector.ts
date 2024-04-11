@@ -1,5 +1,7 @@
 import * as E from './Effect'
 import { Effect } from './Effect'
+import * as F from './Fork'
+import { Fork } from './Fork'
 import * as G from './Generator'
 import { Has } from './Has'
 import * as I from './Iterator'
@@ -35,7 +37,13 @@ async function _run(
       )
     }
 
-    const a = await f(handler)
+    const a = await (tag.key === F.tag.key
+      ? f(
+          handler.bind({
+            run: (f: () => Generator | AsyncGenerator) => run(f(), layer),
+          }),
+        )
+      : f(handler))
     next = await iterator.next(I.is(a) ? await _run(a, layer) : a)
   }
 
@@ -46,8 +54,11 @@ export async function run<G extends Generator | AsyncGenerator>(
   effector: G,
   layer: Layer<
     never,
-    G.YOf<G> extends infer E extends Has<any> ? E.ROf<E> : never
+    Exclude<G.YOf<G> extends infer E extends Has<any> ? E.ROf<E> : never, Fork>
   >,
 ): Promise<G.ROf<G>> {
-  return _run(effector, layer)
+  return _run(
+    effector,
+    Layer.empty().with(F.tag, F.forkWithContext).with(layer),
+  )
 }

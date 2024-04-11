@@ -1,4 +1,5 @@
 import * as E from './Effect'
+import { Fork } from './Fork'
 import { Function } from './Function'
 import { Handler } from './Handler'
 import { Has } from './Has'
@@ -23,35 +24,40 @@ export class Layer<R, A> {
     tag: Tag<_R> | { tag: Tag<_R> },
     handler: H,
   ): Layer<
-    | Exclude<R, _R>
-    | (H extends Function
-        ? ReturnType<H> extends
-            | Generator<infer E extends Has<any>>
-            | AsyncGenerator<infer E extends Has<any>>
-          ? Exclude<E.ROf<E>, A>
-          : never
-        : H extends Struct
-        ? {
-            [K in keyof H]: H[K] extends Function
-              ? ReturnType<H[K]> extends
-                  | Generator<infer E extends Has<any>>
-                  | AsyncGenerator<infer E extends Has<any>>
+    Exclude<
+      | Exclude<R, _R>
+      | (H extends Function
+          ? ReturnType<H> extends
+              | Generator<infer E extends Has<any>>
+              | AsyncGenerator<infer E extends Has<any>>
+            ? Exclude<E.ROf<E>, A>
+            : never
+          : H extends Struct
+          ? {
+              [K in keyof H]: H[K] extends Function
+                ? ReturnType<H[K]> extends
+                    | Generator<infer E extends Has<any>>
+                    | AsyncGenerator<infer E extends Has<any>>
+                  ? Exclude<E.ROf<E>, A>
+                  : never
+                : H[K] extends
+                    | Generator<infer E extends Has<any>>
+                    | AsyncGenerator<infer E extends Has<any>>
                 ? Exclude<E.ROf<E>, A>
                 : never
-              : H[K] extends
-                  | Generator<infer E extends Has<any>>
-                  | AsyncGenerator<infer E extends Has<any>>
-              ? Exclude<E.ROf<E>, A>
-              : never
-          }[keyof H]
-        : H extends
-            | Generator<infer E extends Has<any>>
-            | AsyncGenerator<infer E extends Has<any>>
-        ? Exclude<E.ROf<E>, A>
-        : never),
+            }[keyof H]
+          : H extends
+              | Generator<infer E extends Has<any>>
+              | AsyncGenerator<infer E extends Has<any>>
+          ? Exclude<E.ROf<E>, A>
+          : never),
+      Fork
+    >,
     _R | A
   >
-  with<_R, _A>(layer: Layer<_R, _A>): Layer<Exclude<_R | R, _A | A>, _A | A>
+  with<_R, _A>(
+    layer: Layer<_R, _A>,
+  ): Layer<Exclude<_R | R, _A | A | Fork>, _A | A>
   with(
     tagOrLayer: Tag<unknown> | { tag: Tag<any> } | Layer<any, any>,
     handler?: any,
