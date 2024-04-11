@@ -1,6 +1,6 @@
 import * as G from './Generator'
 
-describe('Generator', () =>
+describe('Generator', () => {
   describe('traverse', () => {
     test('applying generator function to array elements', () => {
       const generator = G.traverse([42, 1337], function* (n) {
@@ -13,4 +13,5 @@ describe('Generator', () =>
 
       expect(bs).toStrictEqual([42 * 2, 1337 * 2])
     })
-  }))
+  })
+})
