@@ -14,7 +14,7 @@ export const {
   upsertOne,
 } = {
   *findManyById(ids) {
-    return yield* fx.traverse(ids, function* (_id) {
+    return yield* fx.all(ids, function* (_id) {
       return {
         _id,
         externalId: yield* perform(Id.random()),

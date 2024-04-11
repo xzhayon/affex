@@ -28,7 +28,7 @@ export function* getCharacterBySearchTerm(
 
   let newStarships: ReadonlyArray<Starship> = []
   if (character === undefined) {
-    newStarships = yield* fx.traverse(
+    newStarships = yield* fx.all(
       characterDto.starshipUrls,
       function* (starshipUrl) {
         return (
