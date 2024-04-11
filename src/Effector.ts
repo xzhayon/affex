@@ -40,7 +40,12 @@ async function _run(
     const a = await (tag.key === F.tag.key
       ? f(
           handler.bind({
-            run: (f: () => Generator | AsyncGenerator) => run(f(), layer),
+            run: (
+              effector:
+                | Generator
+                | AsyncGenerator
+                | (() => Generator | AsyncGenerator),
+            ) => run(effector, layer),
           }),
         )
       : f(handler))
@@ -51,14 +56,14 @@ async function _run(
 }
 
 export async function run<G extends Generator | AsyncGenerator>(
-  effector: G,
+  effector: G | (() => G),
   layer: Layer<
     never,
     Exclude<G.YOf<G> extends infer E extends Has<any> ? E.ROf<E> : never, Fork>
   >,
 ): Promise<G.ROf<G>> {
   return _run(
-    effector,
+    I.is(effector) ? effector : effector(),
     Layer.empty().with(F.tag, F.forkWithContext).with(layer),
   )
 }

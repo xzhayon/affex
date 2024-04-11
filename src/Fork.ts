@@ -21,7 +21,7 @@ export interface Fork {
               R extends infer _R ? (_R extends never ? never : Has<_R>) : never
             >,
       >(
-        f: () => G,
+        effector: G | (() => G),
       ) => Promise<Generated<Awaited<G.ROf<G>>>>,
     ) => any,
   >(
@@ -52,7 +52,7 @@ export function fork<R = never>() {
               R extends infer _R ? (_R extends never ? never : Has<_R>) : never
             >,
       >(
-        f: () => G,
+        effector: G | (() => G),
       ) => Promise<Generated<Awaited<G.ROf<G>>>>,
     ) => any,
   >(
@@ -62,7 +62,7 @@ export function fork<R = never>() {
 
 export const forkWithContext = function (this: {
   run: <G extends Generator | AsyncGenerator>(
-    f: () => G,
+    effector: G | (() => G),
   ) => Promise<Generated<Awaited<G.ROf<G>>>>
 }) {
   const ctx = this
@@ -75,7 +75,7 @@ export const forkWithContext = function (this: {
   return <
     F extends (
       run: <G extends Generator | AsyncGenerator>(
-        f: () => G,
+        effector: G | (() => G),
       ) => Promise<Generated<Awaited<G.ROf<G>>>>,
     ) => any,
   >(
