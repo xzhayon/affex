@@ -15,7 +15,7 @@ export type AsyncEffector<R, A> = AsyncGenerator<
 
 async function _run(
   iterator: Iterator<any> | AsyncIterator<any>,
-  layer: Layer<any, any>,
+  layer: Layer<never, any>,
 ) {
   let next = await iterator.next()
   while (!next.done) {
