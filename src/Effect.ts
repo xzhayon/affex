@@ -11,7 +11,7 @@ import { URI } from './Type'
 
 export interface Effect<R, A> {
   readonly [URI]: 'Effect'
-  readonly key: symbol
+  readonly tag: Tag<R>
   readonly f: (r: R) => A
 }
 
@@ -20,7 +20,7 @@ export type ROf<E extends Effect<any, any>> = E extends Effect<infer R, any>
   : never
 
 function effect<R, A>(
-  { key }: Tag<R>,
+  tag: Tag<R>,
   f: (r: R) => A,
 ): Effect<
   | R
@@ -31,7 +31,7 @@ function effect<R, A>(
       : never),
   Generated<Awaited<A>>
 > {
-  return { [URI]: 'Effect', key, f: f as any }
+  return { [URI]: 'Effect', tag, f: f as any }
 }
 
 export function functionA<R extends Function>(tag: Tag<R>) {

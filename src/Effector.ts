@@ -4,7 +4,6 @@ import * as G from './Generator'
 import { Has } from './Has'
 import * as I from './Iterator'
 import { Layer } from './Layer'
-import * as T from './Tag'
 
 export type Effector<R, A> = Generator<R extends any ? Has<R> : never, A, any>
 
@@ -26,12 +25,12 @@ async function _run(
       continue
     }
 
-    const { key, f }: Effect<any, any> = next.value
-    const handler = layer.handler(T.tag(key))
+    const { tag, f }: Effect<any, any> = next.value
+    const handler: any = layer.handler(tag)
     if (handler === undefined) {
       throw new Error(
         `Cannot find handler for effect${
-          key.description ? ` "${key.description}"` : ''
+          tag.key.description ? ` "${tag.key.description}"` : ''
         }`,
       )
     }
