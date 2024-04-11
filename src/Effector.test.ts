@@ -7,14 +7,14 @@ import * as T from './Tag'
 describe('Effector', () => {
   describe('run', () => {
     test('running effector with no effects', async () => {
-      function* f() {
-        yield 42
-        yield 1337
+      await expect(
+        E.run(function* () {
+          yield 42
+          yield 1337
 
-        return 42 + 1337
-      }
-
-      await expect(E.run(f(), Layer.empty())).resolves.toStrictEqual(42 + 1337)
+          return 42 + 1337
+        }, Layer.empty()),
+      ).resolves.toStrictEqual(42 + 1337)
     })
 
     test.each([undefined, 'Add'])(
@@ -27,11 +27,11 @@ describe('Effector', () => {
         const tag = T.tag<Add>(description)
         const effect = _E.function(tag)
 
-        function* f() {
-          return yield* _E.perform(effect(42, 1337))
-        }
-
-        await expect(E.run(f(), Layer.empty() as any)).rejects.toThrow(
+        await expect(
+          E.run(function* () {
+            return yield* _E.perform(effect(42, 1337))
+          }, Layer.empty() as any),
+        ).rejects.toThrow(
           `Cannot find handler for effect${
             description ? ` "${description}"` : ''
           }`,
@@ -56,12 +56,10 @@ describe('Effector', () => {
       const tag = T.tag<Add>()
       const effect = _E.function(tag)
 
-      function* f() {
-        return yield* _E.perform(effect(42, 1337))
-      }
-
       await expect(
-        E.run(f(), Layer.empty().with(tag, handler)),
+        E.run(function* () {
+          return yield* _E.perform(effect(42, 1337))
+        }, Layer.empty().with(tag, handler)),
       ).resolves.toStrictEqual(42 + 1337)
     })
 
@@ -82,12 +80,10 @@ describe('Effector', () => {
       const tag = T.tag<Identity>()
       const effect = <A>(a: A) => _E.functionA(tag)((f) => f(a))
 
-      function* f() {
-        return yield* _E.perform(effect(42))
-      }
-
       await expect(
-        E.run(f(), Layer.empty().with(tag, handler)),
+        E.run(function* () {
+          return yield* _E.perform(effect(42))
+        }, Layer.empty().with(tag, handler)),
       ).resolves.toStrictEqual(42)
     })
 
@@ -112,12 +108,10 @@ describe('Effector', () => {
       const tag = T.tag<Calculator>()
       const effect = _E.struct(tag)('add')
 
-      function* f() {
-        return yield* _E.perform(effect.add(42, 1337))
-      }
-
       await expect(
-        E.run(f(), Layer.empty().with(tag, handler)),
+        E.run(function* () {
+          return yield* _E.perform(effect.add(42, 1337))
+        }, Layer.empty().with(tag, handler)),
       ).resolves.toStrictEqual(42 + 1337)
     })
 
@@ -143,12 +137,10 @@ describe('Effector', () => {
       const { trace } = _E.structA(tag)('trace')
       const effect = { trace: <A>(a: A) => trace((f) => f(a)) }
 
-      function* f() {
-        return yield* _E.perform(effect.trace(42))
-      }
-
       await expect(
-        E.run(f(), Layer.empty().with(tag, handler)),
+        E.run(function* () {
+          return yield* _E.perform(effect.trace(42))
+        }, Layer.empty().with(tag, handler)),
       ).resolves.toStrictEqual(42)
     })
 
@@ -168,13 +160,12 @@ describe('Effector', () => {
       const clock = _E.struct(tagClock)('now')
 
       const date = new Date()
-      function* f() {
-        return yield* _E.perform(log.trace('foo'))
-      }
 
       await expect(
         E.run(
-          f(),
+          function* () {
+            return yield* _E.perform(log.trace('foo'))
+          },
           Layer.empty()
             .with(tagLog, {
               *trace(message) {
@@ -224,17 +215,15 @@ describe('Effector', () => {
         return u
       }
 
-      function* f() {
-        return yield* _E.perform(
-          cache.get('foo', numberDecoder, function* () {
-            return yield* _E.perform(crypto.number())
-          }),
-        )
-      }
-
       await expect(
         E.run(
-          f(),
+          function* () {
+            return yield* _E.perform(
+              cache.get('foo', numberDecoder, function* () {
+                return yield* _E.perform(crypto.number())
+              }),
+            )
+          },
           Layer.empty()
             .with(tagCrypto, { number: () => 42 })
             .with(tagCache, {
