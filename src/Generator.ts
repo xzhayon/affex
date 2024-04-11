@@ -19,7 +19,7 @@ export type Generated<A> = A extends Generator | AsyncGenerator ? ROf<A> : A
 export function* traverse<A, G extends Generator>(
   as: ReadonlyArray<A>,
   f: (a: A) => G,
-): Generator<YOf<G>, ReadonlyArray<ROf<G>>, NOf<G>> {
+): Generator<YOf<G>, ROf<G>[], NOf<G>> {
   const bs = []
   for (const a of as) {
     bs.push(yield* f(a) as any)
