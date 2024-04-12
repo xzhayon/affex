@@ -1,4 +1,4 @@
-import * as fx from 'fx'
+import { fx } from 'fx'
 import * as CharacterRepository from '../../application/persistence/CharacterRepository'
 import * as StarshipRepository from '../../application/persistence/StarshipRepository'
 import * as GetCharacterByNameQuery from '../../application/query/GetCharacterByNameQuery'
