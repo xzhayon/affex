@@ -1,5 +1,4 @@
-import * as fx from 'fx'
-import { Effector, perform } from 'fx'
+import { Effector, fx, perform } from 'fx'
 
 describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic-effects-for-the-rest-of-us/>', () => {
   type UserName = string

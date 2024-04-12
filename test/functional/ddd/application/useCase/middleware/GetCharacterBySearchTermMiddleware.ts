@@ -1,5 +1,4 @@
-import * as fx from 'fx'
-import { perform } from 'fx'
+import { fx, perform } from 'fx'
 import { Character, CharaterSearchTerm } from '../../../domain/entity/Character'
 import { Starship } from '../../../domain/entity/Starship'
 import { cacheCharacterSearchTerm } from '../../command/CacheCharacterSearchTermCommand'

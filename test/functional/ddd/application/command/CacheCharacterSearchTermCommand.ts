@@ -1,4 +1,4 @@
-import { perform } from '../../../../../src/Effect'
+import { perform } from 'fx'
 import {
   Character,
   CharaterSearchTerm,
