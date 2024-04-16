@@ -1,4 +1,4 @@
-import { Effector, fx, perform } from 'fx'
+import { Effector, fx } from 'fx'
 
 describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic-effects-for-the-rest-of-us/>', () => {
   type UserName = string
@@ -45,7 +45,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
   describe('What Does This Have to Do With Algebraic Effects?', () => {
     test('performing effect', async () => {
       function* getName(user: User) {
-        return user.name !== null ? user.name : yield* perform(askName())
+        return user.name !== null ? user.name : yield* askName()
       }
 
       function* makeFriends(user1: User, user2: User) {
@@ -73,7 +73,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
   describe('A Function Has No Color', () => {
     test('performing asynchronous effect', async () => {
       function* getName(user: User) {
-        return user.name !== null ? user.name : yield* perform(askName())
+        return user.name !== null ? user.name : yield* askName()
       }
 
       function* makeFriends(user1: User, user2: User) {
@@ -95,7 +95,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
               tagAskName,
               () =>
                 new Promise((resolve) =>
-                  setTimeout(() => resolve('Arya Stark'), 1000),
+                  setTimeout(() => resolve('Arya Stark')),
                 ),
             ),
         ),
@@ -111,16 +111,16 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
       function* enumerateFiles(
         dir: DirName,
       ): Effector<OpenDirectory | Log | HandleFile, void> {
-        const contents = yield* perform(openDirectory(dir))
-        yield* perform(log(`Enumerating files in ${dir}`))
+        const contents = yield* openDirectory(dir)
+        yield* log(`Enumerating files in ${dir}`)
         for (const file of contents.files) {
-          yield* perform(handleFile(file))
+          yield* handleFile(file)
         }
-        yield* perform(log(`Enumerating subdirectories in ${dir}`))
+        yield* log(`Enumerating subdirectories in ${dir}`)
         for (const directory of contents.dirs) {
           yield* enumerateFiles(directory)
         }
-        yield* perform(log('Done'))
+        yield* log('Done')
       }
 
       const _log: string[] = []
@@ -172,16 +172,16 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
       function* enumerateFiles(
         dir: DirName,
       ): Effector<OpenDirectory | Log | HandleFile, void> {
-        const contents = yield* perform(openDirectory(dir))
-        yield* perform(log(`Enumerating files in ${dir}`))
+        const contents = yield* openDirectory(dir)
+        yield* log(`Enumerating files in ${dir}`)
         for (const file of contents.files) {
-          yield* perform(handleFile(file))
+          yield* handleFile(file)
         }
-        yield* perform(log(`Enumerating subdirectories in ${dir}`))
+        yield* log(`Enumerating subdirectories in ${dir}`)
         for (const directory of contents.dirs) {
           yield* enumerateFiles(directory)
         }
-        yield* perform(log('Done'))
+        yield* log('Done')
       }
 
       const _log: string[] = []
@@ -206,7 +206,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
             _log.push(message)
           })
           .with(tagHandleFile, function* (fileName) {
-            yield* perform(log(`Handling ${fileName}`))
+            yield* log(`Handling ${fileName}`)
             files.push(fileName)
           }),
       )

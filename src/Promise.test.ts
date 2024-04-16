@@ -1,6 +1,5 @@
-import * as _E from './Effect'
 import * as E from './Effector'
-import { Layer } from './Layer'
+import * as L from './Layer'
 import * as P from './Promise'
 import * as T from './Tag'
 
@@ -10,8 +9,8 @@ describe('Promise', () => {
   }
 
   const tag = T.tag<Sleep>()
-  const sleep = _E.function(tag)
-  const layer = Layer.empty().with(
+  const sleep = E.function(tag)
+  const layer = L.layer().with(
     tag,
     (ds) =>
       new Promise((resolve, reject) =>
@@ -23,13 +22,9 @@ describe('Promise', () => {
     [[0, 2], true, [0, 2]],
     [[1, 2], false, 1],
   ])('all', async (input, success, output) => {
-    await expect(
-      E.run(function* () {
-        return yield* P.all(input, function* (a) {
-          return yield* _E.perform(sleep(a))
-        })
-      }, layer),
-    )[success ? 'resolves' : 'rejects'].toStrictEqual(output)
+    await expect(E.run(P.all(input, sleep), layer))[
+      success ? 'resolves' : 'rejects'
+    ].toStrictEqual(output)
   })
 
   test.each([
@@ -50,13 +45,9 @@ describe('Promise', () => {
       ],
     ],
   ])('allSettled', async (input, success, output) => {
-    await expect(
-      E.run(function* () {
-        return yield* P.allSettled(input, function* (a) {
-          return yield* _E.perform(sleep(a))
-        })
-      }, layer),
-    )[success ? 'resolves' : 'rejects'].toStrictEqual(output)
+    await expect(E.run(P.allSettled(input, sleep), layer))[
+      success ? 'resolves' : 'rejects'
+    ].toStrictEqual(output)
   })
 
   test.each([
@@ -64,11 +55,7 @@ describe('Promise', () => {
     [[1, 2], true, 2],
     [[1, 3], false, undefined],
   ])('any', async (input, success, output) => {
-    function* f() {
-      return yield* P.any(input, function* (a) {
-        return yield* _E.perform(sleep(a))
-      })
-    }
+    const f = P.any(input, sleep)
 
     await (success
       ? expect(E.run(f, layer)).resolves.toStrictEqual(output)
@@ -80,12 +67,8 @@ describe('Promise', () => {
     [[1, 2], false, 1],
     [[0, 1], true, 0],
   ])('race', async (input, success, output) => {
-    await expect(
-      E.run(function* () {
-        return yield* P.race(input, function* (a) {
-          return yield* _E.perform(sleep(a))
-        })
-      }, layer),
-    )[success ? 'resolves' : 'rejects'].toStrictEqual(output)
+    await expect(E.run(P.race(input, sleep), layer))[
+      success ? 'resolves' : 'rejects'
+    ].toStrictEqual(output)
   })
 })

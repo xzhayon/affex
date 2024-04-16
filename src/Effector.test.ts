@@ -1,7 +1,6 @@
-import * as _E from './Effect'
 import * as E from './Effector'
 import * as G from './Generator'
-import { Layer } from './Layer'
+import * as L from './Layer'
 import * as T from './Tag'
 
 describe('Effector', () => {
@@ -13,7 +12,7 @@ describe('Effector', () => {
           yield 1337
 
           return 42 + 1337
-        }, Layer.empty()),
+        }, L.layer()),
       ).resolves.toStrictEqual(42 + 1337)
     })
 
@@ -25,13 +24,9 @@ describe('Effector', () => {
         }
 
         const tag = T.tag<Add>(description)
-        const effect = _E.function(tag)
+        const add = E.function(tag)
 
-        await expect(
-          E.run(function* () {
-            return yield* _E.perform(effect(42, 1337))
-          }, Layer.empty() as any),
-        ).rejects.toThrow(
+        await expect(E.run(add(42, 1337), L.layer() as any)).rejects.toThrow(
           `Cannot find handler for effect${
             description ? ` "${description}"` : ''
           }`,
@@ -54,12 +49,10 @@ describe('Effector', () => {
       }
 
       const tag = T.tag<Add>()
-      const effect = _E.function(tag)
+      const add = E.function(tag)
 
       await expect(
-        E.run(function* () {
-          return yield* _E.perform(effect(42, 1337))
-        }, Layer.empty().with(tag, handler)),
+        E.run(add(42, 1337), L.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42 + 1337)
     })
 
@@ -78,12 +71,10 @@ describe('Effector', () => {
       }
 
       const tag = T.tag<Identity>()
-      const effect = <A>(a: A) => _E.functionA(tag)((f) => f(a))
+      const identity = <A>(a: A) => E.functionA(tag)((r) => r(a))
 
       await expect(
-        E.run(function* () {
-          return yield* _E.perform(effect(42))
-        }, Layer.empty().with(tag, handler)),
+        E.run(identity(42), L.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42)
     })
 
@@ -106,12 +97,10 @@ describe('Effector', () => {
       }
 
       const tag = T.tag<Calculator>()
-      const effect = _E.struct(tag)('add')
+      const calculator = E.struct(tag)('add')
 
       await expect(
-        E.run(function* () {
-          return yield* _E.perform(effect.add(42, 1337))
-        }, Layer.empty().with(tag, handler)),
+        E.run(calculator.add(42, 1337), L.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42 + 1337)
     })
 
@@ -134,13 +123,11 @@ describe('Effector', () => {
       }
 
       const tag = T.tag<Log>()
-      const { trace } = _E.structA(tag)('trace')
-      const effect = { trace: <A>(a: A) => trace((f) => f(a)) }
+      const { trace } = E.structA(tag)('trace')
+      const log = { trace: <A>(a: A) => trace((r) => r(a)) }
 
       await expect(
-        E.run(function* () {
-          return yield* _E.perform(effect.trace(42))
-        }, Layer.empty().with(tag, handler)),
+        E.run(log.trace(42), L.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42)
     })
 
@@ -154,22 +141,20 @@ describe('Effector', () => {
       }
 
       const tagLog = T.tag<Log>()
-      const log = _E.struct(tagLog)('trace')
+      const log = E.struct(tagLog)('trace')
 
       const tagClock = T.tag<Clock>()
-      const clock = _E.struct(tagClock)('now')
+      const clock = E.struct(tagClock)('now')
 
       const date = new Date()
 
       await expect(
         E.run(
-          function* () {
-            return yield* _E.perform(log.trace('foo'))
-          },
-          Layer.empty()
+          log.trace('foo'),
+          L.layer()
             .with(tagLog, {
               *trace(message) {
-                return `${yield* _E.perform(clock.now())}\t${message}`
+                return `${yield* clock.now()}\t${message}`
               },
             })
             .with(tagClock, { now: () => date }),
@@ -195,16 +180,16 @@ describe('Effector', () => {
       }
 
       const tagCrypto = T.tag<Crypto>()
-      const crypto = _E.struct(tagCrypto)('number')
+      const crypto = E.struct(tagCrypto)('number')
 
       const tagCache = T.tag<Cache>()
-      const { get } = _E.structA(tagCache)('get')
+      const { get } = E.structA(tagCache)('get')
       const cache = {
         get: <A, G extends Generator<unknown, A>>(
           key: string,
           decoder: Decoder<A>,
           onMiss: () => G,
-        ) => get((f) => f(key, decoder, onMiss)),
+        ) => get((r) => r(key, decoder, onMiss)),
       }
 
       const numberDecoder = (u: unknown) => {
@@ -217,20 +202,10 @@ describe('Effector', () => {
 
       await expect(
         E.run(
-          function* () {
-            return yield* _E.perform(
-              cache.get('foo', numberDecoder, function* () {
-                return yield* _E.perform(crypto.number())
-              }),
-            )
-          },
-          Layer.empty()
+          cache.get('foo', numberDecoder, crypto.number),
+          L.layer()
             .with(tagCrypto, { number: () => 42 })
-            .with(tagCache, {
-              *get(_key, _decoder, onMiss) {
-                return yield* onMiss()
-              },
-            }),
+            .with(tagCache, { get: (_key, _decoder, onMiss) => onMiss() }),
         ),
       ).resolves.toStrictEqual(42)
     })
