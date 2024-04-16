@@ -92,15 +92,7 @@ describe('Fork', () => {
       await expect(
         E.run(
           F.fork<Get42 | Get1337>()(
-            async (run) =>
-              [
-                await run(function* () {
-                  return yield* get42()
-                }),
-                await run(function* () {
-                  return yield* get1337()
-                }),
-              ] as const,
+            async (run) => [await run(get42), await run(get1337)] as const,
           ),
           L.layer()
             .with(tag42, () => 42)

@@ -1,5 +1,5 @@
-import { Handler } from '../../../../../src/Handler'
-import { Log, Severity } from '../../application/log/Log'
+import { fx } from 'fx'
+import { Severity, tag } from '../../application/log/Log'
 
 function _log(
   severity: Severity,
@@ -14,14 +14,14 @@ function _log(
   }
 }
 
-export function inMemoryLog(
+export function InMemoryLog(
   log: Array<{
     readonly severity: Severity
     readonly message: string
     readonly context?: Readonly<Record<string, unknown>>
   }> = [],
 ) {
-  return {
+  return fx.layer().with(tag, {
     debug: _log('debug', log),
     info: _log('info', log),
     notice: _log('notice', log),
@@ -30,5 +30,5 @@ export function inMemoryLog(
     critical: _log('critical', log),
     alert: _log('alert', log),
     emergency: _log('emergency', log),
-  } satisfies Handler<Log>
+  })
 }

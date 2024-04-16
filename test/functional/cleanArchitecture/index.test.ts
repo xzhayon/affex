@@ -1,21 +1,15 @@
 import { fx } from 'fx'
-import * as Log from './application/log/Log'
-import * as CharacterRepository from './application/persistence/CharacterRepository'
-import * as StarshipRepository from './application/persistence/StarshipRepository'
-import * as GetCharacterByNameQuery from './application/query/GetCharacterByNameQuery'
-import * as GetStarshipByNameQuery from './application/query/GetStarshipByNameQuery'
 import { flyStarship } from './application/useCase/FlyStarshipUseCase'
-import * as Id from './domain/valueObject/Id'
-import { inMemoryLog } from './infrastructure/log/InMemoryLog'
-import { inMemoryCharacterRepository } from './infrastructure/persistence/InMemoryCharacterRepository'
-import { inMemoryStarshipRepository } from './infrastructure/persistence/InMemoryStarshipRepository'
-import * as MockCharacterRepository from './infrastructure/persistence/MockCharacterRepository'
-import * as MockStarshipRepository from './infrastructure/persistence/MockStarshipRepository'
-import { getCharacterByNameFromMemory } from './infrastructure/query/InMemoryGetCharacterByNameQuery'
-import { getStarshipByNameFromMemory } from './infrastructure/query/InMemoryGetStarshipByNameQuery'
-import { getMockCharacterByName } from './infrastructure/query/MockGetCharacterByNameQuery'
-import { getMockStarshipByName } from './infrastructure/query/MockGetStarshipByNameQuery'
-import * as CryptoUuid from './infrastructure/valueObject/CryptoUuid'
+import { InMemoryLog } from './infrastructure/log/InMemoryLog'
+import { InMemoryCharacterRepository } from './infrastructure/persistence/InMemoryCharacterRepository'
+import { InMemoryStarshipRepository } from './infrastructure/persistence/InMemoryStarshipRepository'
+import { MockCharacterRepository } from './infrastructure/persistence/MockCharacterRepository'
+import { MockStarshipRepository } from './infrastructure/persistence/MockStarshipRepository'
+import { InMemoryGetCharacterByNameQuery } from './infrastructure/query/InMemoryGetCharacterByNameQuery'
+import { InMemoryGetStarshipByNameQuery } from './infrastructure/query/InMemoryGetStarshipByNameQuery'
+import { MockGetCharacterByNameQuery } from './infrastructure/query/MockGetCharacterByNameQuery'
+import { MockGetStarshipByNameQuery } from './infrastructure/query/MockGetStarshipByNameQuery'
+import { CryptoUuid } from './infrastructure/valueObject/CryptoUuid'
 
 describe('Clean architecture', () => {
   let log: any[] = []
@@ -28,18 +22,15 @@ describe('Clean architecture', () => {
     starshipStorage = {}
   })
 
-  const layer = fx
-    .layer()
-    .with(Id, CryptoUuid.random)
-    .with(Log, inMemoryLog(log))
+  const layer = fx.layer().with(CryptoUuid()).with(InMemoryLog(log))
 
   test('running use case with mocks', async () => {
     const mockLayer = fx
       .layer()
-      .with(CharacterRepository, MockCharacterRepository)
-      .with(GetCharacterByNameQuery, getMockCharacterByName)
-      .with(GetStarshipByNameQuery, getMockStarshipByName)
-      .with(StarshipRepository, MockStarshipRepository)
+      .with(MockCharacterRepository())
+      .with(MockGetCharacterByNameQuery())
+      .with(MockGetStarshipByNameQuery())
+      .with(MockStarshipRepository())
 
     await expect(
       fx.run(flyStarship('luke', 'x-wing'), layer.with(mockLayer)),
@@ -49,10 +40,9 @@ describe('Clean architecture', () => {
   test('running use case with in-memory storage', async () => {
     const inMemoryLayer = fx
       .layer()
-      .with(CharacterRepository, inMemoryCharacterRepository(characterStorage))
+      .with(InMemoryCharacterRepository(characterStorage))
       .with(
-        GetCharacterByNameQuery,
-        getCharacterByNameFromMemory([
+        InMemoryGetCharacterByNameQuery([
           {
             name: 'Luke Skywalker',
             starshipUrls: [
@@ -64,12 +54,11 @@ describe('Clean architecture', () => {
         ]),
       )
       .with(
-        GetStarshipByNameQuery,
-        getStarshipByNameFromMemory([
+        InMemoryGetStarshipByNameQuery([
           { name: 'X-wing', url: 'https://swapi.dev/api/starships/12/' },
         ]),
       )
-      .with(StarshipRepository, inMemoryStarshipRepository(starshipStorage))
+      .with(InMemoryStarshipRepository(starshipStorage))
 
     await expect(
       fx.run(flyStarship('luke', 'x-wing'), layer.with(inMemoryLayer)),

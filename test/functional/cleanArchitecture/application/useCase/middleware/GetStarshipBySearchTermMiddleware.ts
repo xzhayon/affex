@@ -1,7 +1,7 @@
 import { Starship, StarshipSearchTerm } from '../../../domain/entity/Starship'
 import { cacheStarshipSearchTerm } from '../../command/CacheStarshipSearchTermCommand'
 import { createStarship } from '../../command/CreateStarshipCommand'
-import * as StarshipRepository from '../../persistence/StarshipRepository'
+import { StarshipRepository } from '../../persistence/StarshipRepository'
 import { getStarshipByName } from '../../query/GetStarshipByNameQuery'
 
 export function* getStarshipBySearchTerm(

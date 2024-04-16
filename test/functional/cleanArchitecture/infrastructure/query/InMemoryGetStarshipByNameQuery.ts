@@ -1,11 +1,11 @@
-import { Handler } from '../../../../../src/Handler'
+import { fx } from 'fx'
 import { StarshipDto } from '../../application/dto/StarshipDto'
-import { GetStarshipByNameQuery } from '../../application/query/GetStarshipByNameQuery'
+import { tag } from '../../application/query/GetStarshipByNameQuery'
 
-export const getStarshipByNameFromMemory = (
+export function InMemoryGetStarshipByNameQuery(
   storage: ReadonlyArray<StarshipDto> = [],
-) =>
-  function* (name) {
+) {
+  return fx.layer().with(tag, function* (name) {
     const starship = storage.find((starship) =>
       new RegExp(name, 'i').test(starship.name),
     )
@@ -14,4 +14,5 @@ export const getStarshipByNameFromMemory = (
     }
 
     return starship
-  } satisfies Handler<GetStarshipByNameQuery>
+  })
+}

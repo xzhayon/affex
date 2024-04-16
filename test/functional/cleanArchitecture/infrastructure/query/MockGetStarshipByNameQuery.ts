@@ -1,7 +1,9 @@
-import { Handler } from 'fx'
-import { GetStarshipByNameQuery } from '../../application/query/GetStarshipByNameQuery'
-import * as Id from '../../domain/valueObject/Id'
+import { fx } from 'fx'
+import { tag } from '../../application/query/GetStarshipByNameQuery'
+import { id } from '../../domain/valueObject/Id'
 
-export const getMockStarshipByName = function* (name) {
-  return { name, url: yield* Id.random() }
-} satisfies Handler<GetStarshipByNameQuery>
+export function MockGetStarshipByNameQuery() {
+  return fx.layer().with(tag, function* (name) {
+    return { name, url: yield* id() }
+  })
+}

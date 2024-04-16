@@ -1,5 +1,7 @@
 import crypto from 'crypto'
-import { Handler } from 'fx'
-import { RandomId } from '../../domain/valueObject/Id'
+import { fx } from 'fx'
+import { tag } from '../../domain/valueObject/Id'
 
-export const random = crypto.randomUUID satisfies Handler<RandomId>
+export function CryptoUuid() {
+  return fx.layer().with(tag, crypto.randomUUID)
+}

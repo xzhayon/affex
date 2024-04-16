@@ -2,8 +2,8 @@ import * as E from './Effector'
 import * as F from './Function'
 import * as G from './Generator'
 import { Generated } from './Generator'
-import { Handler } from './Handler'
 import { Has } from './Has'
+import * as L from './Layer'
 import * as S from './Struct'
 import * as T from './Tag'
 import { URI } from './Type'
@@ -60,25 +60,30 @@ export function fork<R = never>() {
   ) => E.functionA(tag)((r) => r<R>()(f))
 }
 
-export const forkWithContext = function (this: {
-  run: <G extends Generator | AsyncGenerator>(
-    effector: G | (() => G),
-  ) => Promise<Generated<Awaited<G.ROf<G>>>>
-}) {
-  const context = this
-  if (!S.is(context) || !S.has(context, 'run') || !F.is(context.run)) {
-    throw new Error(
-      `Cannot access context from "${tag.key.description}" handler`,
-    )
-  }
-
-  return <
-    F extends (
+export function ContextAwareFork() {
+  return L.layer().with(
+    tag,
+    function (this: {
       run: <G extends Generator | AsyncGenerator>(
         effector: G | (() => G),
-      ) => Promise<Generated<Awaited<G.ROf<G>>>>,
-    ) => any,
-  >(
-    f: F,
-  ) => f(context.run)
-} satisfies Handler<Fork>
+      ) => Promise<Generated<Awaited<G.ROf<G>>>>
+    }) {
+      const context = this
+      if (!S.is(context) || !S.has(context, 'run') || !F.is(context.run)) {
+        throw new Error(
+          `Cannot access context from "${tag.key.description}" handler`,
+        )
+      }
+
+      return <
+        F extends (
+          run: <G extends Generator | AsyncGenerator>(
+            effector: G | (() => G),
+          ) => Promise<Generated<Awaited<G.ROf<G>>>>,
+        ) => any,
+      >(
+        f: F,
+      ) => f(context.run)
+    },
+  )
+}

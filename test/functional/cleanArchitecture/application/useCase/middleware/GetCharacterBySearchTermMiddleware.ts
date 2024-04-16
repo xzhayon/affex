@@ -4,8 +4,8 @@ import { Starship } from '../../../domain/entity/Starship'
 import { cacheCharacterSearchTerm } from '../../command/CacheCharacterSearchTermCommand'
 import { createCharacter } from '../../command/CreateCharacterCommand'
 import { createStarship } from '../../command/CreateStarshipCommand'
-import * as CharacterRepository from '../../persistence/CharacterRepository'
-import * as StarshipRepository from '../../persistence/StarshipRepository'
+import { CharacterRepository } from '../../persistence/CharacterRepository'
+import { StarshipRepository } from '../../persistence/StarshipRepository'
 import { getCharacterByName } from '../../query/GetCharacterByNameQuery'
 
 export function* getCharacterBySearchTerm(

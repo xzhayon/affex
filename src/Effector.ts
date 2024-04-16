@@ -138,6 +138,6 @@ export async function run<G extends Generator | AsyncGenerator>(
 ): Promise<G.ROf<G>> {
   return _run(
     I.is(effector) ? effector : effector(),
-    L.layer().with(F.tag, F.forkWithContext).with(layer),
+    L.layer().with(F.ContextAwareFork()).with(layer),
   )
 }

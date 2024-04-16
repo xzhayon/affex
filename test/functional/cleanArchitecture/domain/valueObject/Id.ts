@@ -1,4 +1,4 @@
-import * as fx from 'fx'
+import { fx } from 'fx'
 
 export type Id = string
 
@@ -8,4 +8,4 @@ export interface RandomId {
 }
 
 export const tag = fx.tag<RandomId>()
-export const random = fx.function(tag)
+export const id = fx.function(tag)

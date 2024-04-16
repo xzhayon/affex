@@ -1,7 +1,7 @@
 import { CharaterSearchTerm } from '../../domain/entity/Character'
 import { StarshipSearchTerm } from '../../domain/entity/Starship'
 import { flyStarship as _flyStarship } from '../command/FlyStarshipCommand'
-import * as CharacterRepository from '../persistence/CharacterRepository'
+import { CharacterRepository } from '../persistence/CharacterRepository'
 import { getCharacterBySearchTerm } from './middleware/GetCharacterBySearchTermMiddleware'
 import { getStarshipBySearchTerm } from './middleware/GetStarshipBySearchTermMiddleware'
 

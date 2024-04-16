@@ -1,11 +1,11 @@
-import { Handler } from '../../../../../src/Handler'
+import { fx } from 'fx'
 import { CharacterDto } from '../../application/dto/CharacterDto'
-import { GetCharacterByNameQuery } from '../../application/query/GetCharacterByNameQuery'
+import { tag } from '../../application/query/GetCharacterByNameQuery'
 
-export const getCharacterByNameFromMemory = (
+export function InMemoryGetCharacterByNameQuery(
   storage: ReadonlyArray<CharacterDto> = [],
-) =>
-  function* (name) {
+) {
+  return fx.layer().with(tag, function* (name) {
     const character = storage.find((character) =>
       new RegExp(name, 'i').test(character.name),
     )
@@ -14,4 +14,5 @@ export const getCharacterByNameFromMemory = (
     }
 
     return character
-  } satisfies Handler<GetCharacterByNameQuery>
+  })
+}

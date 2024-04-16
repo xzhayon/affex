@@ -1,6 +1,6 @@
-import { Handler } from '../../../../../src/Handler'
-import { debug } from '../../application/log/Log'
-import { CharacterRepository } from '../../application/persistence/CharacterRepository'
+import { fx } from 'fx'
+import { Log } from '../../application/log/Log'
+import { tag } from '../../application/persistence/CharacterRepository'
 import {
   Character,
   CharaterExternalId,
@@ -14,23 +14,23 @@ interface CharacterStorage {
   bySearchTerm?: Record<CharaterSearchTerm, Character | undefined>
 }
 
-export function inMemoryCharacterRepository(storage: CharacterStorage = {}) {
-  return {
+export function InMemoryCharacterRepository(storage: CharacterStorage = {}) {
+  return fx.layer().with(tag, {
     *findOneById(id) {
       const character = storage.byId?.[id]
       character === undefined
-        ? yield* debug('Character not found', { characterId: id })
-        : yield* debug('Character found', { characterId: character._id })
+        ? yield* Log.debug('Character not found', { characterId: id })
+        : yield* Log.debug('Character found', { characterId: character._id })
 
       return character
     },
     *findOneByExternalId(externalId) {
       const character = storage.byExternalId?.[externalId]
       character === undefined
-        ? yield* debug('Character not found', {
+        ? yield* Log.debug('Character not found', {
             characterExternalId: externalId,
           })
-        : yield* debug('Character found', {
+        : yield* Log.debug('Character found', {
             characterId: character._id,
             characterExternalId: character.externalId,
           })
@@ -40,10 +40,10 @@ export function inMemoryCharacterRepository(storage: CharacterStorage = {}) {
     *findOneBySearchTerm(searchTerm) {
       const character = storage.bySearchTerm?.[searchTerm]
       character === undefined
-        ? yield* debug('Character not found', {
+        ? yield* Log.debug('Character not found', {
             characterSearchTerm: searchTerm,
           })
-        : yield* debug('Character found', {
+        : yield* Log.debug('Character found', {
             characterId: character._id,
             characterSearchTerm: searchTerm,
           })
@@ -66,7 +66,7 @@ export function inMemoryCharacterRepository(storage: CharacterStorage = {}) {
           {},
         ),
       }
-      yield* debug('Character upserted', { characterId: character._id })
+      yield* Log.debug('Character upserted', { characterId: character._id })
     },
-  } satisfies Handler<CharacterRepository>
+  })
 }

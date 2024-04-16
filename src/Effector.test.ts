@@ -71,7 +71,7 @@ describe('Effector', () => {
       }
 
       const tag = T.tag<Identity>()
-      const identity = <A>(a: A) => E.functionA(tag)((f) => f(a))
+      const identity = <A>(a: A) => E.functionA(tag)((r) => r(a))
 
       await expect(
         E.run(identity(42), L.layer().with(tag, handler)),
@@ -124,7 +124,7 @@ describe('Effector', () => {
 
       const tag = T.tag<Log>()
       const { trace } = E.structA(tag)('trace')
-      const log = { trace: <A>(a: A) => trace((f) => f(a)) }
+      const log = { trace: <A>(a: A) => trace((r) => r(a)) }
 
       await expect(
         E.run(log.trace(42), L.layer().with(tag, handler)),
@@ -189,7 +189,7 @@ describe('Effector', () => {
           key: string,
           decoder: Decoder<A>,
           onMiss: () => G,
-        ) => get((f) => f(key, decoder, onMiss)),
+        ) => get((r) => r(key, decoder, onMiss)),
       }
 
       const numberDecoder = (u: unknown) => {
@@ -205,11 +205,7 @@ describe('Effector', () => {
           cache.get('foo', numberDecoder, crypto.number),
           L.layer()
             .with(tagCrypto, { number: () => 42 })
-            .with(tagCache, {
-              *get(_key, _decoder, onMiss) {
-                return yield* onMiss()
-              },
-            }),
+            .with(tagCache, { get: (_key, _decoder, onMiss) => onMiss() }),
         ),
       ).resolves.toStrictEqual(42)
     })

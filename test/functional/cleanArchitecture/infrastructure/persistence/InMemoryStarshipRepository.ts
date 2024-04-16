@@ -1,6 +1,6 @@
-import { Handler } from '../../../../../src/Handler'
-import { debug } from '../../application/log/Log'
-import { StarshipRepository } from '../../application/persistence/StarshipRepository'
+import { fx } from 'fx'
+import { Log } from '../../application/log/Log'
+import { tag } from '../../application/persistence/StarshipRepository'
 import {
   CharaterExternalId,
   CharaterSearchTerm,
@@ -14,15 +14,17 @@ interface StarshipStorage {
   bySearchTerm?: Record<CharaterSearchTerm, Starship | undefined>
 }
 
-export function inMemoryStarshipRepository(storage: StarshipStorage = {}) {
-  return {
+export function InMemoryStarshipRepository(storage: StarshipStorage = {}) {
+  return fx.layer().with(tag, {
     *findManyById(ids) {
       const starships = ids
         .map((id) => storage.byId?.[id])
         .filter((starship): starship is Starship => starship !== undefined)
       starships.length === 0
-        ? yield* debug('Starships not found', { starshipIdCount: ids.length })
-        : yield* debug('Starships found', {
+        ? yield* Log.debug('Starships not found', {
+            starshipIdCount: ids.length,
+          })
+        : yield* Log.debug('Starships found', {
             starshipCount: starships.length,
             starshipIdCount: ids.length,
           })
@@ -32,16 +34,18 @@ export function inMemoryStarshipRepository(storage: StarshipStorage = {}) {
     *findOneById(id) {
       const starship = storage.byId?.[id]
       starship === undefined
-        ? yield* debug('Starship not found', { starshipId: id })
-        : yield* debug('Starship found', { starshipId: starship._id })
+        ? yield* Log.debug('Starship not found', { starshipId: id })
+        : yield* Log.debug('Starship found', { starshipId: starship._id })
 
       return starship
     },
     *findOneByExternalId(externalId) {
       const starship = storage.byExternalId?.[externalId]
       starship === undefined
-        ? yield* debug('Starship not found', { starshipExternalId: externalId })
-        : yield* debug('Starship found', {
+        ? yield* Log.debug('Starship not found', {
+            starshipExternalId: externalId,
+          })
+        : yield* Log.debug('Starship found', {
             starshipId: starship._id,
             starshipExternalId: starship.externalId,
           })
@@ -51,8 +55,10 @@ export function inMemoryStarshipRepository(storage: StarshipStorage = {}) {
     *findOneBySearchTerm(searchTerm) {
       const starship = storage.bySearchTerm?.[searchTerm]
       starship === undefined
-        ? yield* debug('Starship not found', { starshipSearchTerm: searchTerm })
-        : yield* debug('Starship found', {
+        ? yield* Log.debug('Starship not found', {
+            starshipSearchTerm: searchTerm,
+          })
+        : yield* Log.debug('Starship found', {
             starshipId: starship._id,
             starshipSearchTerm: searchTerm,
           })
@@ -77,7 +83,9 @@ export function inMemoryStarshipRepository(storage: StarshipStorage = {}) {
           ),
         }
       })
-      yield* debug('Starships upserted', { starshipCount: starships.length })
+      yield* Log.debug('Starships upserted', {
+        starshipCount: starships.length,
+      })
     },
     *upsertOne(starship) {
       storage.byId = { ...storage.byId, [starship._id]: starship }
@@ -95,7 +103,7 @@ export function inMemoryStarshipRepository(storage: StarshipStorage = {}) {
           {},
         ),
       }
-      yield* debug('Starship upserted', { starshipId: starship._id })
+      yield* Log.debug('Starship upserted', { starshipId: starship._id })
     },
-  } satisfies Handler<StarshipRepository>
+  })
 }
