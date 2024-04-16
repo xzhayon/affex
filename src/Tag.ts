@@ -1,5 +1,4 @@
-import * as String from './String'
-import * as Struct from './Struct'
+import * as S from './String'
 import { URI } from './Type'
 
 declare const R: unique symbol
@@ -14,12 +13,6 @@ export function tag<R>(description?: string): Tag<R>
 export function tag<R>(keyOrDescription: symbol | string = Symbol()): Tag<R> {
   return {
     [URI]: 'Tag',
-    key: String.is(keyOrDescription)
-      ? Symbol(keyOrDescription)
-      : keyOrDescription,
+    key: S.is(keyOrDescription) ? Symbol(keyOrDescription) : keyOrDescription,
   }
-}
-
-export function is(u: unknown): u is Tag<unknown> {
-  return Struct.is(u) && Struct.has(u, URI) && u[URI] === 'Tag'
 }
