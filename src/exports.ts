@@ -1,7 +1,6 @@
 export { Effector, function, functionA, run, struct, structA } from './Effector'
 export { fork } from './Fork'
 export { YOf, traverse } from './Generator'
-export { Handler } from './Handler'
 export { layer } from './Layer'
 export { all, allSettled, any, race } from './Promise'
 export { tag } from './Tag'
