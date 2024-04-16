@@ -1,4 +1,4 @@
-import { fx, perform } from 'fx'
+import { fx } from 'fx'
 import { Character, CharaterSearchTerm } from '../../../domain/entity/Character'
 import { Starship } from '../../../domain/entity/Starship'
 import { cacheCharacterSearchTerm } from '../../command/CacheCharacterSearchTermCommand'
@@ -15,15 +15,15 @@ export function* getCharacterBySearchTerm(
 ) {
   let character =
     characters.find(({ searchTerms }) => searchTerms.includes(characterName)) ??
-    (yield* perform(CharacterRepository.findOneBySearchTerm(characterName)))
+    (yield* CharacterRepository.findOneBySearchTerm(characterName))
   if (character !== undefined) {
     return { character, starships: [] }
   }
 
-  let characterDto = yield* perform(getCharacterByName(characterName))
+  let characterDto = yield* getCharacterByName(characterName)
   character =
     characters.find(({ externalId }) => externalId === characterDto.url) ??
-    (yield* perform(CharacterRepository.findOneByExternalId(characterDto.url)))
+    (yield* CharacterRepository.findOneByExternalId(characterDto.url))
 
   let newStarships: ReadonlyArray<Starship> = []
   if (character === undefined) {
@@ -32,9 +32,7 @@ export function* getCharacterBySearchTerm(
       function* (starshipUrl) {
         return (
           starships.find(({ externalId }) => externalId === starshipUrl) ??
-          (yield* perform(
-            StarshipRepository.findOneByExternalId(starshipUrl),
-          )) ??
+          (yield* StarshipRepository.findOneByExternalId(starshipUrl)) ??
           (yield* createStarship(starshipUrl))
         )
       },
@@ -43,19 +41,17 @@ export function* getCharacterBySearchTerm(
   }
 
   const newCharacter = yield* cacheCharacterSearchTerm(character, characterName)
-  yield* perform(CharacterRepository.upsertOne(newCharacter))
-  yield* perform(StarshipRepository.upsertMany(newStarships))
-  const _character = yield* perform(
-    CharacterRepository.findOneById(newCharacter._id),
-  )
+  yield* CharacterRepository.upsertOne(newCharacter)
+  yield* StarshipRepository.upsertMany(newStarships)
+  const _character = yield* CharacterRepository.findOneById(newCharacter._id)
   if (_character === undefined) {
     throw new Error(`Cannot find character "${newCharacter._id}"`)
   }
 
   return {
     character: _character,
-    starships: yield* perform(
-      StarshipRepository.findManyById(newStarships.map(({ _id }) => _id)),
+    starships: yield* StarshipRepository.findManyById(
+      newStarships.map(({ _id }) => _id),
     ),
   }
 }

@@ -1,4 +1,3 @@
-import { perform } from 'fx'
 import * as Id from '../valueObject/Id'
 
 export interface Entity {
@@ -8,5 +7,5 @@ export interface Entity {
 export type IdOf<A extends Entity> = A['_id']
 
 export function* entity() {
-  return { _id: yield* perform(Id.random()) }
+  return { _id: yield* Id.random() }
 }

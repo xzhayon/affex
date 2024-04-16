@@ -1,4 +1,3 @@
-import { perform } from 'fx'
 import { CharaterSearchTerm } from '../../domain/entity/Character'
 import { StarshipSearchTerm } from '../../domain/entity/Starship'
 import { flyStarship as _flyStarship } from '../command/FlyStarshipCommand'
@@ -18,7 +17,7 @@ export function* flyStarship(
     character,
     starship,
   )
-  yield* perform(CharacterRepository.upsertOne(_character))
+  yield* CharacterRepository.upsertOne(_character)
 
   return { character: _character, starship: _starship }
 }

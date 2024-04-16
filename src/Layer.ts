@@ -82,3 +82,7 @@ export class Layer<R, A> {
     return this.handlers[key] as any
   }
 }
+
+export function layer() {
+  return Layer.empty()
+}

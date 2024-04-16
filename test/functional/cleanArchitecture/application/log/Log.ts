@@ -1,4 +1,4 @@
-import * as fx from 'fx'
+import { fx } from 'fx'
 
 export type Severity =
   | 'debug'

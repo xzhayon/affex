@@ -6,7 +6,7 @@ describe('Generator', () => {
       const generator = G.traverse([42, 1337], function* (n) {
         yield n * 2
       })
-      const bs: Array<number> = []
+      const bs: number[] = []
       for (const b of generator) {
         bs.push(b)
       }

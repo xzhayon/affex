@@ -1,5 +1,5 @@
 import { Handler } from '../../../../../src/Handler'
-import { Log, Severity } from '../../kernel/Log'
+import { Log, Severity } from '../../application/log/Log'
 
 function _log(
   severity: Severity,

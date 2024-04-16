@@ -1,4 +1,4 @@
-import * as E from './Effect'
+import * as E from './Effector'
 import * as F from './Function'
 import * as G from './Generator'
 import { Generated } from './Generator'
@@ -65,8 +65,8 @@ export const forkWithContext = function (this: {
     effector: G | (() => G),
   ) => Promise<Generated<Awaited<G.ROf<G>>>>
 }) {
-  const ctx = this
-  if (!S.is(ctx) || !S.has(ctx, 'run') || !F.is(ctx.run)) {
+  const context = this
+  if (!S.is(context) || !S.has(context, 'run') || !F.is(context.run)) {
     throw new Error(
       `Cannot access context from "${tag.key.description}" handler`,
     )
@@ -80,5 +80,5 @@ export const forkWithContext = function (this: {
     ) => any,
   >(
     f: F,
-  ) => f(ctx.run)
+  ) => f(context.run)
 } satisfies Handler<Fork>
