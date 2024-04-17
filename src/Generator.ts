@@ -16,14 +16,20 @@ export type NOf<G extends Generator | AsyncGenerator> = G extends
 
 export type Generated<A> = A extends Generator | AsyncGenerator ? ROf<A> : A
 
-export function* traverse<A, G extends Generator>(
-  as: ReadonlyArray<A>,
-  f: (a: A) => G,
+export function* sequence<G extends Generator>(
+  gs: ReadonlyArray<G>,
 ): Generator<YOf<G>, ROf<G>[], NOf<G>> {
-  const bs = []
-  for (const a of as) {
-    bs.push(yield* f(a) as any)
+  const as = []
+  for (const g of gs) {
+    as.push(yield* g as any)
   }
 
-  return bs
+  return as
+}
+
+export function traverse<A, G extends Generator>(
+  as: ReadonlyArray<A>,
+  f: (a: A) => G,
+) {
+  return sequence(as.map(f))
 }
