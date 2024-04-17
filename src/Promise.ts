@@ -3,38 +3,34 @@ import * as F from './Fork'
 import * as G from './Generator'
 import { Has } from './Has'
 
-export function all<A, G extends Generator<any> | AsyncGenerator<any>>(
-  as: ReadonlyArray<A>,
-  f: (a: A) => G,
+export function all<G extends Generator<any> | AsyncGenerator<any>>(
+  gs: ReadonlyArray<G>,
 ) {
   return F.fork<
     G.YOf<G> extends infer Y ? (Y extends Has<any> ? E.ROf<Y> : never) : never
-  >()((run) => Promise.all(as.map((a) => run(f(a)))))
+  >()((run) => Promise.all(gs.map(run)))
 }
 
-export function allSettled<A, G extends Generator<any> | AsyncGenerator<any>>(
-  as: ReadonlyArray<A>,
-  f: (a: A) => G,
+export function allSettled<G extends Generator<any> | AsyncGenerator<any>>(
+  gs: ReadonlyArray<G>,
 ) {
   return F.fork<
     G.YOf<G> extends infer Y ? (Y extends Has<any> ? E.ROf<Y> : never) : never
-  >()((run) => Promise.allSettled(as.map((a) => run(f(a)))))
+  >()((run) => Promise.allSettled(gs.map(run)))
 }
 
-export function any<A, G extends Generator<any> | AsyncGenerator<any>>(
-  as: ReadonlyArray<A>,
-  f: (a: A) => G,
+export function any<G extends Generator<any> | AsyncGenerator<any>>(
+  gs: ReadonlyArray<G>,
 ) {
   return F.fork<
     G.YOf<G> extends infer Y ? (Y extends Has<any> ? E.ROf<Y> : never) : never
-  >()((run) => Promise.any(as.map((a) => run(f(a)))))
+  >()((run) => Promise.any(gs.map(run)))
 }
 
-export function race<A, G extends Generator<any> | AsyncGenerator<any>>(
-  as: ReadonlyArray<A>,
-  f: (a: A) => G,
+export function race<G extends Generator<any> | AsyncGenerator<any>>(
+  gs: ReadonlyArray<G>,
 ) {
   return F.fork<
     G.YOf<G> extends infer Y ? (Y extends Has<any> ? E.ROf<Y> : never) : never
-  >()((run) => Promise.race(as.map((a) => run(f(a)))))
+  >()((run) => Promise.race(gs.map(run)))
 }

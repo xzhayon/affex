@@ -22,7 +22,7 @@ describe('Promise', () => {
     [[0, 2], true, [0, 2]],
     [[1, 2], false, 1],
   ])('all', async (input, success, output) => {
-    await expect(E.run(P.all(input, sleep), layer))[
+    await expect(E.run(P.all(input.map(sleep)), layer))[
       success ? 'resolves' : 'rejects'
     ].toStrictEqual(output)
   })
@@ -45,7 +45,7 @@ describe('Promise', () => {
       ],
     ],
   ])('allSettled', async (input, success, output) => {
-    await expect(E.run(P.allSettled(input, sleep), layer))[
+    await expect(E.run(P.allSettled(input.map(sleep)), layer))[
       success ? 'resolves' : 'rejects'
     ].toStrictEqual(output)
   })
@@ -55,7 +55,7 @@ describe('Promise', () => {
     [[1, 2], true, 2],
     [[1, 3], false, undefined],
   ])('any', async (input, success, output) => {
-    const f = P.any(input, sleep)
+    const f = P.any(input.map(sleep))
 
     await (success
       ? expect(E.run(f, layer)).resolves.toStrictEqual(output)
@@ -67,7 +67,7 @@ describe('Promise', () => {
     [[1, 2], false, 1],
     [[0, 1], true, 0],
   ])('race', async (input, success, output) => {
-    await expect(E.run(P.race(input, sleep), layer))[
+    await expect(E.run(P.race(input.map(sleep)), layer))[
       success ? 'resolves' : 'rejects'
     ].toStrictEqual(output)
   })

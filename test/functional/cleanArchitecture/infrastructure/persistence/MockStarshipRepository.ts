@@ -6,9 +6,11 @@ import { id } from '../../domain/valueObject/Id'
 export function MockStarshipRepository() {
   return fx.layer().with(tag, {
     *findManyById(ids) {
-      return yield* fx.all(ids, function* (_id) {
-        return { _id, externalId: yield* id(), searchTerms: [] }
-      })
+      return yield* fx.all(
+        ids.map(function* (_id) {
+          return { _id, externalId: yield* id(), searchTerms: [] }
+        }),
+      )
     },
     *findOneById(_id) {
       return { _id, externalId: yield* id(), searchTerms: [] }
