@@ -28,14 +28,13 @@ export function* getCharacterBySearchTerm(
   let newStarships: ReadonlyArray<Starship> = []
   if (character === undefined) {
     newStarships = yield* fx.all(
-      characterDto.starshipUrls,
-      function* (starshipUrl) {
+      characterDto.starshipUrls.map(function* (url) {
         return (
-          starships.find(({ externalId }) => externalId === starshipUrl) ??
-          (yield* StarshipRepository.findOneByExternalId(starshipUrl)) ??
-          (yield* createStarship(starshipUrl))
+          starships.find(({ externalId }) => externalId === url) ??
+          (yield* StarshipRepository.findOneByExternalId(url)) ??
+          (yield* createStarship(url))
         )
-      },
+      }),
     )
     character = yield* createCharacter(characterDto.url, newStarships)
   }
