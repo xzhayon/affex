@@ -1,3 +1,4 @@
+import { fx } from 'fx'
 import { Starship, StarshipSearchTerm } from '../../../domain/entity/Starship'
 import { cacheStarshipSearchTerm } from '../../command/CacheStarshipSearchTermCommand'
 import { createStarship } from '../../command/CreateStarshipCommand'
@@ -25,7 +26,9 @@ export function* getStarshipBySearchTerm(
   yield* StarshipRepository.upsertOne(newStarship)
   const _starship = yield* StarshipRepository.findOneById(newStarship._id)
   if (_starship === undefined) {
-    throw new Error(`Cannot find starship "${newStarship._id}"`)
+    return yield* fx.raise(
+      new Error(`Cannot find starship "${newStarship._id}"`),
+    )
   }
 
   return _starship

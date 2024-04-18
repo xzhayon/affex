@@ -4,7 +4,7 @@ import { StarshipDto } from '../dto/StarshipDto'
 
 export interface GetStarshipByNameQuery {
   readonly [fx.URI]?: unique symbol
-  (name: StarshipSearchTerm): StarshipDto
+  (name: StarshipSearchTerm): StarshipDto | Error
 }
 
 export const tag = fx.tag<GetStarshipByNameQuery>()

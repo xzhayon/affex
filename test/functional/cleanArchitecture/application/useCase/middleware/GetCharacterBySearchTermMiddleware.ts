@@ -44,7 +44,9 @@ export function* getCharacterBySearchTerm(
   yield* StarshipRepository.upsertMany(newStarships)
   const _character = yield* CharacterRepository.findOneById(newCharacter._id)
   if (_character === undefined) {
-    throw new Error(`Cannot find character "${newCharacter._id}"`)
+    return yield* fx.raise(
+      new Error(`Cannot find character "${newCharacter._id}"`),
+    )
   }
 
   return {

@@ -1,11 +1,12 @@
+import { Equal } from '@type-challenges/utils'
 import * as E from './Effect'
-import { Effect } from './Effect'
-import * as F from './Fork'
+import { Effect, Use } from './Effect'
+import { Throw } from './Error'
 import { Fork } from './Fork'
+import * as F from './Function'
 import { Function } from './Function'
 import * as G from './Generator'
 import { Generated } from './Generator'
-import { Has } from './Has'
 import * as I from './Iterator'
 import * as L from './Layer'
 import { Layer } from './Layer'
@@ -13,12 +14,16 @@ import { NonEmptyArray } from './NonEmptyArray'
 import { Struct } from './Struct'
 import { Tag } from './Tag'
 
-export type Effector<R, A> = Generator<R extends any ? Has<R> : never, A, any>
-
-export type AsyncEffector<R, A> = AsyncGenerator<
-  R extends any ? Has<R> : never,
+export type Effector<R, A, E = never> = Generator<
+  R extends any ? Use<R> : never,
   A,
-  any
+  Equal<E, never> extends true ? unknown : Throw<E>
+>
+
+export type AsyncEffector<R, A, E = never> = AsyncGenerator<
+  R extends any ? Use<R> : never,
+  A,
+  Equal<E, never> extends true ? unknown : Throw<E>
 >
 
 export function functionA<R extends Function>(tag: Tag<R>) {
@@ -50,11 +55,18 @@ export function structA<R extends Struct>(tag: Tag<R>) {
       ) => Effector<
         | R
         | (A extends Generator | AsyncGenerator
-            ? G.YOf<A> extends infer E extends Has<any>
-              ? E.ROf<E>
+            ? G.YOf<A> extends Use<infer E>
+              ? E
               : never
             : never),
-        Generated<Awaited<A>>
+        Exclude<Generated<Awaited<A>>, Error>,
+        A extends Generator | AsyncGenerator
+          ? G.NOf<A> extends Throw<infer E>
+            ? E
+            : never
+          : A extends Error
+          ? A
+          : never
       >
     }
 }
@@ -79,11 +91,18 @@ export function struct<R extends Struct>(tag: Tag<R>) {
           ) => Effector<
             | R
             | (ReturnType<R[_K]> extends Generator | AsyncGenerator
-                ? G.YOf<ReturnType<R[_K]>> extends infer E extends Has<any>
-                  ? E.ROf<E>
+                ? G.YOf<ReturnType<R[_K]>> extends Use<infer E>
+                  ? E
                   : never
                 : never),
-            Generated<Awaited<ReturnType<R[_K]>>>
+            Generated<Awaited<ReturnType<R[_K]>>>,
+            ReturnType<R[_K]> extends Generator | AsyncGenerator
+              ? G.NOf<ReturnType<R[_K]>> extends Throw<infer E>
+                ? E
+                : never
+              : ReturnType<R[_K]> extends infer E extends Error
+              ? E
+              : never
           >
         : never
     }
@@ -101,7 +120,7 @@ async function _run(
       continue
     }
 
-    const { tag, f }: Effect<any, any> = next.value
+    const { tag, f }: Effect<any, any, any> = next.value
     const handler: any = layer.handler(tag)
     if (handler === undefined) {
       throw new Error(
@@ -111,19 +130,29 @@ async function _run(
       )
     }
 
-    const a = await (tag.key === F.tag.key
-      ? f(
-          handler.bind({
-            run: (
-              effector:
-                | Generator
-                | AsyncGenerator
-                | (() => Generator | AsyncGenerator),
-            ) => run(effector, layer),
-          }),
-        )
-      : f(handler))
-    next = await iterator.next(I.is(a) ? await _run(a, layer) : a)
+    try {
+      const a = await f(
+        F.is(handler)
+          ? handler.bind({
+              run: (
+                effector:
+                  | Generator
+                  | AsyncGenerator
+                  | (() => Generator | AsyncGenerator),
+              ) => run(effector, layer),
+            })
+          : handler,
+      )
+      next = await iterator.next(I.is(a) ? await _run(a, layer) : a)
+    } catch (error) {
+      if (iterator.throw === undefined) {
+        throw error
+      }
+
+      next = await iterator.throw(
+        I.is(error) ? await _run(error, layer) : error,
+      )
+    }
   }
 
   return next.value
@@ -133,11 +162,8 @@ export async function run<G extends Generator | AsyncGenerator>(
   effector: G | (() => G),
   layer: Layer<
     never,
-    Exclude<G.YOf<G> extends infer E extends Has<any> ? E.ROf<E> : never, Fork>
+    Exclude<G.YOf<G> extends infer E extends Use<any> ? E.ROf<E> : never, Fork>
   >,
 ): Promise<G.ROf<G>> {
-  return _run(
-    I.is(effector) ? effector : effector(),
-    L.layer().with(F.ContextAwareFork()).with(layer),
-  )
+  return _run(I.is(effector) ? effector : effector(), L.default().with(layer))
 }

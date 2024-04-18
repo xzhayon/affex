@@ -1,3 +1,4 @@
+import { fx } from 'fx'
 import { Entity, IdOf, entity } from './Entity'
 import { Starship } from './Starship'
 
@@ -22,10 +23,12 @@ export function* character(
   } satisfies Character
 }
 
-export function flyStarship(character: Character, starship: Starship) {
+export function* flyStarship(character: Character, starship: Starship) {
   if (!character.starshipIds.includes(starship._id)) {
-    throw new Error(
-      `Character "${character._id}" cannot fly starship "${starship._id}"`,
+    return yield* fx.raise(
+      new Error(
+        `Character "${character._id}" cannot fly starship "${starship._id}"`,
+      ),
     )
   }
 

@@ -1,8 +1,11 @@
-import * as E from './Effect'
+import * as Ef from './Effect'
+import { Use } from './Effect'
+import * as Er from './Error'
+import { Raise } from './Error'
+import * as F from './Fork'
 import { Fork } from './Fork'
 import { Function } from './Function'
 import { Handler } from './Handler'
-import { Has } from './Has'
 import { Struct } from './Struct'
 import { Tag } from './Tag'
 
@@ -27,36 +30,36 @@ export class Layer<R, A> {
       | Exclude<R, _R>
       | (H extends Function
           ? ReturnType<H> extends
-              | Generator<infer E extends Has<any>>
-              | AsyncGenerator<infer E extends Has<any>>
-            ? Exclude<E.ROf<E>, A>
+              | Generator<infer E extends Use<any>>
+              | AsyncGenerator<infer E extends Use<any>>
+            ? Exclude<Ef.ROf<E>, A>
             : never
           : H extends Struct
           ? {
               [K in keyof H]: H[K] extends Function
                 ? ReturnType<H[K]> extends
-                    | Generator<infer E extends Has<any>>
-                    | AsyncGenerator<infer E extends Has<any>>
-                  ? Exclude<E.ROf<E>, A>
+                    | Generator<infer E extends Use<any>>
+                    | AsyncGenerator<infer E extends Use<any>>
+                  ? Exclude<Ef.ROf<E>, A>
                   : never
                 : H[K] extends
-                    | Generator<infer E extends Has<any>>
-                    | AsyncGenerator<infer E extends Has<any>>
-                ? Exclude<E.ROf<E>, A>
+                    | Generator<infer E extends Use<any>>
+                    | AsyncGenerator<infer E extends Use<any>>
+                ? Exclude<Ef.ROf<E>, A>
                 : never
             }[keyof H]
           : H extends
-              | Generator<infer E extends Has<any>>
-              | AsyncGenerator<infer E extends Has<any>>
-          ? Exclude<E.ROf<E>, A>
+              | Generator<infer E extends Use<any>>
+              | AsyncGenerator<infer E extends Use<any>>
+          ? Exclude<Ef.ROf<E>, A>
           : never),
-      Fork
+      Fork | Raise<any>
     >,
     _R | A
   >
   with<_R, _A>(
     layer: Layer<_R, _A>,
-  ): Layer<Exclude<_R | R, _A | A | Fork>, _A | A>
+  ): Layer<Exclude<_R | R, _A | A | Fork | Raise<any>>, _A | A>
   with(tagOrLayer: Tag<unknown> | Layer<any, any>, handler?: any) {
     this.handlers = {
       ...this.handlers,
@@ -80,3 +83,8 @@ export class Layer<R, A> {
 export function layer() {
   return Layer.empty()
 }
+
+function _default() {
+  return layer().with(Er.ExceptionRaise()).with(F.ContextAwareFork())
+}
+export { _default as default }
