@@ -1,20 +1,28 @@
 import { Effector } from './Effector'
+import { Throw } from './Error'
 import * as G from './Generator'
 import { Generated } from './Generator'
-import { Has } from './Has'
 import * as S from './Struct'
 import { Tag } from './Tag'
 import { URI } from './Type'
 
-export interface Effect<R, A> {
+declare const E: unique symbol
+export interface Effect<R, A, E> {
   readonly [URI]: 'Effect'
+  readonly [E]?: E
   readonly tag: Tag<R>
   readonly f: (r: R) => A
 }
 
-export type ROf<E extends Effect<any, any>> = E extends Effect<infer R, any>
+export type ROf<E extends Effect<any, any, any>> = E extends Effect<
+  infer R,
+  any,
+  any
+>
   ? R
   : never
+
+export type Use<R> = Effect<R, any, any>
 
 export function effect<R, A>(
   tag: Tag<R>,
@@ -22,19 +30,26 @@ export function effect<R, A>(
 ): Effect<
   | R
   | (A extends Generator | AsyncGenerator
-      ? G.YOf<A> extends infer E extends Has<any>
+      ? G.YOf<A> extends infer E extends Use<any>
         ? ROf<E>
         : never
       : never),
-  Generated<Awaited<A>>
+  Exclude<Generated<Awaited<A>>, Error>,
+  A extends Generator | AsyncGenerator
+    ? G.NOf<A> extends Throw<infer E>
+      ? E
+      : never
+    : A extends infer E extends Error
+    ? E
+    : never
 > {
   return { [URI]: 'Effect', tag, f: f as any }
 }
 
-export function is(u: unknown): u is Effect<unknown, unknown> {
+export function is(u: unknown): u is Effect<unknown, unknown, unknown> {
   return S.is(u) && S.has(u, URI) && u[URI] === 'Effect'
 }
 
-export function* perform<R, A>(effect: Effect<R, A>): Effector<R, A> {
-  return yield effect as R extends any ? Effect<R, A> : never
+export function* perform<R, A, E>(effect: Effect<R, A, E>): Effector<R, A, E> {
+  return (yield effect as any) as any
 }

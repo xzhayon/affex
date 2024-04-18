@@ -10,7 +10,9 @@ export function InMemoryGetStarshipByNameQuery(
       new RegExp(name, 'i').test(starship.name),
     )
     if (starship === undefined) {
-      throw new Error(`Cannot find any starship with name "${name}"`)
+      return yield* fx.raise(
+        new Error(`Cannot find any starship with name "${name}"`),
+      )
     }
 
     return starship

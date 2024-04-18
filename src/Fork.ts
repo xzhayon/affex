@@ -1,8 +1,8 @@
+import { Use } from './Effect'
 import * as E from './Effector'
 import * as F from './Function'
 import * as G from './Generator'
 import { Generated } from './Generator'
-import { Has } from './Has'
 import * as L from './Layer'
 import * as S from './Struct'
 import * as T from './Tag'
@@ -15,10 +15,10 @@ export interface Fork {
       run: <
         G extends
           | Generator<
-              R extends infer _R ? (_R extends never ? never : Has<_R>) : never
+              R extends infer _R ? (_R extends never ? never : Use<_R>) : never
             >
           | AsyncGenerator<
-              R extends infer _R ? (_R extends never ? never : Has<_R>) : never
+              R extends infer _R ? (_R extends never ? never : Use<_R>) : never
             >,
       >(
         effector: G | (() => G),
@@ -28,12 +28,12 @@ export interface Fork {
     f: F,
   ) => ReturnType<F> extends infer G extends Generator | AsyncGenerator
     ? Generator<
-        | (R extends infer _R ? (_R extends never ? never : Has<_R>) : never)
+        | (R extends infer _R ? (_R extends never ? never : Use<_R>) : never)
         | G.YOf<G>,
         Generated<Awaited<G.ROf<G>>>
       >
     : Generator<
-        R extends infer _R ? (_R extends never ? never : Has<_R>) : never,
+        R extends infer _R ? (_R extends never ? never : Use<_R>) : never,
         Generated<Awaited<ReturnType<F>>>
       >
 }
@@ -46,10 +46,10 @@ export function fork<R = never>() {
       run: <
         G extends
           | Generator<
-              R extends infer _R ? (_R extends never ? never : Has<_R>) : never
+              R extends infer _R ? (_R extends never ? never : Use<_R>) : never
             >
           | AsyncGenerator<
-              R extends infer _R ? (_R extends never ? never : Has<_R>) : never
+              R extends infer _R ? (_R extends never ? never : Use<_R>) : never
             >,
       >(
         effector: G | (() => G),

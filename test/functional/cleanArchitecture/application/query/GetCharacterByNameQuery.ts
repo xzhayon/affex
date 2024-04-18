@@ -4,7 +4,7 @@ import { CharacterDto } from '../dto/CharacterDto'
 
 export interface GetCharacterByNameQuery {
   readonly [fx.URI]?: unique symbol
-  (name: CharaterSearchTerm): CharacterDto
+  (name: CharaterSearchTerm): CharacterDto | Error
 }
 
 export const tag = fx.tag<GetCharacterByNameQuery>()

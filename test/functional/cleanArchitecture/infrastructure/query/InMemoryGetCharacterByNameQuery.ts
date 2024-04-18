@@ -10,7 +10,9 @@ export function InMemoryGetCharacterByNameQuery(
       new RegExp(name, 'i').test(character.name),
     )
     if (character === undefined) {
-      throw new Error(`Cannot find any character with name "${name}"`)
+      return yield* fx.raise(
+        new Error(`Cannot find any character with name "${name}"`),
+      )
     }
 
     return character
