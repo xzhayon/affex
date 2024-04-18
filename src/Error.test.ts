@@ -45,7 +45,7 @@ describe('Error', () => {
   })
 
   describe('raise', () => {
-    test('raising error from ', async () => {
+    test('raising error not defined in interface', async () => {
       interface Random {
         readonly [URI]?: unique symbol
         (): number
