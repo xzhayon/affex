@@ -2,6 +2,7 @@ import * as E from './Effector'
 import * as Fi from './Fiber'
 import * as Fo from './Fork'
 import * as L from './Layer'
+import * as R from './Raise'
 import * as T from './Tag'
 
 describe('Fork', () => {
@@ -25,6 +26,33 @@ describe('Fork', () => {
       ).resolves.toStrictEqual([42, 1337])
     })
 
+    test('raising unexpected error', async () => {
+      await expect(
+        Fi.run(
+          Fo.fork()((run) =>
+            // @ts-expect-error
+            run(function* () {
+              return yield* R.raise(new Error('foo'))
+            }),
+          ),
+          L.layer(),
+        ),
+      ).rejects.toThrow('foo')
+    })
+
+    test('raising error', async () => {
+      await expect(
+        Fi.run(
+          Fo.fork<never, Error>()((run) =>
+            run(function* () {
+              return yield* R.raise(new Error('foo'))
+            }),
+          ),
+          L.layer(),
+        ),
+      ).rejects.toThrow('foo')
+    })
+
     test('forking generator function', async () => {
       await expect(
         Fi.run(
@@ -41,6 +69,15 @@ describe('Fork', () => {
           L.layer(),
         ),
       ).resolves.toStrictEqual([42, 1337])
+    })
+
+    test('raising error from generator function', async () => {
+      await expect(
+        Fi.run(
+          Fo.fork()(() => R.raise(new Error('foo'))),
+          L.layer(),
+        ),
+      ).rejects.toThrow('foo')
     })
 
     test('forking function with effects', async () => {

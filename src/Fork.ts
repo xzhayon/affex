@@ -1,6 +1,10 @@
 import { Equal } from '@type-challenges/utils'
+import * as X from './Effect'
 import { Use } from './Effect'
-import * as E from './Effector'
+import * as Ef from './Effector'
+import { Effector } from './Effector'
+import * as Er from './Error'
+import { NullError, Throw } from './Error'
 import * as F from './Function'
 import * as G from './Generator'
 import { Generated } from './Generator'
@@ -11,7 +15,7 @@ import { URI } from './Type'
 
 export interface Fork {
   readonly [URI]?: unique symbol
-  <R = never>(): <
+  <R = never, E = never>(): <
     F extends (
       run: <
         G extends
@@ -20,14 +24,18 @@ export interface Fork {
                 ? Equal<R, never> extends true
                   ? never
                   : Use<R>
-                : never
+                : never,
+              any,
+              Equal<E, never> extends true ? Throw<NullError> : Throw<E>
             >
           | AsyncGenerator<
               R extends any
                 ? Equal<R, never> extends true
                   ? never
                   : Use<R>
-                : never
+                : never,
+              any,
+              Equal<E, never> extends true ? Throw<NullError> : Throw<E>
             >,
       >(
         effector: G | (() => G),
@@ -43,17 +51,19 @@ export interface Fork {
               : Use<R>
             : never)
         | G.YOf<G>,
-        Generated<Awaited<G.ROf<G>>>
+        Generated<Awaited<G.ROf<G>>>,
+        (Equal<E, never> extends true ? Throw<NullError> : Throw<E>) | G.NOf<G>
       >
     : Generator<
         R extends any ? (Equal<R, never> extends true ? never : Use<R>) : never,
-        Generated<Awaited<ReturnType<F>>>
+        Generated<Awaited<ReturnType<F>>>,
+        Equal<E, never> extends true ? Throw<NullError> : Throw<E>
       >
 }
 
 export const tag = T.tag<Fork>('Fork')
 
-export function fork<R = never>() {
+export function fork<R = never, E = never>() {
   return <
     F extends (
       run: <
@@ -63,14 +73,18 @@ export function fork<R = never>() {
                 ? Equal<R, never> extends true
                   ? never
                   : Use<R>
-                : never
+                : never,
+              any,
+              Equal<E, never> extends true ? Throw<NullError> : Throw<E>
             >
           | AsyncGenerator<
               R extends any
                 ? Equal<R, never> extends true
                   ? never
                   : Use<R>
-                : never
+                : never,
+              any,
+              Equal<E, never> extends true ? Throw<NullError> : Throw<E>
             >,
       >(
         effector: G | (() => G),
@@ -78,7 +92,14 @@ export function fork<R = never>() {
     ) => any,
   >(
     f: F,
-  ) => E.functionA(tag)((r) => r<R>()(f))
+  ): ReturnType<F> extends infer G extends Generator | AsyncGenerator
+    ? Effector<
+        R | G.YOf<G> extends infer U extends Use<any> ? X.ROf<U> : never,
+        Generated<Awaited<G.ROf<G>>>,
+        E | (G.NOf<G> extends infer T extends Throw<any> ? Er.EOf<T> : never)
+      >
+    : Effector<R, Generated<Awaited<ReturnType<F>>>, E> =>
+    Ef.functionA(tag)((r) => r<R>()(f as any)) as any
 }
 
 export function ContextAwareFork() {
