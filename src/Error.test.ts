@@ -1,5 +1,6 @@
 import * as Ef from './Effector'
 import * as Er from './Error'
+import * as F from './Fiber'
 import * as L from './Layer'
 import * as T from './Tag'
 import { URI } from './Type'
@@ -15,7 +16,7 @@ describe('Error', () => {
 
   test('throwing error from normal function', async () => {
     await expect(
-      Ef.run(
+      F.run(
         divide(42, 0),
         L.layer().with(tag, (a, b) => {
           if (b === 0) {
@@ -30,7 +31,7 @@ describe('Error', () => {
 
   test('throwing error from generator function', async () => {
     await expect(
-      Ef.run(
+      F.run(
         divide(42, 0),
         L.layer().with(tag, function* (a, b) {
           if (b === 0) {
@@ -54,7 +55,7 @@ describe('Error', () => {
       const random = Ef.function(tagRandom)
 
       await expect(
-        Ef.run(
+        F.run(
           random,
           // @ts-expect-error
           L.layer().with(tagRandom, function* () {
@@ -66,7 +67,7 @@ describe('Error', () => {
 
     test('raising error', async () => {
       await expect(
-        Ef.run(
+        F.run(
           divide(42, 0),
           L.layer().with(tag, function* (a, b) {
             if (b === 0) {
@@ -83,7 +84,7 @@ describe('Error', () => {
       class FooError extends Error {}
 
       await expect(
-        Ef.run(
+        F.run(
           divide(42, 0),
           L.layer().with(tag, function* (a, b) {
             if (b === 0) {
@@ -102,7 +103,7 @@ describe('Error', () => {
       }
 
       await expect(
-        Ef.run(
+        F.run(
           divide(42, 0),
           // @ts-expect-error
           L.layer().with(tag, function* (a, b) {
@@ -126,7 +127,7 @@ describe('Error', () => {
       const random = Ef.function(tagRandom)
 
       await expect(
-        Ef.run(
+        F.run(
           divide(42, 0),
           L.layer()
             .with(tag, function* (_a, b) {
@@ -153,7 +154,7 @@ describe('Error', () => {
 
     test('forwarding error', async () => {
       await expect(
-        Ef.run(
+        F.run(
           Er.tryCatch(divide(42, 0), function* (error) {
             throw error
           }),
@@ -164,7 +165,7 @@ describe('Error', () => {
 
     test('throwing new error', async () => {
       await expect(
-        Ef.run(
+        F.run(
           Er.tryCatch(divide(42, 0), function* () {
             throw new Error('Cannot recover from exception')
           }),
@@ -175,7 +176,7 @@ describe('Error', () => {
 
     test('raising new error', async () => {
       await expect(
-        Ef.run(
+        F.run(
           Er.tryCatch(divide(42, 0), function* () {
             return yield* Er.raise(new Error('Cannot recover from exception'))
           }),
@@ -186,7 +187,7 @@ describe('Error', () => {
 
     test('returning value', async () => {
       await expect(
-        Ef.run(
+        F.run(
           Er.tryCatch(divide(42, 0), function* () {
             return NaN
           }),
@@ -208,7 +209,7 @@ describe('Error', () => {
         return yield* random()
       })
       await expect(
-        Ef.run(
+        F.run(
           newLocal,
           layer.with(tagRandom, () => 42),
         ),
