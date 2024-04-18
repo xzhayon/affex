@@ -3,22 +3,22 @@ import { Function } from './Function'
 import { Generated } from './Generator'
 import { Struct } from './Struct'
 
-type ConstantHandler<R> =
-  | Exclude<R, Error>
-  | Promise<Exclude<R, Error>>
+type ReturnTypeHandler<A> =
+  | Exclude<A, Error>
+  | Promise<Exclude<A, Error>>
   | Generator<
       any,
-      Exclude<R, Error>,
-      R extends infer E extends Error ? Throw<E> : Throw<NullError>
+      Exclude<A, Error>,
+      A extends Error ? Throw<A> : Throw<NullError>
     >
   | AsyncGenerator<
       any,
-      Exclude<R, Error>,
-      R extends infer E extends Error ? Throw<E> : Throw<NullError>
+      Exclude<A, Error>,
+      A extends Error ? Throw<A> : Throw<NullError>
     >
 type FunctionHandler<R extends Function> = (
   ...args: Parameters<R>
-) => ConstantHandler<Generated<Awaited<ReturnType<R>>>>
+) => ReturnTypeHandler<Generated<Awaited<ReturnType<R>>>>
 type StructHandler<R extends Struct> = {
   [K in keyof R as R[K] extends Function ? K : never]: R[K] extends Function
     ? FunctionHandler<R[K]>
