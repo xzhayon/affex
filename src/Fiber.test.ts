@@ -1,13 +1,14 @@
 import * as E from './Effector'
+import * as F from './Fiber'
 import * as G from './Generator'
 import * as L from './Layer'
 import * as T from './Tag'
 
-describe('Effector', () => {
+describe('Fiber', () => {
   describe('run', () => {
     test('running effector with no effects', async () => {
       await expect(
-        E.run(function* () {
+        F.run(function* () {
           yield 42
           yield 1337
 
@@ -26,7 +27,7 @@ describe('Effector', () => {
         const tag = T.tag<Add>(description)
         const add = E.function(tag)
 
-        await expect(E.run(add(42, 1337), L.layer() as any)).rejects.toThrow(
+        await expect(F.run(add(42, 1337), L.layer() as any)).rejects.toThrow(
           `Cannot find handler for effect${
             description ? ` "${description}"` : ''
           }`,
@@ -52,7 +53,7 @@ describe('Effector', () => {
       const add = E.function(tag)
 
       await expect(
-        E.run(add(42, 1337), L.layer().with(tag, handler)),
+        F.run(add(42, 1337), L.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42 + 1337)
     })
 
@@ -74,7 +75,7 @@ describe('Effector', () => {
       const identity = <A>(a: A) => E.functionA(tag)((r) => r(a))
 
       await expect(
-        E.run(identity(42), L.layer().with(tag, handler)),
+        F.run(identity(42), L.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42)
     })
 
@@ -100,7 +101,7 @@ describe('Effector', () => {
       const calculator = E.struct(tag)('add')
 
       await expect(
-        E.run(calculator.add(42, 1337), L.layer().with(tag, handler)),
+        F.run(calculator.add(42, 1337), L.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42 + 1337)
     })
 
@@ -127,7 +128,7 @@ describe('Effector', () => {
       const log = { trace: <A>(a: A) => trace((r) => r(a)) }
 
       await expect(
-        E.run(log.trace(42), L.layer().with(tag, handler)),
+        F.run(log.trace(42), L.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42)
     })
 
@@ -149,7 +150,7 @@ describe('Effector', () => {
       const date = new Date()
 
       await expect(
-        E.run(
+        F.run(
           log.trace('foo'),
           L.layer()
             .with(tagLog, {
@@ -201,7 +202,7 @@ describe('Effector', () => {
       }
 
       await expect(
-        E.run(
+        F.run(
           cache.get('foo', numberDecoder, crypto.number),
           L.layer()
             .with(tagCrypto, { number: () => 42 })

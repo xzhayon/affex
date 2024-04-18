@@ -1,4 +1,5 @@
 import * as E from './Effector'
+import * as Fi from './Fiber'
 import * as L from './Layer'
 import * as P from './Promise'
 import * as T from './Tag'
@@ -22,7 +23,7 @@ describe('Promise', () => {
     [[0, 2], true, [0, 2]],
     [[1, 2], false, 1],
   ])('all', async (input, success, output) => {
-    await expect(E.run(P.all(input.map(sleep)), layer))[
+    await expect(Fi.run(P.all(input.map(sleep)), layer))[
       success ? 'resolves' : 'rejects'
     ].toStrictEqual(output)
   })
@@ -45,7 +46,7 @@ describe('Promise', () => {
       ],
     ],
   ])('allSettled', async (input, success, output) => {
-    await expect(E.run(P.allSettled(input.map(sleep)), layer))[
+    await expect(Fi.run(P.allSettled(input.map(sleep)), layer))[
       success ? 'resolves' : 'rejects'
     ].toStrictEqual(output)
   })
@@ -58,8 +59,8 @@ describe('Promise', () => {
     const f = P.any(input.map(sleep))
 
     await (success
-      ? expect(E.run(f, layer)).resolves.toStrictEqual(output)
-      : expect(E.run(f, layer)).rejects.toThrow())
+      ? expect(Fi.run(f, layer)).resolves.toStrictEqual(output)
+      : expect(Fi.run(f, layer)).rejects.toThrow())
   })
 
   test.each([
@@ -67,7 +68,7 @@ describe('Promise', () => {
     [[1, 2], false, 1],
     [[0, 1], true, 0],
   ])('race', async (input, success, output) => {
-    await expect(E.run(P.race(input.map(sleep)), layer))[
+    await expect(Fi.run(P.race(input.map(sleep)), layer))[
       success ? 'resolves' : 'rejects'
     ].toStrictEqual(output)
   })

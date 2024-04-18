@@ -1,5 +1,6 @@
 import * as E from './Effector'
-import * as F from './Fork'
+import * as Fi from './Fiber'
+import * as Fo from './Fork'
 import * as L from './Layer'
 import * as T from './Tag'
 
@@ -7,8 +8,8 @@ describe('Fork', () => {
   describe('fork', () => {
     test('forking normal function', async () => {
       await expect(
-        E.run(
-          F.fork()(
+        Fi.run(
+          Fo.fork()(
             async (run) =>
               [
                 await run(function* () {
@@ -26,8 +27,8 @@ describe('Fork', () => {
 
     test('forking generator function', async () => {
       await expect(
-        E.run(
-          F.fork()(async function* (run) {
+        Fi.run(
+          Fo.fork()(async function* (run) {
             return [
               await run(function* () {
                 return 42
@@ -58,8 +59,8 @@ describe('Fork', () => {
       const get1337 = E.function(tag1337)
 
       await expect(
-        E.run(
-          F.fork()(function* (run) {
+        Fi.run(
+          Fo.fork()(function* (run) {
             const a = yield* get42()
             const b = yield* get1337()
 
@@ -90,8 +91,8 @@ describe('Fork', () => {
       const get1337 = E.function(tag1337)
 
       await expect(
-        E.run(
-          F.fork<Get42 | Get1337>()(
+        Fi.run(
+          Fo.fork<Get42 | Get1337>()(
             async (run) => [await run(get42), await run(get1337)] as const,
           ),
           L.layer()

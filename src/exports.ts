@@ -1,5 +1,6 @@
-export { Effector, function, functionA, run, struct, structA } from './Effector'
+export { Effector, function, functionA, struct, structA } from './Effector'
 export { raise, tryCatch } from './Error'
+export { run } from './Fiber'
 export { fork } from './Fork'
 export { NOf, YOf, sequence, traverse } from './Generator'
 export { layer } from './Layer'
