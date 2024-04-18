@@ -13,6 +13,21 @@ export interface NullError {
 
 export type Throw<E> = (e: E) => E
 
+export type EOf<T extends Throw<any>> = T extends Throw<infer E> ? E : never
+
+export function* tryCatch<A extends Generator, B extends Generator>(
+  effector: A | (() => A),
+  onError: (
+    error: G.NOf<A> extends infer T extends Throw<any> ? EOf<T> : never,
+  ) => B,
+): Generator<G.YOf<A> | G.YOf<B>, G.ROf<A> | G.ROf<B>, G.NOf<B>> {
+  try {
+    return yield* (I.is(effector) ? effector : effector()) as any
+  } catch (error: any) {
+    return yield* onError(error) as any
+  }
+}
+
 export interface Raise<E> {
   (error: E): never
 }
@@ -27,15 +42,4 @@ export function ExceptionRaise(): Layer<never, Raise<any>> {
   return L.layer().with(tag<any>(), (error) => {
     throw error
   }) as any
-}
-
-export function* tryCatch<A extends Generator, B extends Generator>(
-  effector: A | (() => A),
-  onError: (error: G.NOf<A> extends Throw<infer E> ? E : never) => B,
-): Generator<G.YOf<A> | G.YOf<B>, G.ROf<A> | G.ROf<B>, G.NOf<B>> {
-  try {
-    return yield* (I.is(effector) ? effector : effector()) as any
-  } catch (error: any) {
-    return yield* onError(error) as any
-  }
 }

@@ -1,16 +1,16 @@
 import * as S from './String'
 import { URI } from './Type'
 
-declare const R: unique symbol
-export interface Tag<R> {
+declare const A: unique symbol
+export interface Tag<A> {
   readonly [URI]: 'Tag'
-  readonly [R]?: R
+  readonly [A]?: A
   readonly key: symbol
 }
 
-export function tag<R>(key?: symbol): Tag<R>
-export function tag<R>(description?: string): Tag<R>
-export function tag<R>(keyOrDescription: symbol | string = Symbol()): Tag<R> {
+export function tag<A>(key?: symbol): Tag<A>
+export function tag<A>(description?: string): Tag<A>
+export function tag<A>(keyOrDescription: symbol | string = Symbol()): Tag<A> {
   return {
     [URI]: 'Tag',
     key: S.is(keyOrDescription) ? Symbol(keyOrDescription) : keyOrDescription,

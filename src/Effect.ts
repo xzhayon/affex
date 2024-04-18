@@ -1,4 +1,5 @@
 import { Effector } from './Effector'
+import * as Er from './Error'
 import { Throw } from './Error'
 import * as G from './Generator'
 import { Generated } from './Generator'
@@ -14,6 +15,8 @@ export interface Effect<R, A, E> {
   readonly f: (r: R) => A
 }
 
+export type Use<R> = Effect<R, any, any>
+
 export type ROf<E extends Effect<any, any, any>> = E extends Effect<
   infer R,
   any,
@@ -22,25 +25,23 @@ export type ROf<E extends Effect<any, any, any>> = E extends Effect<
   ? R
   : never
 
-export type Use<R> = Effect<R, any, any>
-
 export function effect<R, A>(
   tag: Tag<R>,
   f: (r: R) => A,
 ): Effect<
   | R
   | (A extends Generator | AsyncGenerator
-      ? G.YOf<A> extends infer E extends Use<any>
-        ? ROf<E>
+      ? G.YOf<A> extends infer U extends Use<any>
+        ? ROf<U>
         : never
       : never),
   Exclude<Generated<Awaited<A>>, Error>,
   A extends Generator | AsyncGenerator
-    ? G.NOf<A> extends Throw<infer E>
-      ? E
+    ? G.NOf<A> extends infer T extends Throw<any>
+      ? Er.EOf<T>
       : never
-    : A extends infer E extends Error
-    ? E
+    : A extends Error
+    ? A
     : never
 > {
   return { [URI]: 'Effect', tag, f: f as any }

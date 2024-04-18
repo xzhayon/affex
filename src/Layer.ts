@@ -22,44 +22,36 @@ export class Layer<R, A> {
 
   private constructor() {}
 
-  with<_R, H extends Handler<_R>>(
-    tag: Tag<_R>,
+  with<_A, H extends Handler<_A>>(
+    tag: Tag<_A>,
     handler: H,
   ): Layer<
     Exclude<
-      | Exclude<R, _R>
+      | R
       | (H extends Function
           ? ReturnType<H> extends
-              | Generator<infer E extends Use<any>>
-              | AsyncGenerator<infer E extends Use<any>>
-            ? Exclude<Ef.ROf<E>, A>
+              | Generator<infer U extends Use<any>>
+              | AsyncGenerator<infer U extends Use<any>>
+            ? Ef.ROf<U>
             : never
           : H extends Struct
           ? {
               [K in keyof H]: H[K] extends Function
                 ? ReturnType<H[K]> extends
-                    | Generator<infer E extends Use<any>>
-                    | AsyncGenerator<infer E extends Use<any>>
-                  ? Exclude<Ef.ROf<E>, A>
+                    | Generator<infer U extends Use<any>>
+                    | AsyncGenerator<infer U extends Use<any>>
+                  ? Ef.ROf<U>
                   : never
-                : H[K] extends
-                    | Generator<infer E extends Use<any>>
-                    | AsyncGenerator<infer E extends Use<any>>
-                ? Exclude<Ef.ROf<E>, A>
                 : never
             }[keyof H]
-          : H extends
-              | Generator<infer E extends Use<any>>
-              | AsyncGenerator<infer E extends Use<any>>
-          ? Exclude<Ef.ROf<E>, A>
           : never),
-      Fork | Raise<any>
+      AOf<DefaultLayer> | A | _A
     >,
-    _R | A
+    A | _A
   >
   with<_R, _A>(
     layer: Layer<_R, _A>,
-  ): Layer<Exclude<_R | R, _A | A | Fork | Raise<any>>, _A | A>
+  ): Layer<Exclude<R | _R, AOf<DefaultLayer> | A | _A>, A | _A>
   with(tagOrLayer: Tag<unknown> | Layer<any, any>, handler?: any) {
     this.handlers = {
       ...this.handlers,
@@ -75,16 +67,22 @@ export class Layer<R, A> {
     return this
   }
 
-  handler<_R extends A>({ key }: Tag<_R>): Handler<_R> {
+  handler<_A extends A>({ key }: Tag<_A>): Handler<_A> {
     return this.handlers[key] as any
   }
 }
+
+export type DefaultLayer = Layer<never, Fork | Raise<any>>
+
+export type AOf<L extends Layer<any, any>> = L extends Layer<any, infer A>
+  ? A
+  : never
 
 export function layer() {
   return Layer.empty()
 }
 
-function _default() {
+function _default(): DefaultLayer {
   return layer().with(Er.ExceptionRaise()).with(F.ContextAwareFork())
 }
 export { _default as default }

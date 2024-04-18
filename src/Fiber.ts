@@ -1,11 +1,10 @@
 import * as E from './Effect'
 import { Effect, Use } from './Effect'
-import { Fork } from './Fork'
 import * as F from './Function'
 import * as G from './Generator'
 import * as I from './Iterator'
 import * as L from './Layer'
-import { Layer } from './Layer'
+import { DefaultLayer, Layer } from './Layer'
 
 async function _run(
   iterator: Iterator<any> | AsyncIterator<any>,
@@ -61,7 +60,10 @@ export async function run<G extends Generator | AsyncGenerator>(
   effector: G | (() => G),
   layer: Layer<
     never,
-    Exclude<G.YOf<G> extends infer E extends Use<any> ? E.ROf<E> : never, Fork>
+    Exclude<
+      G.YOf<G> extends infer U extends Use<any> ? E.ROf<U> : never,
+      L.AOf<DefaultLayer>
+    >
   >,
 ): Promise<G.ROf<G>> {
   return _run(I.is(effector) ? effector : effector(), L.default().with(layer))
