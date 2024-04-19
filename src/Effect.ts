@@ -9,8 +9,9 @@ import { URI } from './Type'
 
 declare const E: unique symbol
 export interface Effect<R, A, E> {
-  readonly [URI]: 'Effect'
+  readonly [URI]?: unique symbol
   readonly [E]?: E
+  readonly _tag: 'Effect'
   readonly tag: Tag<R>
   readonly f: (r: R) => A
 }
@@ -44,11 +45,11 @@ export function effect<R, A>(
     ? A
     : never
 > {
-  return { [URI]: 'Effect', tag, f: f as any }
+  return { _tag: 'Effect', tag, f: f as any }
 }
 
 export function is(u: unknown): u is Effect<unknown, unknown, unknown> {
-  return $Struct.is(u) && $Struct.has(u, URI) && u[URI] === 'Effect'
+  return $Struct.is(u) && $Struct.has(u, '_tag') && u._tag === 'Effect'
 }
 
 export function* perform<R, A, E>(effect: Effect<R, A, E>): Effector<R, A, E> {

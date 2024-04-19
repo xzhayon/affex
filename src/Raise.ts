@@ -3,8 +3,10 @@ import { Effector } from './Effector'
 import * as $Layer from './Layer'
 import { Layer } from './Layer'
 import * as $Tag from './Tag'
+import { URI } from './Type'
 
 export interface Raise<E> {
+  readonly [URI]?: unique symbol
   (error: E): never
 }
 
