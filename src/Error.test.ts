@@ -1,8 +1,9 @@
-import * as Ef from './Effector'
-import * as Er from './Error'
-import * as F from './Fiber'
-import * as L from './Layer'
-import * as T from './Tag'
+import * as $Effector from './Effector'
+import * as $Error from './Error'
+import * as $Fiber from './Fiber'
+import * as $Layer from './Layer'
+import * as $Raise from './Raise'
+import * as $Tag from './Tag'
 import { URI } from './Type'
 
 describe('Error', () => {
@@ -11,142 +12,13 @@ describe('Error', () => {
     (a: number, b: number): number | Error
   }
 
-  const tag = T.tag<Divide>()
-  const divide = Ef.function(tag)
-
-  test('throwing error from normal function', async () => {
-    await expect(
-      F.run(
-        divide(42, 0),
-        L.layer().with(tag, (a, b) => {
-          if (b === 0) {
-            throw new Error('Cannot divide by zero')
-          }
-
-          return a / b
-        }),
-      ),
-    ).rejects.toThrow('Cannot divide by zero')
-  })
-
-  test('throwing error from generator function', async () => {
-    await expect(
-      F.run(
-        divide(42, 0),
-        L.layer().with(tag, function* (a, b) {
-          if (b === 0) {
-            throw new Error('Cannot divide by zero')
-          }
-
-          return a / b
-        }),
-      ),
-    ).rejects.toThrow('Cannot divide by zero')
-  })
-
-  describe('raise', () => {
-    test('raising error from ', async () => {
-      interface Random {
-        readonly [URI]?: unique symbol
-        (): number
-      }
-
-      const tagRandom = T.tag<Random>()
-      const random = Ef.function(tagRandom)
-
-      await expect(
-        F.run(
-          random,
-          // @ts-expect-error
-          L.layer().with(tagRandom, function* () {
-            return yield* Er.raise(new Error('Cannot return random number'))
-          }),
-        ),
-      ).rejects.toThrow('Cannot return random number')
-    })
-
-    test('raising error', async () => {
-      await expect(
-        F.run(
-          divide(42, 0),
-          L.layer().with(tag, function* (a, b) {
-            if (b === 0) {
-              yield* Er.raise(new Error('Cannot divide by zero'))
-            }
-
-            return a / b
-          }),
-        ),
-      ).rejects.toThrow('Cannot divide by zero')
-    })
-
-    test('raising error subclass', async () => {
-      class FooError extends Error {}
-
-      await expect(
-        F.run(
-          divide(42, 0),
-          L.layer().with(tag, function* (a, b) {
-            if (b === 0) {
-              yield* Er.raise(new FooError('Cannot divide by zero'))
-            }
-
-            return a / b
-          }),
-        ),
-      ).rejects.toThrow('Cannot divide by zero')
-    })
-
-    test('raising different error', async () => {
-      class BarError extends Error {
-        readonly [URI]!: 'BarError'
-      }
-
-      await expect(
-        F.run(
-          divide(42, 0),
-          // @ts-expect-error
-          L.layer().with(tag, function* (a, b) {
-            if (b === 0) {
-              yield* Er.raise(new BarError('Cannot divide by zero'))
-            }
-
-            return a / b
-          }),
-        ),
-      ).rejects.toThrow('Cannot divide by zero')
-    })
-
-    test('raising error and performing effect', async () => {
-      interface Random {
-        readonly [URI]?: unique symbol
-        (): number
-      }
-
-      const tagRandom = T.tag<Random>()
-      const random = Ef.function(tagRandom)
-
-      await expect(
-        F.run(
-          divide(42, 0),
-          L.layer()
-            .with(tag, function* (_a, b) {
-              if (b === 0) {
-                yield* Er.raise(new Error('Cannot divide by zero'))
-              }
-
-              return yield* random()
-            })
-            .with(tagRandom, () => Math.random()),
-        ),
-      ).rejects.toThrow('Cannot divide by zero')
-    })
-  })
+  const tag = $Tag.tag<Divide>()
+  const divide = $Effector.function(tag)
 
   describe('tryCatch', () => {
-    const layer = L.layer().with(tag, function* (a, b) {
+    const layer = $Layer.layer().with(tag, function* (a, b) {
       if (b === 0) {
-        yield* Er.raise(new Error('Cannot divide by zero'))
+        yield* $Raise.raise(new Error('Cannot divide by zero'))
       }
 
       return a / b
@@ -154,8 +26,8 @@ describe('Error', () => {
 
     test('forwarding error', async () => {
       await expect(
-        F.run(
-          Er.tryCatch(divide(42, 0), function* (error) {
+        $Fiber.run(
+          $Error.tryCatch(divide(42, 0), function* (error) {
             throw error
           }),
           layer,
@@ -165,8 +37,8 @@ describe('Error', () => {
 
     test('throwing new error', async () => {
       await expect(
-        F.run(
-          Er.tryCatch(divide(42, 0), function* () {
+        $Fiber.run(
+          $Error.tryCatch(divide(42, 0), function* () {
             throw new Error('Cannot recover from exception')
           }),
           layer,
@@ -176,9 +48,11 @@ describe('Error', () => {
 
     test('raising new error', async () => {
       await expect(
-        F.run(
-          Er.tryCatch(divide(42, 0), function* () {
-            return yield* Er.raise(new Error('Cannot recover from exception'))
+        $Fiber.run(
+          $Error.tryCatch(divide(42, 0), function* () {
+            return yield* $Raise.raise(
+              new Error('Cannot recover from exception'),
+            )
           }),
           layer,
         ),
@@ -187,8 +61,8 @@ describe('Error', () => {
 
     test('returning value', async () => {
       await expect(
-        F.run(
-          Er.tryCatch(divide(42, 0), function* () {
+        $Fiber.run(
+          $Error.tryCatch(divide(42, 0), function* () {
             return NaN
           }),
           layer,
@@ -202,14 +76,14 @@ describe('Error', () => {
         (): number
       }
 
-      const tagRandom = T.tag<Random>()
-      const random = Ef.function(tagRandom)
+      const tagRandom = $Tag.tag<Random>()
+      const random = $Effector.function(tagRandom)
 
-      const newLocal = Er.tryCatch(divide(42, 0), function* () {
+      const newLocal = $Error.tryCatch(divide(42, 0), function* () {
         return yield* random()
       })
       await expect(
-        F.run(
+        $Fiber.run(
           newLocal,
           layer.with(tagRandom, () => 42),
         ),

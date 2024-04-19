@@ -1,9 +1,9 @@
-import * as G from './Generator'
+import * as $Generator from './Generator'
 
 describe('Generator', () => {
   describe('sequence', () => {
     test('unwrapping array of generators', () => {
-      const generator = G.sequence(
+      const generator = $Generator.sequence(
         [42, 1337].map(function* (n) {
           yield n * 2
         }),
@@ -19,7 +19,7 @@ describe('Generator', () => {
 
   describe('traverse', () => {
     test('applying generator function to array elements', () => {
-      const generator = G.traverse([42, 1337], function* (n) {
+      const generator = $Generator.traverse([42, 1337], function* (n) {
         yield n * 2
       })
       const bs: number[] = []

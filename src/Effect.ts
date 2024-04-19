@@ -1,8 +1,9 @@
 import { Effector } from './Effector'
+import * as $Error from './Error'
 import { Throw } from './Error'
-import * as G from './Generator'
+import * as $Generator from './Generator'
 import { Generated } from './Generator'
-import * as S from './Struct'
+import * as $Struct from './Struct'
 import { Tag } from './Tag'
 import { URI } from './Type'
 
@@ -14,6 +15,8 @@ export interface Effect<R, A, E> {
   readonly f: (r: R) => A
 }
 
+export type Use<R> = Effect<R, any, any>
+
 export type ROf<E extends Effect<any, any, any>> = E extends Effect<
   infer R,
   any,
@@ -22,32 +25,30 @@ export type ROf<E extends Effect<any, any, any>> = E extends Effect<
   ? R
   : never
 
-export type Use<R> = Effect<R, any, any>
-
 export function effect<R, A>(
   tag: Tag<R>,
   f: (r: R) => A,
 ): Effect<
   | R
   | (A extends Generator | AsyncGenerator
-      ? G.YOf<A> extends infer E extends Use<any>
-        ? ROf<E>
+      ? $Generator.YOf<A> extends infer U extends Use<any>
+        ? ROf<U>
         : never
       : never),
   Exclude<Generated<Awaited<A>>, Error>,
   A extends Generator | AsyncGenerator
-    ? G.NOf<A> extends Throw<infer E>
-      ? E
+    ? $Generator.NOf<A> extends infer T extends Throw<any>
+      ? $Error.EOf<T>
       : never
-    : A extends infer E extends Error
-    ? E
+    : A extends Error
+    ? A
     : never
 > {
   return { [URI]: 'Effect', tag, f: f as any }
 }
 
 export function is(u: unknown): u is Effect<unknown, unknown, unknown> {
-  return S.is(u) && S.has(u, URI) && u[URI] === 'Effect'
+  return $Struct.is(u) && $Struct.has(u, URI) && u[URI] === 'Effect'
 }
 
 export function* perform<R, A, E>(effect: Effect<R, A, E>): Effector<R, A, E> {

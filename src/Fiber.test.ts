@@ -1,19 +1,19 @@
-import * as E from './Effector'
-import * as F from './Fiber'
-import * as G from './Generator'
-import * as L from './Layer'
-import * as T from './Tag'
+import * as $Effector from './Effector'
+import * as $Fiber from './Fiber'
+import * as $Generator from './Generator'
+import * as $Layer from './Layer'
+import * as $Tag from './Tag'
 
 describe('Fiber', () => {
   describe('run', () => {
     test('running effector with no effects', async () => {
       await expect(
-        F.run(function* () {
+        $Fiber.run(function* () {
           yield 42
           yield 1337
 
           return 42 + 1337
-        }, L.layer()),
+        }, $Layer.layer()),
       ).resolves.toStrictEqual(42 + 1337)
     })
 
@@ -24,10 +24,11 @@ describe('Fiber', () => {
           (a: number, b: number): number
         }
 
-        const tag = T.tag<Add>(description)
-        const add = E.function(tag)
+        const tag = $Tag.tag<Add>(description)
+        const add = $Effector.function(tag)
 
-        await expect(F.run(add(42, 1337), L.layer() as any)).rejects.toThrow(
+        // @ts-expect-error
+        await expect($Fiber.run(add(42, 1337), $Layer.layer())).rejects.toThrow(
           `Cannot find handler for effect${
             description ? ` "${description}"` : ''
           }`,
@@ -49,11 +50,11 @@ describe('Fiber', () => {
         (a: number, b: number): number
       }
 
-      const tag = T.tag<Add>()
-      const add = E.function(tag)
+      const tag = $Tag.tag<Add>()
+      const add = $Effector.function(tag)
 
       await expect(
-        F.run(add(42, 1337), L.layer().with(tag, handler)),
+        $Fiber.run(add(42, 1337), $Layer.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42 + 1337)
     })
 
@@ -71,11 +72,11 @@ describe('Fiber', () => {
         <A>(a: A): A
       }
 
-      const tag = T.tag<Identity>()
-      const identity = <A>(a: A) => E.functionA(tag)((r) => r(a))
+      const tag = $Tag.tag<Identity>()
+      const identity = <A>(a: A) => $Effector.functionA(tag)((r) => r(a))
 
       await expect(
-        F.run(identity(42), L.layer().with(tag, handler)),
+        $Fiber.run(identity(42), $Layer.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42)
     })
 
@@ -97,11 +98,11 @@ describe('Fiber', () => {
         add(a: number, b: number): number
       }
 
-      const tag = T.tag<Calculator>()
-      const calculator = E.struct(tag)('add')
+      const tag = $Tag.tag<Calculator>()
+      const calculator = $Effector.struct(tag)('add')
 
       await expect(
-        F.run(calculator.add(42, 1337), L.layer().with(tag, handler)),
+        $Fiber.run(calculator.add(42, 1337), $Layer.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42 + 1337)
     })
 
@@ -123,12 +124,12 @@ describe('Fiber', () => {
         trace<A>(a: A): A
       }
 
-      const tag = T.tag<Log>()
-      const { trace } = E.structA(tag)('trace')
+      const tag = $Tag.tag<Log>()
+      const { trace } = $Effector.structA(tag)('trace')
       const log = { trace: <A>(a: A) => trace((r) => r(a)) }
 
       await expect(
-        F.run(log.trace(42), L.layer().with(tag, handler)),
+        $Fiber.run(log.trace(42), $Layer.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42)
     })
 
@@ -141,18 +142,19 @@ describe('Fiber', () => {
         now(): Date
       }
 
-      const tagLog = T.tag<Log>()
-      const log = E.struct(tagLog)('trace')
+      const tagLog = $Tag.tag<Log>()
+      const log = $Effector.struct(tagLog)('trace')
 
-      const tagClock = T.tag<Clock>()
-      const clock = E.struct(tagClock)('now')
+      const tagClock = $Tag.tag<Clock>()
+      const clock = $Effector.struct(tagClock)('now')
 
       const date = new Date()
 
       await expect(
-        F.run(
+        $Fiber.run(
           log.trace('foo'),
-          L.layer()
+          $Layer
+            .layer()
             .with(tagLog, {
               *trace(message) {
                 return `${yield* clock.now()}\t${message}`
@@ -177,14 +179,14 @@ describe('Fiber', () => {
           key: string,
           decoder: Decoder<A>,
           onMiss: () => G,
-        ): Generator<G.YOf<G>, A>
+        ): Generator<$Generator.YOf<G>, A>
       }
 
-      const tagCrypto = T.tag<Crypto>()
-      const crypto = E.struct(tagCrypto)('number')
+      const tagCrypto = $Tag.tag<Crypto>()
+      const crypto = $Effector.struct(tagCrypto)('number')
 
-      const tagCache = T.tag<Cache>()
-      const { get } = E.structA(tagCache)('get')
+      const tagCache = $Tag.tag<Cache>()
+      const { get } = $Effector.structA(tagCache)('get')
       const cache = {
         get: <A, G extends Generator<unknown, A>>(
           key: string,
@@ -202,9 +204,10 @@ describe('Fiber', () => {
       }
 
       await expect(
-        F.run(
+        $Fiber.run(
           cache.get('foo', numberDecoder, crypto.number),
-          L.layer()
+          $Layer
+            .layer()
             .with(tagCrypto, { number: () => 42 })
             .with(tagCache, { get: (_key, _decoder, onMiss) => onMiss() }),
         ),

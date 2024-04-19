@@ -3,11 +3,11 @@ import { Severity, tag } from '../../application/log/Log'
 
 function _log(
   severity: Severity,
-  log: Array<{
+  log: {
     readonly severity: Severity
     readonly message: string
     readonly context?: Readonly<Record<string, unknown>>
-  }>,
+  }[],
 ) {
   return (message: string, context?: Readonly<Record<string, unknown>>) => {
     log.push({ severity, message, context })
@@ -15,11 +15,11 @@ function _log(
 }
 
 export function InMemoryLog(
-  log: Array<{
+  log: {
     readonly severity: Severity
     readonly message: string
     readonly context?: Readonly<Record<string, unknown>>
-  }> = [],
+  }[] = [],
 ) {
   return fx.layer().with(tag, {
     debug: _log('debug', log),

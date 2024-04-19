@@ -17,11 +17,11 @@ export type NOf<G extends Generator | AsyncGenerator> = G extends
 export type Generated<A> = A extends Generator | AsyncGenerator ? ROf<A> : A
 
 export function* sequence<G extends Generator>(
-  gs: ReadonlyArray<G>,
+  generators: ReadonlyArray<G>,
 ): Generator<YOf<G>, ROf<G>[], NOf<G>> {
   const as = []
-  for (const g of gs) {
-    as.push(yield* g as any)
+  for (const generator of generators) {
+    as.push(yield* generator as any)
   }
 
   return as
