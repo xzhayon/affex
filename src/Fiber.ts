@@ -3,8 +3,7 @@ import { Effect, Use } from './Effect'
 import * as $Function from './Function'
 import * as $Generator from './Generator'
 import * as $Iterator from './Iterator'
-import * as $Layer from './Layer'
-import { DefaultLayer, Layer } from './Layer'
+import { Layer } from './Layer'
 
 async function _run(
   iterator: Iterator<any> | AsyncIterator<any>,
@@ -60,16 +59,8 @@ export async function run<G extends Generator | AsyncGenerator>(
   effector: G | (() => G),
   layer: Layer<
     never,
-    Exclude<
-      $Generator.YOf<G> extends infer U extends Use<any>
-        ? $Effect.ROf<U>
-        : never,
-      $Layer.AOf<DefaultLayer>
-    >
+    $Generator.YOf<G> extends infer U extends Use<any> ? $Effect.ROf<U> : never
   >,
 ): Promise<$Generator.ROf<G>> {
-  return _run(
-    $Iterator.is(effector) ? effector : effector(),
-    $Layer.default().with(layer),
-  )
+  return _run($Iterator.is(effector) ? effector : effector(), layer)
 }

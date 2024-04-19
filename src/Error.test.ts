@@ -1,8 +1,8 @@
 import * as $Effector from './Effector'
 import * as $Error from './Error'
-import * as $Fiber from './Fiber'
 import * as $Layer from './Layer'
 import * as $Raise from './Raise'
+import * as $Runtime from './Runtime'
 import * as $Tag from './Tag'
 import { URI } from './Type'
 
@@ -26,7 +26,7 @@ describe('Error', () => {
 
     test('forwarding error', async () => {
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           $Error.tryCatch(divide(42, 0), function* (error) {
             throw error
           }),
@@ -37,7 +37,7 @@ describe('Error', () => {
 
     test('throwing new error', async () => {
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           $Error.tryCatch(divide(42, 0), function* () {
             throw new Error('Cannot recover from exception')
           }),
@@ -48,7 +48,7 @@ describe('Error', () => {
 
     test('raising new error', async () => {
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           $Error.tryCatch(divide(42, 0), function* () {
             return yield* $Raise.raise(
               new Error('Cannot recover from exception'),
@@ -61,7 +61,7 @@ describe('Error', () => {
 
     test('returning value', async () => {
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           $Error.tryCatch(divide(42, 0), function* () {
             return NaN
           }),
@@ -83,7 +83,7 @@ describe('Error', () => {
         return yield* random()
       })
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           newLocal,
           layer.with(tagRandom, () => 42),
         ),

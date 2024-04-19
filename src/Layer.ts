@@ -1,11 +1,8 @@
 import * as $Effect from './Effect'
 import { Use } from './Effect'
-import * as $Fork from './Fork'
-import { Fork } from './Fork'
 import { Function } from './Function'
 import { Handler } from './Handler'
-import * as $Raise from './Raise'
-import { Raise } from './Raise'
+import { DefaultLayer } from './Runtime'
 import { Struct } from './Struct'
 import { Tag } from './Tag'
 
@@ -72,8 +69,6 @@ export class Layer<R, A> {
   }
 }
 
-export type DefaultLayer = Layer<never, Fork | Raise<any>>
-
 export type AOf<L extends Layer<any, any>> = L extends Layer<any, infer A>
   ? A
   : never
@@ -81,8 +76,3 @@ export type AOf<L extends Layer<any, any>> = L extends Layer<any, infer A>
 export function layer() {
   return Layer.empty()
 }
-
-function _default(): DefaultLayer {
-  return layer().with($Raise.ExceptionRaise()).with($Fork.ContextAwareFork())
-}
-export { _default as default }

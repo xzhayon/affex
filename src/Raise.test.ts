@@ -1,7 +1,7 @@
 import * as $Effector from './Effector'
-import * as $Fiber from './Fiber'
 import * as $Layer from './Layer'
 import * as $Raise from './Raise'
+import * as $Runtime from './Runtime'
 import * as $Tag from './Tag'
 import { URI } from './Type'
 
@@ -16,7 +16,7 @@ describe('Raise', () => {
 
   test('throwing error from normal function', async () => {
     await expect(
-      $Fiber.run(
+      $Runtime.run(
         divide(42, 0),
         $Layer.layer().with(tag, (a, b) => {
           if (b === 0) {
@@ -31,7 +31,7 @@ describe('Raise', () => {
 
   test('throwing error from generator function', async () => {
     await expect(
-      $Fiber.run(
+      $Runtime.run(
         divide(42, 0),
         $Layer.layer().with(tag, function* (a, b) {
           if (b === 0) {
@@ -55,7 +55,7 @@ describe('Raise', () => {
       const random = $Effector.function(tagRandom)
 
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           random,
           // @ts-expect-error
           $Layer.layer().with(tagRandom, function* () {
@@ -67,7 +67,7 @@ describe('Raise', () => {
 
     test('raising error', async () => {
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           divide(42, 0),
           $Layer.layer().with(tag, function* (a, b) {
             if (b === 0) {
@@ -84,7 +84,7 @@ describe('Raise', () => {
       class FooError extends Error {}
 
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           divide(42, 0),
           $Layer.layer().with(tag, function* (a, b) {
             if (b === 0) {
@@ -103,7 +103,7 @@ describe('Raise', () => {
       }
 
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           divide(42, 0),
           // @ts-expect-error
           $Layer.layer().with(tag, function* (a, b) {
@@ -127,7 +127,7 @@ describe('Raise', () => {
       const random = $Effector.function(tagRandom)
 
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           divide(42, 0),
           $Layer
             .layer()

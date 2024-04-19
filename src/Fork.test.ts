@@ -1,15 +1,15 @@
 import * as $Effector from './Effector'
-import * as $Fiber from './Fiber'
 import * as $Fork from './Fork'
 import * as $Layer from './Layer'
 import * as $Raise from './Raise'
+import * as $Runtime from './Runtime'
 import * as $Tag from './Tag'
 
 describe('Fork', () => {
   describe('fork', () => {
     test('forking normal function', async () => {
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           $Fork.fork()(
             async (run) =>
               [
@@ -28,7 +28,7 @@ describe('Fork', () => {
 
     test('raising unexpected error', async () => {
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           $Fork.fork()((run) =>
             // @ts-expect-error
             run(function* () {
@@ -42,7 +42,7 @@ describe('Fork', () => {
 
     test('raising error', async () => {
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           $Fork.fork<never, Error>()((run) =>
             run(function* () {
               return yield* $Raise.raise(new Error('foo'))
@@ -55,7 +55,7 @@ describe('Fork', () => {
 
     test('forking generator function', async () => {
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           $Fork.fork()(async function* (run) {
             return [
               await run(function* () {
@@ -73,7 +73,7 @@ describe('Fork', () => {
 
     test('raising error from generator function', async () => {
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           $Fork.fork()(() => $Raise.raise(new Error('foo'))),
           $Layer.layer(),
         ),
@@ -96,7 +96,7 @@ describe('Fork', () => {
       const get1337 = $Effector.function(tag1337)
 
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           $Fork.fork()(function* (run) {
             const a = yield* get42()
             const b = yield* get1337()
@@ -129,7 +129,7 @@ describe('Fork', () => {
       const get1337 = $Effector.function(tag1337)
 
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           $Fork.fork<Get42 | Get1337>()(
             async (run) => [await run(get42), await run(get1337)] as const,
           ),

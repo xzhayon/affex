@@ -1,14 +1,14 @@
 import * as $Effector from './Effector'
-import * as $Fiber from './Fiber'
 import * as $Generator from './Generator'
 import * as $Layer from './Layer'
+import * as $Runtime from './Runtime'
 import * as $Tag from './Tag'
 
-describe('Fiber', () => {
+describe('Runtime', () => {
   describe('run', () => {
     test('running effector with no effects', async () => {
       await expect(
-        $Fiber.run(function* () {
+        $Runtime.run(function* () {
           yield 42
           yield 1337
 
@@ -27,8 +27,10 @@ describe('Fiber', () => {
         const tag = $Tag.tag<Add>(description)
         const add = $Effector.function(tag)
 
-        // @ts-expect-error
-        await expect($Fiber.run(add(42, 1337), $Layer.layer())).rejects.toThrow(
+        await expect(
+          // @ts-expect-error
+          $Runtime.run(add(42, 1337), $Layer.layer()),
+        ).rejects.toThrow(
           `Cannot find handler for effect${
             description ? ` "${description}"` : ''
           }`,
@@ -54,7 +56,7 @@ describe('Fiber', () => {
       const add = $Effector.function(tag)
 
       await expect(
-        $Fiber.run(add(42, 1337), $Layer.layer().with(tag, handler)),
+        $Runtime.run(add(42, 1337), $Layer.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42 + 1337)
     })
 
@@ -76,7 +78,7 @@ describe('Fiber', () => {
       const identity = <A>(a: A) => $Effector.functionA(tag)((r) => r(a))
 
       await expect(
-        $Fiber.run(identity(42), $Layer.layer().with(tag, handler)),
+        $Runtime.run(identity(42), $Layer.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42)
     })
 
@@ -102,7 +104,10 @@ describe('Fiber', () => {
       const calculator = $Effector.struct(tag)('add')
 
       await expect(
-        $Fiber.run(calculator.add(42, 1337), $Layer.layer().with(tag, handler)),
+        $Runtime.run(
+          calculator.add(42, 1337),
+          $Layer.layer().with(tag, handler),
+        ),
       ).resolves.toStrictEqual(42 + 1337)
     })
 
@@ -129,7 +134,7 @@ describe('Fiber', () => {
       const log = { trace: <A>(a: A) => trace((r) => r(a)) }
 
       await expect(
-        $Fiber.run(log.trace(42), $Layer.layer().with(tag, handler)),
+        $Runtime.run(log.trace(42), $Layer.layer().with(tag, handler)),
       ).resolves.toStrictEqual(42)
     })
 
@@ -151,7 +156,7 @@ describe('Fiber', () => {
       const date = new Date()
 
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           log.trace('foo'),
           $Layer
             .layer()
@@ -204,7 +209,7 @@ describe('Fiber', () => {
       }
 
       await expect(
-        $Fiber.run(
+        $Runtime.run(
           cache.get('foo', numberDecoder, crypto.number),
           $Layer
             .layer()

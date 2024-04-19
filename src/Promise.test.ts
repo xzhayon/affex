@@ -1,7 +1,7 @@
 import * as $Effector from './Effector'
-import * as $Fiber from './Fiber'
 import * as $Layer from './Layer'
 import * as $Promise from './Promise'
+import * as $Runtime from './Runtime'
 import * as $Tag from './Tag'
 
 describe('Promise', () => {
@@ -25,7 +25,7 @@ describe('Promise', () => {
     [[0, 2], true, [0, 2]],
     [[1, 2], false, 1],
   ])('all', async (input, success, output) => {
-    await expect($Fiber.run($Promise.all(input.map(sleep)), layer))[
+    await expect($Runtime.run($Promise.all(input.map(sleep)), layer))[
       success ? 'resolves' : 'rejects'
     ].toStrictEqual(output)
   })
@@ -48,7 +48,7 @@ describe('Promise', () => {
       ],
     ],
   ])('allSettled', async (input, success, output) => {
-    await expect($Fiber.run($Promise.allSettled(input.map(sleep)), layer))[
+    await expect($Runtime.run($Promise.allSettled(input.map(sleep)), layer))[
       success ? 'resolves' : 'rejects'
     ].toStrictEqual(output)
   })
@@ -61,8 +61,8 @@ describe('Promise', () => {
     const f = $Promise.any(input.map(sleep))
 
     await (success
-      ? expect($Fiber.run(f, layer)).resolves.toStrictEqual(output)
-      : expect($Fiber.run(f, layer)).rejects.toThrow())
+      ? expect($Runtime.run(f, layer)).resolves.toStrictEqual(output)
+      : expect($Runtime.run(f, layer)).rejects.toThrow())
   })
 
   test.each([
@@ -70,7 +70,7 @@ describe('Promise', () => {
     [[1, 2], false, 1],
     [[0, 1], true, 0],
   ])('race', async (input, success, output) => {
-    await expect($Fiber.run($Promise.race(input.map(sleep)), layer))[
+    await expect($Runtime.run($Promise.race(input.map(sleep)), layer))[
       success ? 'resolves' : 'rejects'
     ].toStrictEqual(output)
   })
