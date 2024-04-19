@@ -4,7 +4,8 @@ import { Use } from './Effect'
 import * as $Effector from './Effector'
 import { Effector } from './Effector'
 import * as $Error from './Error'
-import { NullError, Throw } from './Error'
+import { Throw, UnexpectedError } from './Error'
+import { Exit } from './Exit'
 import * as $Function from './Function'
 import * as $Generator from './Generator'
 import { Generated } from './Generator'
@@ -15,7 +16,7 @@ import { URI } from './Type'
 
 export interface Fork {
   readonly [URI]?: unique symbol
-  <R = never, E = never>(): <
+  <R = never>(): <
     F extends (
       run: <
         G extends
@@ -25,8 +26,7 @@ export interface Fork {
                   ? never
                   : Use<R>
                 : never,
-              any,
-              Equal<E, never> extends true ? Throw<NullError> : Throw<E>
+              any
             >
           | AsyncGenerator<
               R extends any
@@ -34,12 +34,18 @@ export interface Fork {
                   ? never
                   : Use<R>
                 : never,
-              any,
-              Equal<E, never> extends true ? Throw<NullError> : Throw<E>
+              any
             >,
       >(
         effector: G | (() => G),
-      ) => Promise<Generated<Awaited<$Generator.ROf<G>>>>,
+      ) => Promise<
+        Exit<
+          Generated<Awaited<$Generator.ROf<G>>>,
+          $Generator.NOf<G> extends infer T extends Throw<any>
+            ? $Error.EOf<T>
+            : never
+        >
+      >,
     ) => any,
   >(
     f: F,
@@ -52,19 +58,17 @@ export interface Fork {
             : never)
         | $Generator.YOf<G>,
         Generated<Awaited<$Generator.ROf<G>>>,
-        | (Equal<E, never> extends true ? Throw<NullError> : Throw<E>)
-        | $Generator.NOf<G>
+        $Generator.NOf<G>
       >
     : Generator<
         R extends any ? (Equal<R, never> extends true ? never : Use<R>) : never,
-        Generated<Awaited<ReturnType<F>>>,
-        Equal<E, never> extends true ? Throw<NullError> : Throw<E>
+        Generated<Awaited<ReturnType<F>>>
       >
 }
 
 export const tag = $Tag.tag<Fork>('Fork')
 
-export function fork<R = never, E = never>() {
+export function fork<R = never>() {
   return <
     F extends (
       run: <
@@ -75,8 +79,7 @@ export function fork<R = never, E = never>() {
                   ? never
                   : Use<R>
                 : never,
-              any,
-              Equal<E, never> extends true ? Throw<NullError> : Throw<E>
+              any
             >
           | AsyncGenerator<
               R extends any
@@ -84,12 +87,18 @@ export function fork<R = never, E = never>() {
                   ? never
                   : Use<R>
                 : never,
-              any,
-              Equal<E, never> extends true ? Throw<NullError> : Throw<E>
+              any
             >,
       >(
         effector: G | (() => G),
-      ) => Promise<Generated<Awaited<$Generator.ROf<G>>>>,
+      ) => Promise<
+        Exit<
+          Generated<Awaited<$Generator.ROf<G>>>,
+          $Generator.NOf<G> extends infer T extends Throw<any>
+            ? $Error.EOf<T>
+            : never
+        >
+      >,
     ) => any,
   >(
     f: F,
@@ -99,12 +108,11 @@ export function fork<R = never, E = never>() {
           ? $Effect.ROf<U>
           : never,
         Generated<Awaited<$Generator.ROf<G>>>,
-        | E
-        | ($Generator.NOf<G> extends infer T extends Throw<any>
-            ? $Error.EOf<T>
-            : never)
+        $Generator.NOf<G> extends infer T extends Throw<any>
+          ? $Error.EOf<T>
+          : never
       >
-    : Effector<R, Generated<Awaited<ReturnType<F>>>, E> =>
+    : Effector<R, Generated<Awaited<ReturnType<F>>>> =>
     $Effector.functionA(tag)((r) => r<R>()(f as any)) as any
 }
 
@@ -124,7 +132,7 @@ export function ContextAwareFork() {
           !$Struct.has(context, 'run') ||
           !$Function.is(context.run)
         ) {
-          throw new Error(
+          throw new UnexpectedError(
             `Cannot access context from "${tag.key.description}" handler`,
           )
         }

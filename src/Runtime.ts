@@ -1,5 +1,6 @@
 import * as $Effect from './Effect'
 import { Use } from './Effect'
+import * as $Exit from './Exit'
 import * as $Fiber from './Fiber'
 import * as $Fork from './Fork'
 import { Fork } from './Fork'
@@ -23,7 +24,7 @@ export async function run<G extends Generator | AsyncGenerator>(
     >
   >,
 ) {
-  return $Fiber.run(
+  const exit = await $Fiber.run(
     effector,
     $Layer
       .layer()
@@ -31,4 +32,9 @@ export async function run<G extends Generator | AsyncGenerator>(
       .with($Raise.ExceptionRaise())
       .with(layer),
   )
+  if ($Exit.isFailure(exit)) {
+    throw exit.cause.error
+  }
+
+  return exit.value
 }

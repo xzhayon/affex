@@ -79,12 +79,11 @@ describe('Error', () => {
       const tagRandom = $Tag.tag<Random>()
       const random = $Effector.function(tagRandom)
 
-      const newLocal = $Error.tryCatch(divide(42, 0), function* () {
-        return yield* random()
-      })
       await expect(
         $Runtime.run(
-          newLocal,
+          $Error.tryCatch(divide(42, 0), function* () {
+            return yield* random()
+          }),
           layer.with(tagRandom, () => 42),
         ),
       ).resolves.toStrictEqual(42)

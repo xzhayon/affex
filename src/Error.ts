@@ -6,6 +6,10 @@ export interface NullError {
   readonly [URI]?: unique symbol
 }
 
+export class UnexpectedError extends Error {
+  readonly [URI]!: 'UnexpectedError'
+}
+
 export type Throw<E> = (e: E) => E
 
 export type EOf<T extends Throw<any>> = T extends Throw<infer E> ? E : never
