@@ -1,8 +1,8 @@
-import * as E from './Effector'
-import * as F from './Fiber'
-import * as L from './Layer'
-import * as R from './Raise'
-import * as T from './Tag'
+import * as $Effector from './Effector'
+import * as $Fiber from './Fiber'
+import * as $Layer from './Layer'
+import * as $Raise from './Raise'
+import * as $Tag from './Tag'
 import { URI } from './Type'
 
 describe('Raise', () => {
@@ -11,14 +11,14 @@ describe('Raise', () => {
     (a: number, b: number): number | Error
   }
 
-  const tag = T.tag<Divide>()
-  const divide = E.function(tag)
+  const tag = $Tag.tag<Divide>()
+  const divide = $Effector.function(tag)
 
   test('throwing error from normal function', async () => {
     await expect(
-      F.run(
+      $Fiber.run(
         divide(42, 0),
-        L.layer().with(tag, (a, b) => {
+        $Layer.layer().with(tag, (a, b) => {
           if (b === 0) {
             throw new Error('Cannot divide by zero')
           }
@@ -31,9 +31,9 @@ describe('Raise', () => {
 
   test('throwing error from generator function', async () => {
     await expect(
-      F.run(
+      $Fiber.run(
         divide(42, 0),
-        L.layer().with(tag, function* (a, b) {
+        $Layer.layer().with(tag, function* (a, b) {
           if (b === 0) {
             throw new Error('Cannot divide by zero')
           }
@@ -51,15 +51,15 @@ describe('Raise', () => {
         (): number
       }
 
-      const tagRandom = T.tag<Random>()
-      const random = E.function(tagRandom)
+      const tagRandom = $Tag.tag<Random>()
+      const random = $Effector.function(tagRandom)
 
       await expect(
-        F.run(
+        $Fiber.run(
           random,
           // @ts-expect-error
-          L.layer().with(tagRandom, function* () {
-            return yield* R.raise(new Error('Cannot return random number'))
+          $Layer.layer().with(tagRandom, function* () {
+            return yield* $Raise.raise(new Error('Cannot return random number'))
           }),
         ),
       ).rejects.toThrow('Cannot return random number')
@@ -67,11 +67,11 @@ describe('Raise', () => {
 
     test('raising error', async () => {
       await expect(
-        F.run(
+        $Fiber.run(
           divide(42, 0),
-          L.layer().with(tag, function* (a, b) {
+          $Layer.layer().with(tag, function* (a, b) {
             if (b === 0) {
-              yield* R.raise(new Error('Cannot divide by zero'))
+              yield* $Raise.raise(new Error('Cannot divide by zero'))
             }
 
             return a / b
@@ -84,11 +84,11 @@ describe('Raise', () => {
       class FooError extends Error {}
 
       await expect(
-        F.run(
+        $Fiber.run(
           divide(42, 0),
-          L.layer().with(tag, function* (a, b) {
+          $Layer.layer().with(tag, function* (a, b) {
             if (b === 0) {
-              yield* R.raise(new FooError('Cannot divide by zero'))
+              yield* $Raise.raise(new FooError('Cannot divide by zero'))
             }
 
             return a / b
@@ -103,12 +103,12 @@ describe('Raise', () => {
       }
 
       await expect(
-        F.run(
+        $Fiber.run(
           divide(42, 0),
           // @ts-expect-error
-          L.layer().with(tag, function* (a, b) {
+          $Layer.layer().with(tag, function* (a, b) {
             if (b === 0) {
-              yield* R.raise(new BarError('Cannot divide by zero'))
+              yield* $Raise.raise(new BarError('Cannot divide by zero'))
             }
 
             return a / b
@@ -123,16 +123,17 @@ describe('Raise', () => {
         (): number
       }
 
-      const tagRandom = T.tag<Random>()
-      const random = E.function(tagRandom)
+      const tagRandom = $Tag.tag<Random>()
+      const random = $Effector.function(tagRandom)
 
       await expect(
-        F.run(
+        $Fiber.run(
           divide(42, 0),
-          L.layer()
+          $Layer
+            .layer()
             .with(tag, function* (_a, b) {
               if (b === 0) {
-                yield* R.raise(new Error('Cannot divide by zero'))
+                yield* $Raise.raise(new Error('Cannot divide by zero'))
               }
 
               return yield* random()

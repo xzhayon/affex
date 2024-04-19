@@ -1,5 +1,5 @@
-import * as G from './Generator'
-import * as I from './Iterator'
+import * as $Generator from './Generator'
+import * as $Iterator from './Iterator'
 import { URI } from './Type'
 
 export interface NullError {
@@ -13,11 +13,17 @@ export type EOf<T extends Throw<any>> = T extends Throw<infer E> ? E : never
 export function* tryCatch<A extends Generator, B extends Generator>(
   effector: A | (() => A),
   onError: (
-    error: G.NOf<A> extends infer T extends Throw<any> ? EOf<T> : never,
+    error: $Generator.NOf<A> extends infer T extends Throw<any>
+      ? EOf<T>
+      : never,
   ) => B,
-): Generator<G.YOf<A> | G.YOf<B>, G.ROf<A> | G.ROf<B>, G.NOf<B>> {
+): Generator<
+  $Generator.YOf<A> | $Generator.YOf<B>,
+  $Generator.ROf<A> | $Generator.ROf<B>,
+  $Generator.NOf<B>
+> {
   try {
-    return yield* (I.is(effector) ? effector : effector()) as any
+    return yield* ($Iterator.is(effector) ? effector : effector()) as any
   } catch (error: any) {
     return yield* onError(error) as any
   }

@@ -1,10 +1,10 @@
 import { Equal } from '@type-challenges/utils'
-import * as Ef from './Effect'
+import * as $Effect from './Effect'
 import { Use } from './Effect'
-import * as Er from './Error'
+import * as $Error from './Error'
 import { Throw } from './Error'
 import { Function } from './Function'
-import * as G from './Generator'
+import * as $Generator from './Generator'
 import { Generated } from './Generator'
 import { NonEmptyArray } from './NonEmptyArray'
 import { Struct } from './Struct'
@@ -23,7 +23,7 @@ export type AsyncEffector<R, A, E = never> = AsyncGenerator<
 >
 
 export function functionA<R extends Function>(tag: Tag<R>) {
-  return <A>(f: (r: R) => A) => Ef.perform(Ef.effect(tag, f))
+  return <A>(f: (r: R) => A) => $Effect.perform($Effect.effect(tag, f))
 }
 
 function _function<R extends Function>(tag: Tag<R>) {
@@ -42,7 +42,7 @@ export function structA<R extends Struct>(tag: Tag<R>) {
       (effects, key) => ({
         ...effects,
         [key]: <A>(f: (r: R[K]) => A) =>
-          Ef.perform(Ef.effect(tag, (r) => f(r[key]))),
+          $Effect.perform($Effect.effect(tag, (r) => f(r[key]))),
       }),
       {},
     ) as {
@@ -51,14 +51,14 @@ export function structA<R extends Struct>(tag: Tag<R>) {
       ) => Effector<
         | R
         | (A extends Generator | AsyncGenerator
-            ? G.YOf<A> extends infer U extends Use<any>
-              ? Ef.ROf<U>
+            ? $Generator.YOf<A> extends infer U extends Use<any>
+              ? $Effect.ROf<U>
               : never
             : never),
         Exclude<Generated<Awaited<A>>, Error>,
         A extends Generator | AsyncGenerator
-          ? G.NOf<A> extends infer T extends Throw<any>
-            ? Er.EOf<T>
+          ? $Generator.NOf<A> extends infer T extends Throw<any>
+            ? $Error.EOf<T>
             : never
           : A extends Error
           ? A
@@ -77,7 +77,7 @@ export function struct<R extends Struct>(tag: Tag<R>) {
       (effects, key) => ({
         ...effects,
         [key]: (...args: any) =>
-          Ef.perform(Ef.effect(tag, (r: any) => r[key](...args))),
+          $Effect.perform($Effect.effect(tag, (r: any) => r[key](...args))),
       }),
       {},
     ) as {
@@ -87,14 +87,18 @@ export function struct<R extends Struct>(tag: Tag<R>) {
           ) => Effector<
             | R
             | (ReturnType<R[_K]> extends Generator | AsyncGenerator
-                ? G.YOf<ReturnType<R[_K]>> extends infer U extends Use<any>
-                  ? Ef.ROf<U>
+                ? $Generator.YOf<
+                    ReturnType<R[_K]>
+                  > extends infer U extends Use<any>
+                  ? $Effect.ROf<U>
                   : never
                 : never),
             Generated<Awaited<ReturnType<R[_K]>>>,
             ReturnType<R[_K]> extends Generator | AsyncGenerator
-              ? G.NOf<ReturnType<R[_K]>> extends infer T extends Throw<any>
-                ? Er.EOf<T>
+              ? $Generator.NOf<
+                  ReturnType<R[_K]>
+                > extends infer T extends Throw<any>
+                ? $Error.EOf<T>
                 : never
               : ReturnType<R[_K]> extends Error
               ? ReturnType<R[_K]>

@@ -1,10 +1,10 @@
-import * as E from './Effect'
+import * as $Effect from './Effect'
 import { Use } from './Effect'
-import * as F from './Fork'
+import * as $Fork from './Fork'
 import { Fork } from './Fork'
 import { Function } from './Function'
 import { Handler } from './Handler'
-import * as Ra from './Raise'
+import * as $Raise from './Raise'
 import { Raise } from './Raise'
 import { Struct } from './Struct'
 import { Tag } from './Tag'
@@ -32,7 +32,7 @@ export class Layer<R, A> {
           ? ReturnType<H> extends
               | Generator<infer U extends Use<any>>
               | AsyncGenerator<infer U extends Use<any>>
-            ? E.ROf<U>
+            ? $Effect.ROf<U>
             : never
           : H extends Struct
           ? {
@@ -40,7 +40,7 @@ export class Layer<R, A> {
                 ? ReturnType<H[K]> extends
                     | Generator<infer U extends Use<any>>
                     | AsyncGenerator<infer U extends Use<any>>
-                  ? E.ROf<U>
+                  ? $Effect.ROf<U>
                   : never
                 : never
             }[keyof H]
@@ -83,6 +83,6 @@ export function layer() {
 }
 
 function _default(): DefaultLayer {
-  return layer().with(Ra.ExceptionRaise()).with(F.ContextAwareFork())
+  return layer().with($Raise.ExceptionRaise()).with($Fork.ContextAwareFork())
 }
 export { _default as default }

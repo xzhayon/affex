@@ -1,8 +1,8 @@
-import * as F from './Function'
-import * as S from './Struct'
+import * as $Function from './Function'
+import * as $Struct from './Struct'
 
 export function is(
   u: unknown,
 ): u is Iterator<unknown> | AsyncIterator<unknown> {
-  return S.is(u) && S.has(u, 'next') && F.is(u.next)
+  return $Struct.is(u) && $Struct.has(u, 'next') && $Function.is(u.next)
 }
