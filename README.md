@@ -41,7 +41,7 @@ function ConsoleLog() {
 }
 
 // Run program with provided layer.
-fx.run(main, ConsoleLog())
+fx.runPromise(main, ConsoleLog())
 ```
 
 ## License
