@@ -3,8 +3,8 @@ import { CharaterSearchTerm } from '../../domain/entity/Character'
 import { CharacterDto } from '../dto/CharacterDto'
 
 export interface GetCharacterByNameQuery {
-  readonly [fx.URI]?: unique symbol
-  (name: CharaterSearchTerm): CharacterDto | Error
+  readonly [fx.uri]?: unique symbol
+  (name: CharaterSearchTerm): fx.Result<CharacterDto, Error>
 }
 
 export const tag = fx.tag<GetCharacterByNameQuery>()

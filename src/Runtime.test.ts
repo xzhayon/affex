@@ -1,222 +1,151 @@
-import * as $Effector from './Effector'
-import * as $Generator from './Generator'
+import * as $Cause from './Cause'
+import * as $Exit from './Exit'
 import * as $Layer from './Layer'
 import * as $Runtime from './Runtime'
 import * as $Tag from './Tag'
+import { uri } from './Type'
+import * as $Exception from './effect/Exception'
+import * as $Fork from './effect/Fork'
+import * as $Proxy from './effect/Proxy'
 
 describe('Runtime', () => {
-  describe('run', () => {
+  describe('runExit', () => {
     test('running effector with no effects', async () => {
       await expect(
-        $Runtime.run(function* () {
+        $Runtime.runExit(function* () {
           yield 42
           yield 1337
 
           return 42 + 1337
         }, $Layer.layer()),
-      ).resolves.toStrictEqual(42 + 1337)
+      ).resolves.toStrictEqual($Exit.success(42 + 1337))
     })
 
     test.each([undefined, 'Add'])(
-      'running effector without providing handler',
+      'running proxy effect without providing handler',
       async (description) => {
         interface Add {
+          readonly [uri]?: unique symbol
           (a: number, b: number): number
         }
 
         const tag = $Tag.tag<Add>(description)
-        const add = $Effector.function(tag)
+        const add = $Proxy.function(tag)
 
         await expect(
           // @ts-expect-error
-          $Runtime.run(add(42, 1337), $Layer.layer()),
-        ).rejects.toThrow(
-          `Cannot find handler for effect${
-            description ? ` "${description}"` : ''
-          }`,
+          $Runtime.runExit(add(42, 1337), $Layer.layer()),
+        ).resolves.toStrictEqual(
+          $Exit.failure(
+            $Cause.die(
+              new Error(
+                `Cannot find handler for effect${
+                  description ? ` "${description}"` : ''
+                }`,
+              ),
+            ),
+          ),
         )
       },
     )
 
-    test.each([
-      (a: number, b: number) => a + b,
-      async (a: number, b: number) => a + b,
-      function* (a: number, b: number) {
-        return a + b
-      },
-      async function* (a: number, b: number) {
-        return a + b
-      },
-    ])('handling effect from function "%s"', async (handler) => {
-      interface Add {
+    test('throwing error from effector', async () => {
+      await expect(
+        $Runtime.runExit(function* () {
+          throw new Error('foo')
+        }, $Layer.layer()),
+      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('foo'))))
+    })
+
+    test('throwing error from effect handler', async () => {
+      interface Divide {
+        readonly [uri]?: unique symbol
         (a: number, b: number): number
       }
 
-      const tag = $Tag.tag<Add>()
-      const add = $Effector.function(tag)
+      const tag = $Tag.tag<Divide>()
+      const divide = $Proxy.function(tag)
 
       await expect(
-        $Runtime.run(add(42, 1337), $Layer.layer().with(tag, handler)),
-      ).resolves.toStrictEqual(42 + 1337)
-    })
+        $Runtime.runExit(
+          divide(42, 0),
+          $Layer.layer().with(tag, (a, b) => {
+            if (b === 0) {
+              throw new Error('Cannot divide by zero')
+            }
 
-    test.each([
-      <A>(a: A) => a,
-      async <A>(a: A) => a,
-      function* <A>(a: A) {
-        return a
-      },
-      async function* <A>(a: A) {
-        return a
-      },
-    ])('handling effect from generic function "%s"', async (handler) => {
-      interface Identity {
-        <A>(a: A): A
-      }
-
-      const tag = $Tag.tag<Identity>()
-      const identity = <A>(a: A) => $Effector.functionA(tag)((r) => r(a))
-
-      await expect(
-        $Runtime.run(identity(42), $Layer.layer().with(tag, handler)),
-      ).resolves.toStrictEqual(42)
-    })
-
-    test.each([
-      { add: (a: number, b: number) => a + b },
-      { add: async (a: number, b: number) => a + b },
-      {
-        *add(a: number, b: number) {
-          return a + b
-        },
-      },
-      {
-        async *add(a: number, b: number) {
-          return a + b
-        },
-      },
-    ])('handling effect from struct "%s"', async (handler) => {
-      interface Calculator {
-        add(a: number, b: number): number
-      }
-
-      const tag = $Tag.tag<Calculator>()
-      const calculator = $Effector.struct(tag)('add')
-
-      await expect(
-        $Runtime.run(
-          calculator.add(42, 1337),
-          $Layer.layer().with(tag, handler),
+            return a / b
+          }),
         ),
-      ).resolves.toStrictEqual(42 + 1337)
+      ).resolves.toStrictEqual(
+        $Exit.failure($Cause.die(new Error('Cannot divide by zero'))),
+      )
     })
 
-    test.each([
-      { trace: <A>(a: A) => a },
-      { trace: async <A>(a: A) => a },
-      {
-        *trace<A>(a: A) {
-          return a
-        },
-      },
-      {
-        async *trace<A>(a: A) {
-          return a
-        },
-      },
-    ])('handling effect from struct "%s"', async (handler) => {
-      interface Log {
-        trace<A>(a: A): A
-      }
-
-      const tag = $Tag.tag<Log>()
-      const { trace } = $Effector.structA(tag)('trace')
-      const log = { trace: <A>(a: A) => trace((r) => r(a)) }
-
+    test('throwing error after catching exception', async () => {
       await expect(
-        $Runtime.run(log.trace(42), $Layer.layer().with(tag, handler)),
-      ).resolves.toStrictEqual(42)
+        $Runtime.runExit(function* () {
+          try {
+            return yield* $Exception.raise(new Error('foo'))
+          } catch {
+            throw new Error('bar')
+          }
+        }, $Layer.layer()),
+      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('bar'))))
     })
 
-    test('concatenating effects', async () => {
-      interface Log {
-        trace(message: string): string
-      }
-
-      interface Clock {
-        now(): Date
-      }
-
-      const tagLog = $Tag.tag<Log>()
-      const log = $Effector.struct(tagLog)('trace')
-
-      const tagClock = $Tag.tag<Clock>()
-      const clock = $Effector.struct(tagClock)('now')
-
-      const date = new Date()
-
+    test('throwing error after catching exception in nested fiber', async () => {
       await expect(
-        $Runtime.run(
-          log.trace('foo'),
-          $Layer
-            .layer()
-            .with(tagLog, {
-              *trace(message) {
-                return `${yield* clock.now()}\t${message}`
-              },
+        $Runtime.runExit(function* () {
+          try {
+            return yield* $Exception.raise(new Error('foo'))
+          } catch {
+            throw new Error('bar')
+          }
+        }, $Layer.layer()),
+      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('bar'))))
+    })
+
+    test('catching error from nested generator', async () => {
+      await expect(
+        $Runtime.runExit(function* () {
+          try {
+            return yield* $Fork.fork()(function* () {
+              throw new Error('foo')
             })
-            .with(tagClock, { now: () => date }),
-        ),
-      ).resolves.toStrictEqual(`${date}\tfoo`)
+          } catch {
+            return 'bar'
+          }
+        }, $Layer.layer()),
+      ).resolves.toStrictEqual($Exit.success('bar'))
     })
 
-    test('handling effect with callback', async () => {
-      interface Decoder<A> {
-        (u: unknown): A
-      }
-
-      interface Crypto {
-        number(): number
-      }
-
-      interface Cache {
-        get<A, G extends Generator<unknown, A>>(
-          key: string,
-          decoder: Decoder<A>,
-          onMiss: () => G,
-        ): Generator<$Generator.YOf<G>, A>
-      }
-
-      const tagCrypto = $Tag.tag<Crypto>()
-      const crypto = $Effector.struct(tagCrypto)('number')
-
-      const tagCache = $Tag.tag<Cache>()
-      const { get } = $Effector.structA(tagCache)('get')
-      const cache = {
-        get: <A, G extends Generator<unknown, A>>(
-          key: string,
-          decoder: Decoder<A>,
-          onMiss: () => G,
-        ) => get((r) => r(key, decoder, onMiss)),
-      }
-
-      const numberDecoder = (u: unknown) => {
-        if (typeof u !== 'number') {
-          throw new Error()
-        }
-
-        return u
-      }
-
+    test('rethrowing error from nested effector', async () => {
       await expect(
-        $Runtime.run(
-          cache.get('foo', numberDecoder, crypto.number),
-          $Layer
-            .layer()
-            .with(tagCrypto, { number: () => 42 })
-            .with(tagCache, { get: (_key, _decoder, onMiss) => onMiss() }),
-        ),
-      ).resolves.toStrictEqual(42)
+        $Runtime.runExit(function* () {
+          try {
+            return yield* $Fork.fork()(function* () {
+              throw new Error('foo')
+            })
+          } catch (error) {
+            throw error
+          }
+        }, $Layer.layer()),
+      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('foo'))))
+    })
+
+    test('rethrowing exception from nested effector', async () => {
+      await expect(
+        $Runtime.runExit(function* () {
+          try {
+            return yield* $Fork.fork()(function* () {
+              return yield* $Exception.raise(new Error('foo'))
+            })
+          } catch (error) {
+            throw error
+          }
+        }, $Layer.layer()),
+      ).resolves.toStrictEqual($Exit.failure($Cause.fail(new Error('foo'))))
     })
   })
 })

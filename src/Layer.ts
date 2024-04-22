@@ -1,13 +1,12 @@
-import * as $Effect from './Effect'
-import { Use } from './Effect'
 import { Function } from './Function'
+import * as $Generator from './Generator'
+import { AnyGenerator } from './Generator'
 import { Handler } from './Handler'
-import { DefaultLayer } from './Runtime'
 import { Struct } from './Struct'
 import { Tag } from './Tag'
 
-const R = Symbol()
-const A = Symbol()
+const R = Symbol('R')
+const A = Symbol('A')
 export class Layer<R, A> {
   readonly [R]!: R;
   readonly [A]!: (a: A) => any
@@ -26,35 +25,27 @@ export class Layer<R, A> {
     Exclude<
       | R
       | (H extends Function
-          ? ReturnType<H> extends
-              | Generator<infer U extends Use<any>>
-              | AsyncGenerator<infer U extends Use<any>>
-            ? $Effect.ROf<U>
+          ? ReturnType<H> extends infer G extends AnyGenerator
+            ? $Generator.UOf<G>
             : never
           : H extends Struct
           ? {
               [K in keyof H]: H[K] extends Function
-                ? ReturnType<H[K]> extends
-                    | Generator<infer U extends Use<any>>
-                    | AsyncGenerator<infer U extends Use<any>>
-                  ? $Effect.ROf<U>
+                ? ReturnType<H[K]> extends infer G extends AnyGenerator
+                  ? $Generator.UOf<G>
                   : never
                 : never
             }[keyof H]
           : never),
-      AOf<DefaultLayer> | A | _A
+      A | _A
     >,
     A | _A
   >
-  with<_R, _A>(
-    layer: Layer<_R, _A>,
-  ): Layer<Exclude<R | _R, AOf<DefaultLayer> | A | _A>, A | _A>
-  with(tagOrLayer: Tag<unknown> | Layer<any, any>, handler?: any) {
+  with<_R, _A>(layer: Layer<_R, _A>): Layer<Exclude<R | _R, A | _A>, A | _A>
+  with(tagOrLayer: Tag<any> | Layer<any, any>, handler?: any) {
     this.handlers = {
       ...this.handlers,
-      ...(tagOrLayer instanceof Layer
-        ? tagOrLayer.handlers
-        : { [tagOrLayer.key]: handler }),
+      ...(is(tagOrLayer) ? tagOrLayer.handlers : { [tagOrLayer.key]: handler }),
     }
 
     return this as any
@@ -65,14 +56,23 @@ export class Layer<R, A> {
   }
 
   handler<_A extends A>({ key }: Tag<_A>): Handler<_A> {
-    return this.handlers[key] as any
+    const handler = this.handlers[key]
+    if (handler === undefined) {
+      throw new Error(
+        `Cannot find handler for effect${
+          key.description ? ` "${key.description}"` : ''
+        }`,
+      )
+    }
+
+    return handler as any
   }
 }
 
-export type AOf<L extends Layer<any, any>> = L extends Layer<any, infer A>
-  ? A
-  : never
-
 export function layer() {
   return Layer.empty()
+}
+
+export function is(u: unknown): u is Layer<unknown, unknown> {
+  return u instanceof Layer
 }

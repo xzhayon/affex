@@ -1,24 +1,25 @@
-import * as $Effector from './Effector'
 import * as $Error from './Error'
 import * as $Layer from './Layer'
-import * as $Raise from './Raise'
+import { Result } from './Result'
 import * as $Runtime from './Runtime'
 import * as $Tag from './Tag'
-import { URI } from './Type'
+import { uri } from './Type'
+import * as $Exception from './effect/Exception'
+import * as $Proxy from './effect/Proxy'
 
 describe('Error', () => {
   interface Divide {
-    readonly [URI]?: unique symbol
-    (a: number, b: number): number | Error
+    readonly [uri]?: unique symbol
+    (a: number, b: number): Result<number, Error>
   }
 
   const tag = $Tag.tag<Divide>()
-  const divide = $Effector.function(tag)
+  const divide = $Proxy.function(tag)
 
   describe('tryCatch', () => {
     const layer = $Layer.layer().with(tag, function* (a, b) {
       if (b === 0) {
-        yield* $Raise.raise(new Error('Cannot divide by zero'))
+        yield* $Exception.raise(new Error('Cannot divide by zero'))
       }
 
       return a / b
@@ -26,7 +27,7 @@ describe('Error', () => {
 
     test('forwarding error', async () => {
       await expect(
-        $Runtime.run(
+        $Runtime.runPromise(
           $Error.tryCatch(divide(42, 0), function* (error) {
             throw error
           }),
@@ -37,7 +38,7 @@ describe('Error', () => {
 
     test('throwing new error', async () => {
       await expect(
-        $Runtime.run(
+        $Runtime.runPromise(
           $Error.tryCatch(divide(42, 0), function* () {
             throw new Error('Cannot recover from exception')
           }),
@@ -48,9 +49,9 @@ describe('Error', () => {
 
     test('raising new error', async () => {
       await expect(
-        $Runtime.run(
+        $Runtime.runPromise(
           $Error.tryCatch(divide(42, 0), function* () {
-            return yield* $Raise.raise(
+            return yield* $Exception.raise(
               new Error('Cannot recover from exception'),
             )
           }),
@@ -61,7 +62,7 @@ describe('Error', () => {
 
     test('returning value', async () => {
       await expect(
-        $Runtime.run(
+        $Runtime.runPromise(
           $Error.tryCatch(divide(42, 0), function* () {
             return NaN
           }),
@@ -72,15 +73,15 @@ describe('Error', () => {
 
     test('performing effect', async () => {
       interface Random {
-        readonly [URI]?: unique symbol
+        readonly [uri]?: unique symbol
         (): number
       }
 
       const tagRandom = $Tag.tag<Random>()
-      const random = $Effector.function(tagRandom)
+      const random = $Proxy.function(tagRandom)
 
       await expect(
-        $Runtime.run(
+        $Runtime.runPromise(
           $Error.tryCatch(divide(42, 0), function* () {
             return yield* random()
           }),

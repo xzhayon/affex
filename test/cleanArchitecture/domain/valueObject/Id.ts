@@ -3,7 +3,7 @@ import { fx } from 'fx'
 export type Id = string
 
 export interface RandomId {
-  readonly [fx.URI]?: unique symbol
+  readonly [fx.uri]?: unique symbol
   (): Id
 }
 
