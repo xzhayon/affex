@@ -6,11 +6,11 @@ export type Cause<E> = Fail<E> | Die
 
 type _Cause<T extends string> = Variant<typeof uri, T>
 
-interface Fail<E> extends _Cause<'Fail'> {
+export interface Fail<E> extends _Cause<'Fail'> {
   readonly error: E
 }
 
-interface Die extends _Cause<'Die'> {
+export interface Die extends _Cause<'Die'> {
   readonly error: unknown
 }
 
