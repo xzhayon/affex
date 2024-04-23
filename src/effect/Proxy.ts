@@ -58,7 +58,7 @@ export { _function as function }
 
 export function structA<R extends Struct>(tag: Tag<R>) {
   return <
-    K extends { [K in keyof R]: R[K] extends Function ? K : never }[keyof R],
+    K extends { [_K in keyof R]: R[_K] extends Function ? _K : never }[keyof R],
   >(
     ...keys: NonEmptyArray<K>
   ) =>
@@ -86,7 +86,7 @@ export function structA<R extends Struct>(tag: Tag<R>) {
 
 export function struct<R extends Struct>(tag: Tag<R>) {
   return <
-    K extends { [K in keyof R]: R[K] extends Function ? K : never }[keyof R],
+    K extends { [_K in keyof R]: R[_K] extends Function ? _K : never }[keyof R],
   >(
     ...keys: NonEmptyArray<K>
   ) =>
