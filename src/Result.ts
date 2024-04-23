@@ -1,11 +1,8 @@
-import { tag, uri } from './Type'
+import { Variant } from './Type'
 
 export type Result<A, E> = Success<A> | Failure<E>
 
-interface _Result<T extends string> {
-  readonly [uri]?: unique symbol
-  readonly [tag]: T
-}
+type _Result<T extends string> = Variant<typeof uri, T>
 
 interface Success<A> extends _Result<'Success'> {
   readonly value: A
@@ -14,6 +11,8 @@ interface Success<A> extends _Result<'Success'> {
 interface Failure<E> extends _Result<'Failure'> {
   readonly error: E
 }
+
+declare const uri: unique symbol
 
 export type AOf<R extends Result<any, any>> = R extends Success<infer A>
   ? A

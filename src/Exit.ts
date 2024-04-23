@@ -1,15 +1,11 @@
 import { Cause } from './Cause'
 import * as $Struct from './Struct'
 import * as $Type from './Type'
+import { Variant } from './Type'
 
 export type Exit<A, E> = Success<A> | Failure<E>
 
-const uri = Symbol('Exit')
-
-interface _Exit<T extends string> {
-  readonly [$Type.uri]: typeof uri
-  readonly [$Type.tag]: T
-}
+type _Exit<T extends string> = Variant<typeof uri, T>
 
 interface Success<A> extends _Exit<'Success'> {
   readonly value: A
@@ -19,12 +15,15 @@ interface Failure<E> extends _Exit<'Failure'> {
   readonly cause: Cause<E>
 }
 
+const uri = Symbol('Exit')
+const _exit = $Type.variant(uri)
+
 export function success<A>(value: A): Exit<A, never> {
-  return { [$Type.uri]: uri, [$Type.tag]: 'Success', value }
+  return { ..._exit('Success'), value }
 }
 
 export function failure<E>(cause: Cause<E>): Exit<never, E> {
-  return { [$Type.uri]: uri, [$Type.tag]: 'Failure', cause }
+  return { ..._exit('Failure'), cause }
 }
 
 export function is(u: unknown): u is Exit<unknown, unknown> {

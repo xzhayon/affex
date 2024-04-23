@@ -1,18 +1,17 @@
 import { Effector } from '../Effector'
 import * as $Struct from '../Struct'
 import * as $Type from '../Type'
+import { Variant } from '../Type'
 import { Exception } from './Exception'
 import { Fork } from './Fork'
 import { Proxy } from './Proxy'
 
 export type Effect<R, A, E> = Exception<E> | Fork<R, A, E> | Proxy<R, A, E>
 
-export const uri = Symbol('Effect')
+export type _Effect<T extends string> = Variant<typeof uri, T>
 
-export interface _Effect<T extends string> {
-  readonly [$Type.uri]: typeof uri
-  readonly [$Type.tag]: T
-}
+const uri = Symbol('Effect')
+export const _effect = $Type.variant(uri)
 
 export function is(u: unknown): u is Effect<unknown, unknown, unknown> {
   return $Struct.is(u) && $Struct.has(u, $Type.uri) && u[$Type.uri] === uri

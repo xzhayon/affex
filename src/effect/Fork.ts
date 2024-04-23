@@ -3,10 +3,9 @@ import { Throw, Use } from '../Effector'
 import { Exit } from '../Exit'
 import * as $Generator from '../Generator'
 import { AnyGenerator, Generated } from '../Generator'
-import * as $Type from '../Type'
 import { OrLazy } from '../Type'
 import * as $Effect from './Effect'
-import { Effect, _Effect } from './Effect'
+import { Effect, _Effect, _effect } from './Effect'
 
 export interface Fork<R, A, E> extends _Effect<'Fork'> {
   handle(
@@ -55,7 +54,7 @@ function _fork<
   Awaited<Generated<ReturnType<F>>>,
   ReturnType<F> extends infer G extends AnyGenerator ? $Generator.TOf<G> : never
 > {
-  return { [$Type.uri]: $Effect.uri, [$Type.tag]: 'Fork', handle }
+  return { ..._effect('Fork'), handle }
 }
 
 export function fork<R = never>() {

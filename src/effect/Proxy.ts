@@ -8,9 +8,8 @@ import * as $Result from '../Result'
 import { Result, Resulted } from '../Result'
 import { Struct } from '../Struct'
 import { Tag } from '../Tag'
-import * as $Type from '../Type'
 import * as $Effect from './Effect'
-import { Effect, _Effect } from './Effect'
+import { Effect, _Effect, _effect } from './Effect'
 
 declare const E: unique symbol
 export interface Proxy<R, A, E> extends _Effect<'Proxy'> {
@@ -35,7 +34,7 @@ function proxy<R, F extends Handler<(handler: Handler<R>) => any>>(
       ? $Result.EOf<_R>
       : never)
 > {
-  return { [$Type.uri]: $Effect.uri, [$Type.tag]: 'Proxy', tag, handle }
+  return { ..._effect('Proxy'), tag, handle }
 }
 
 export function functionA<R extends Function>(tag: Tag<R>) {
