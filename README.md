@@ -20,14 +20,14 @@ import { fx } from '@xzhayon/fx'
 
 // Define effect interface.
 interface Log {
-  readonly [fx.URI]?: unique symbol
+  readonly [fx.uri]?: unique symbol
   (message: string): void
 }
 
 // Create effect tag.
 const tag = fx.tag<Log>()
 
-// Derive effector.
+// Derive effector constructor.
 const log = fx.function(tag)
 
 // Perform effect in generator function.
