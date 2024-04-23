@@ -1,3 +1,4 @@
+import { Equal } from '@type-challenges/utils'
 import { Throw } from './Effector'
 import { NullError } from './Error'
 import { Function } from './Function'
@@ -30,7 +31,9 @@ type ReturnTypeHandler<A> =
       Resulted<A>,
       A extends Result<any, any>
         ? $Result.EOf<A> extends infer E
-          ? Throw<E>
+          ? Equal<E, never> extends false
+            ? Throw<E>
+            : Throw<NullError>
           : never
         : Throw<NullError>
     >
