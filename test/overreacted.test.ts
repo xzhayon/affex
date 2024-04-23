@@ -8,7 +8,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
   }
 
   interface AskName {
-    readonly [fx.URI]?: unique symbol
+    readonly [fx.uri]?: unique symbol
     (): UserName
   }
   const tagAskName = fx.tag<AskName>()
@@ -22,21 +22,21 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
   }
 
   interface OpenDirectory {
-    readonly [fx.URI]?: unique symbol
+    readonly [fx.uri]?: unique symbol
     (dirName: DirName): DirContents
   }
   const tagOpenDirectory = fx.tag<OpenDirectory>()
   const openDirectory = fx.function(tagOpenDirectory)
 
   interface Log {
-    readonly [fx.URI]?: unique symbol
+    readonly [fx.uri]?: unique symbol
     (message: string): void
   }
   const tagLog = fx.tag<Log>()
   const log = fx.function(tagLog)
 
   interface HandleFile {
-    readonly [fx.URI]?: unique symbol
+    readonly [fx.uri]?: unique symbol
     (fileName: FileName): void
   }
   const tagHandleFile = fx.tag<HandleFile>()
@@ -56,7 +56,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
       }
 
       await expect(
-        fx.run(
+        fx.runPromise(
           makeFriends(
             { name: null, friendNames: [] },
             { name: 'Gendry', friendNames: [] },
@@ -84,7 +84,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
       }
 
       await expect(
-        fx.run(
+        fx.runPromise(
           makeFriends(
             { name: null, friendNames: [] },
             { name: 'Gendry', friendNames: [] },
@@ -126,7 +126,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
       const _log: string[] = []
       const dirs: string[] = []
       const files: string[] = []
-      await fx.run(
+      await fx.runPromise(
         enumerateFiles('/dev'),
         fx
           .layer()
@@ -187,7 +187,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
       const _log: string[] = []
       const dirs: string[] = []
       const files: string[] = []
-      await fx.run(
+      await fx.runPromise(
         enumerateFiles('/dev'),
         fx
           .layer()

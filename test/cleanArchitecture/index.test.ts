@@ -33,7 +33,7 @@ describe('Clean architecture', () => {
       .with(MockStarshipRepository())
 
     await expect(
-      fx.run(flyStarship('luke', 'x-wing'), layer.with(mockLayer)),
+      fx.runPromise(flyStarship('luke', 'x-wing'), layer.with(mockLayer)),
     ).rejects.toThrow(/Character "[^"]+" cannot fly starship "[^"]+"/)
   })
 
@@ -61,7 +61,7 @@ describe('Clean architecture', () => {
       .with(InMemoryStarshipRepository(starshipStorage))
 
     await expect(
-      fx.run(flyStarship('luke', 'x-wing'), layer.with(inMemoryLayer)),
+      fx.runPromise(flyStarship('luke', 'x-wing'), layer.with(inMemoryLayer)),
     ).resolves.toMatchObject({
       character: { searchTerms: ['luke'] },
       starship: { searchTerms: ['x-wing'] },

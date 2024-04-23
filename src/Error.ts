@@ -1,29 +1,28 @@
 import * as $Generator from './Generator'
-import * as $Iterator from './Iterator'
-import { URI } from './Type'
+import { OrLazy, uri } from './Type'
 
 export interface NullError {
-  readonly [URI]?: unique symbol
+  readonly [uri]?: unique symbol
 }
 
-export type Throw<E> = (e: E) => E
+export function is(u: unknown): u is Error {
+  return u instanceof Error
+}
 
-export type EOf<T extends Throw<any>> = T extends Throw<infer E> ? E : never
+export function isAggregate(error: Error): error is AggregateError {
+  return error instanceof AggregateError
+}
 
 export function* tryCatch<A extends Generator, B extends Generator>(
-  effector: A | (() => A),
-  onError: (
-    error: $Generator.NOf<A> extends infer T extends Throw<any>
-      ? EOf<T>
-      : never,
-  ) => B,
+  effector: OrLazy<A>,
+  onError: (error: $Generator.TOf<A>) => B,
 ): Generator<
   $Generator.YOf<A> | $Generator.YOf<B>,
   $Generator.ROf<A> | $Generator.ROf<B>,
   $Generator.NOf<B>
 > {
   try {
-    return yield* ($Iterator.is(effector) ? effector : effector()) as any
+    return yield* ($Generator.is(effector) ? effector : effector()) as any
   } catch (error: any) {
     return yield* onError(error) as any
   }

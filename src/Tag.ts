@@ -1,9 +1,9 @@
 import * as $String from './String'
-import { URI } from './Type'
+import { uri } from './Type'
 
 declare const A: unique symbol
 export interface Tag<A> {
-  readonly [URI]: 'Tag'
+  readonly [uri]?: unique symbol
   readonly [A]?: A
   readonly key: symbol
 }
@@ -12,7 +12,6 @@ export function tag<A>(key?: symbol): Tag<A>
 export function tag<A>(description?: string): Tag<A>
 export function tag<A>(keyOrDescription: symbol | string = Symbol()): Tag<A> {
   return {
-    [URI]: 'Tag',
     key: $String.is(keyOrDescription)
       ? Symbol(keyOrDescription)
       : keyOrDescription,

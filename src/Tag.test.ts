@@ -3,16 +3,16 @@ import * as $Tag from './Tag'
 describe('Tag', () =>
   describe('tag', () => {
     test('creating tag', () => {
-      expect(typeof $Tag.tag<never>().key).toStrictEqual('symbol')
+      expect(typeof $Tag.tag().key).toStrictEqual('symbol')
     })
 
     test('creating tag providing key', () => {
       const symbol = Symbol()
 
-      expect($Tag.tag<never>(symbol).key).toStrictEqual(symbol)
+      expect($Tag.tag(symbol).key).toStrictEqual(symbol)
     })
 
     test('creating tag with description', () => {
-      expect($Tag.tag<never>('foo').key.description).toStrictEqual('foo')
+      expect($Tag.tag('foo').key.description).toStrictEqual('foo')
     })
   }))

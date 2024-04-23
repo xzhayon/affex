@@ -3,8 +3,8 @@ import { StarshipSearchTerm } from '../../domain/entity/Starship'
 import { StarshipDto } from '../dto/StarshipDto'
 
 export interface GetStarshipByNameQuery {
-  readonly [fx.URI]?: unique symbol
-  (name: StarshipSearchTerm): StarshipDto | Error
+  readonly [fx.uri]?: unique symbol
+  (name: StarshipSearchTerm): fx.Result<StarshipDto, Error>
 }
 
 export const tag = fx.tag<GetStarshipByNameQuery>()

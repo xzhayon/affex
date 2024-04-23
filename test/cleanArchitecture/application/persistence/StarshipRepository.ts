@@ -7,7 +7,7 @@ import {
 } from '../../domain/entity/Starship'
 
 export interface StarshipRepository {
-  readonly [fx.URI]?: unique symbol
+  readonly [fx.uri]?: unique symbol
   findManyById(ids: ReadonlyArray<IdOf<Starship>>): ReadonlyArray<Starship>
   findOneById(id: IdOf<Starship>): Starship | undefined
   findOneByExternalId(externalId: StarshipExternalId): Starship | undefined

@@ -7,7 +7,7 @@ import {
 import { IdOf } from '../../domain/entity/Entity'
 
 export interface CharacterRepository {
-  readonly [fx.URI]?: unique symbol
+  readonly [fx.uri]?: unique symbol
   findOneById(id: IdOf<Character>): Character | undefined
   findOneByExternalId(externalId: CharaterExternalId): Character | undefined
   findOneBySearchTerm(searchTerm: CharaterSearchTerm): Character | undefined
