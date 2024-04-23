@@ -18,6 +18,8 @@ export interface Proxy<R, A, E> extends _Effect<'Proxy'> {
   readonly handle: Handler<(handler: Handler<R>) => A>
 }
 
+type Unwrapped<A> = Resulted<Awaited<Generated<Resulted<A>>>>
+
 function proxy<R, F extends Handler<(handler: Handler<R>) => any>>(
   tag: Tag<R>,
   handle: F,
@@ -26,7 +28,7 @@ function proxy<R, F extends Handler<(handler: Handler<R>) => any>>(
   | (ReturnType<F> extends infer G extends AnyGenerator
       ? $Generator.UOf<G>
       : never),
-  Awaited<Generated<Resulted<ReturnType<F>>>>,
+  Unwrapped<ReturnType<F>>,
   | (ReturnType<F> extends infer G extends AnyGenerator
       ? $Generator.TOf<G>
       : never)
@@ -42,7 +44,7 @@ export function functionA<R extends Function>(tag: Tag<R>) {
     handle: (r: R | (() => never)) => A,
   ): Effector<
     R | (A extends infer G extends AnyGenerator ? $Generator.UOf<G> : never),
-    Awaited<Generated<Resulted<A>>>,
+    Unwrapped<A>,
     | (A extends infer G extends AnyGenerator ? $Generator.TOf<G> : never)
     | (Awaited<Generated<A>> extends infer _R extends Result<any, any>
         ? $Result.EOf<_R>
@@ -75,7 +77,7 @@ export function structA<R extends Struct>(tag: Tag<R>) {
       ) => Effector<
         | R
         | (A extends infer G extends AnyGenerator ? $Generator.UOf<G> : never),
-        Awaited<Generated<Resulted<A>>>,
+        Unwrapped<A>,
         | (A extends infer G extends AnyGenerator ? $Generator.TOf<G> : never)
         | (Awaited<Generated<A>> extends infer _R extends Result<any, any>
             ? $Result.EOf<_R>
@@ -106,7 +108,7 @@ export function struct<R extends Struct>(tag: Tag<R>) {
             | (ReturnType<R[_K]> extends infer G extends AnyGenerator
                 ? $Generator.UOf<G>
                 : never),
-            Awaited<Generated<ReturnType<R[_K]>>>,
+            Unwrapped<ReturnType<R[_K]>>,
             | (ReturnType<R[_K]> extends infer G extends AnyGenerator
                 ? $Generator.TOf<G>
                 : never)
