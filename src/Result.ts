@@ -8,10 +8,10 @@ interface _Result<T extends string> {
   readonly [$Type.tag]?: T
 }
 
-type Success<A> = A & _Result<'Success'>
+export type Success<A> = A & _Result<'Success'>
 
 declare const E: unique symbol
-interface Failure<E> extends _Result<'Failure'> {
+export interface Failure<E> extends _Result<'Failure'> {
   readonly [E]?: E
 }
 

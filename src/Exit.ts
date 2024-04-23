@@ -7,11 +7,11 @@ export type Exit<A, E> = Success<A> | Failure<E>
 
 type _Exit<T extends string> = Variant<typeof uri, T>
 
-interface Success<A> extends _Exit<'Success'> {
+export interface Success<A> extends _Exit<'Success'> {
   readonly value: A
 }
 
-interface Failure<E> extends _Exit<'Failure'> {
+export interface Failure<E> extends _Exit<'Failure'> {
   readonly cause: Cause<E>
 }
 
