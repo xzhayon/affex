@@ -136,4 +136,38 @@ describe('Error', () => {
       )
     })
   })
+
+  describe('tryCatchAsync', () => {
+    test('catching error', async () => {
+      await expect(
+        $Runtime.runPromise(
+          $Error.tryCatchAsync(
+            async function* () {
+              throw new Error('foo')
+            },
+            function* (error) {
+              return error
+            },
+          ),
+          $Layer.layer(),
+        ),
+      ).resolves.toStrictEqual(new Error('foo'))
+    })
+
+    test('catching "asynchronous" error', async () => {
+      await expect(
+        $Runtime.runPromise(
+          $Error.tryCatchAsync(
+            (async function* () {
+              return await Promise.reject(new Error('foo'))
+            })(),
+            function* (error) {
+              return error
+            },
+          ),
+          $Layer.layer(),
+        ),
+      ).resolves.toStrictEqual(new Error('foo'))
+    })
+  })
 })
