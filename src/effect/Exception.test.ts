@@ -1,3 +1,5 @@
+import * as $Cause from '../Cause'
+import * as $Exit from '../Exit'
 import * as $Layer from '../Layer'
 import { Result } from '../Result'
 import * as $Runtime from '../Runtime'
@@ -26,7 +28,7 @@ describe('Exception', () => {
       const random = $Proxy.function(tagRandom)
 
       await expect(
-        $Runtime.runPromise(
+        $Runtime.runExit(
           random,
           // @ts-expect-error
           $Layer.layer().with(tagRandom, function* () {
@@ -35,12 +37,14 @@ describe('Exception', () => {
             )
           }),
         ),
-      ).rejects.toThrow('Cannot return random number')
+      ).resolves.toStrictEqual(
+        $Exit.failure($Cause.fail(new Error('Cannot return random number'))),
+      )
     })
 
     test('raising error', async () => {
       await expect(
-        $Runtime.runPromise(
+        $Runtime.runExit(
           divide(42, 0),
           $Layer.layer().with(tag, function* (a, b) {
             if (b === 0) {
@@ -50,14 +54,16 @@ describe('Exception', () => {
             return a / b
           }),
         ),
-      ).rejects.toThrow('Cannot divide by zero')
+      ).resolves.toStrictEqual(
+        $Exit.failure($Cause.fail(new Error('Cannot divide by zero'))),
+      )
     })
 
     test('raising error subclass', async () => {
       class FooError extends Error {}
 
       await expect(
-        $Runtime.runPromise(
+        $Runtime.runExit(
           divide(42, 0),
           $Layer.layer().with(tag, function* (a, b) {
             if (b === 0) {
@@ -67,7 +73,9 @@ describe('Exception', () => {
             return a / b
           }),
         ),
-      ).rejects.toThrow('Cannot divide by zero')
+      ).resolves.toStrictEqual(
+        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
+      )
     })
 
     test('raising different error', async () => {
@@ -76,7 +84,7 @@ describe('Exception', () => {
       }
 
       await expect(
-        $Runtime.runPromise(
+        $Runtime.runExit(
           divide(42, 0),
           // @ts-expect-error
           $Layer.layer().with(tag, function* (a, b) {
@@ -87,7 +95,32 @@ describe('Exception', () => {
             return a / b
           }),
         ),
-      ).rejects.toThrow('Cannot divide by zero')
+      ).resolves.toStrictEqual(
+        $Exit.failure($Cause.fail(new BarError('Cannot divide by zero'))),
+      )
+    })
+
+    test('rethrowing error', async () => {
+      await expect(
+        $Runtime.runExit(
+          function* () {
+            try {
+              return yield* divide(42, 0)
+            } catch (error) {
+              throw error
+            }
+          },
+          $Layer.layer().with(tag, function* (a, b) {
+            if (b === 0) {
+              yield* $Exception.raise(new Error('Cannot divide by zero'))
+            }
+
+            return a / b
+          }),
+        ),
+      ).resolves.toStrictEqual(
+        $Exit.failure($Cause.fail(new Error('Cannot divide by zero'))),
+      )
     })
 
     test('raising error and performing effect', async () => {
@@ -100,7 +133,7 @@ describe('Exception', () => {
       const random = $Proxy.function(tagRandom)
 
       await expect(
-        $Runtime.runPromise(
+        $Runtime.runExit(
           divide(42, 0),
           $Layer
             .layer()
@@ -113,7 +146,9 @@ describe('Exception', () => {
             })
             .with(tagRandom, () => Math.random()),
         ),
-      ).rejects.toThrow('Cannot divide by zero')
+      ).resolves.toStrictEqual(
+        $Exit.failure($Cause.fail(new Error('Cannot divide by zero'))),
+      )
     })
   })
 })
