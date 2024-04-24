@@ -46,11 +46,29 @@ export function* sequence<G extends Generator>(
   return as
 }
 
+export async function* sequenceAsync<G extends AnyGenerator>(
+  generators: ReadonlyArray<G>,
+): AsyncGenerator<YOf<G>, ROf<G>[], NOf<G>> {
+  const as = []
+  for await (const generator of generators) {
+    as.push(yield* generator as any)
+  }
+
+  return as
+}
+
 export function traverse<A, G extends Generator>(
   as: ReadonlyArray<A>,
   f: (a: A) => G,
 ) {
   return sequence(as.map(f))
+}
+
+export function traverseAsync<A, G extends AnyGenerator>(
+  as: ReadonlyArray<A>,
+  f: (a: A) => G,
+) {
+  return sequenceAsync(as.map(f))
 }
 
 export function is(u: unknown): u is AnyGenerator {

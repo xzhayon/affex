@@ -3,9 +3,19 @@ import { failure, success } from './Exit'
 
 export { is as isCause, isDie, isFail } from './Cause'
 export { AsyncEffector, Effector } from './Effector'
-export { tryCatch } from './Error'
+export { tryCatch, tryCatchAsync } from './Error'
 export { is as isExit, isFailure, isSuccess } from './Exit'
-export { NOf, ROf, TOf, UOf, YOf, sequence, traverse } from './Generator'
+export {
+  NOf,
+  ROf,
+  TOf,
+  UOf,
+  YOf,
+  sequence,
+  sequenceAsync,
+  traverse,
+  traverseAsync,
+} from './Generator'
 export { layer } from './Layer'
 export { all, any, race, settled } from './Promise'
 export { Result } from './Result'

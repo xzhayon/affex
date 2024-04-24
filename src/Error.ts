@@ -1,4 +1,5 @@
 import * as $Generator from './Generator'
+import { AnyGenerator } from './Generator'
 import { OrLazy, uri } from './Type'
 
 export interface NullError {
@@ -21,6 +22,24 @@ export function* tryCatch<A extends Generator, B extends Generator>(
   effector: OrLazy<A>,
   onError: (error: $Generator.TOf<A> | UnknownError) => B,
 ): Generator<
+  $Generator.YOf<A> | $Generator.YOf<B>,
+  $Generator.ROf<A> | $Generator.ROf<B>,
+  $Generator.NOf<B>
+> {
+  try {
+    return yield* ($Generator.is(effector) ? effector : effector()) as any
+  } catch (error: any) {
+    return yield* onError(error) as any
+  }
+}
+
+export async function* tryCatchAsync<
+  A extends AnyGenerator,
+  B extends AnyGenerator,
+>(
+  effector: OrLazy<A>,
+  onError: (error: $Generator.TOf<A> | UnknownError) => B,
+): AsyncGenerator<
   $Generator.YOf<A> | $Generator.YOf<B>,
   $Generator.ROf<A> | $Generator.ROf<B>,
   $Generator.NOf<B>
