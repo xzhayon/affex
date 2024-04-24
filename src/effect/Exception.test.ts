@@ -80,7 +80,7 @@ describe('Exception', () => {
 
     test('raising different error', async () => {
       class BarError extends Error {
-        readonly [uri]!: 'BarError'
+        readonly [uri]!: 'Bar'
       }
 
       await expect(

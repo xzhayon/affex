@@ -96,5 +96,44 @@ describe('Error', () => {
         ),
       ).resolves.toStrictEqual(42)
     })
+
+    test('handling unexpected errors', async () => {
+      class FooError extends Error {
+        readonly [uri]!: 'Foo'
+      }
+
+      class BarError extends Error {
+        readonly [uri]!: 'Bar'
+      }
+
+      await expect(
+        $Runtime.runExit(function* () {
+          // @ts-expect-error
+          return (yield* $Error.tryCatch(
+            function* () {
+              if (false) {
+                return yield* $Exception.raise(new FooError())
+              }
+
+              throw new BarError()
+            },
+            function* (error) {
+              switch (error[uri]) {
+                case 'Foo':
+                  return 'foo'
+              }
+            },
+          )).length
+        }, $Layer.layer()),
+      ).resolves.toStrictEqual(
+        $Exit.failure(
+          $Cause.die(
+            new TypeError(
+              "Cannot read properties of undefined (reading 'length')",
+            ),
+          ),
+        ),
+      )
+    })
   })
 })
