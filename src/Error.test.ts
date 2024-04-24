@@ -1,4 +1,6 @@
+import * as $Cause from './Cause'
 import * as $Error from './Error'
+import * as $Exit from './Exit'
 import * as $Layer from './Layer'
 import { Result } from './Result'
 import * as $Runtime from './Runtime'
@@ -15,41 +17,44 @@ describe('Error', () => {
 
   const tag = $Tag.tag<Divide>()
   const divide = $Proxy.function(tag)
+  const layer = $Layer.layer().with(tag, function* (a, b) {
+    if (b === 0) {
+      yield* $Exception.raise(new Error('Cannot divide by zero'))
+    }
+
+    return a / b
+  })
 
   describe('tryCatch', () => {
-    const layer = $Layer.layer().with(tag, function* (a, b) {
-      if (b === 0) {
-        yield* $Exception.raise(new Error('Cannot divide by zero'))
-      }
-
-      return a / b
-    })
-
     test('forwarding error', async () => {
       await expect(
-        $Runtime.runPromise(
+        $Runtime.runExit(
           $Error.tryCatch(divide(42, 0), function* (error) {
             throw error
           }),
           layer,
         ),
-      ).rejects.toThrow('Cannot divide by zero')
+      ).resolves.toStrictEqual(
+        $Exit.failure($Cause.die(new Error('Cannot divide by zero'))),
+      )
     })
 
     test('throwing new error', async () => {
       await expect(
-        $Runtime.runPromise(
+        $Runtime.runExit(
           $Error.tryCatch(divide(42, 0), function* () {
             throw new Error('Cannot recover from exception')
           }),
           layer,
         ),
-      ).rejects.toThrow('Cannot recover from exception')
+      ).resolves.toStrictEqual(
+        $Exit.failure($Cause.die(new Error('Cannot recover from exception'))),
+      )
     })
 
     test('raising new error', async () => {
       await expect(
-        $Runtime.runPromise(
+        $Runtime.runExit(
           $Error.tryCatch(divide(42, 0), function* () {
             return yield* $Exception.raise(
               new Error('Cannot recover from exception'),
@@ -57,7 +62,9 @@ describe('Error', () => {
           }),
           layer,
         ),
-      ).rejects.toThrow('Cannot recover from exception')
+      ).resolves.toStrictEqual(
+        $Exit.failure($Cause.fail(new Error('Cannot recover from exception'))),
+      )
     })
 
     test('returning value', async () => {
