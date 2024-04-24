@@ -150,5 +150,35 @@ describe('Exception', () => {
         $Exit.failure($Cause.fail(new Error('Cannot divide by zero'))),
       )
     })
+
+    test('expecting multiple errors', async () => {
+      class FooError extends Error {
+        readonly [uri]!: 'Foo'
+      }
+
+      class BarError extends Error {
+        readonly [uri]!: 'Bar'
+      }
+
+      interface FooBar {
+        (): Result<never, FooError | BarError>
+      }
+
+      const tagFooBar = $Tag.tag<FooBar>()
+      const fooBar = $Proxy.function(tagFooBar)
+
+      await expect(
+        $Runtime.runExit(
+          fooBar,
+          $Layer.layer().with(tagFooBar, function* () {
+            if (false) {
+              return yield* $Exception.raise(new FooError())
+            }
+
+            return yield* $Exception.raise(new BarError())
+          }),
+        ),
+      ).resolves.toStrictEqual($Exit.failure($Cause.fail(new BarError())))
+    })
   })
 })
