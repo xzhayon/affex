@@ -1,4 +1,4 @@
-import { Effector } from '../Effector'
+import { Effector, Throw, Use } from '../Effector'
 import * as $Struct from '../Struct'
 import * as $Type from '../Type'
 import { Variant } from '../Type'
@@ -18,5 +18,7 @@ export function is(u: unknown): u is Effect<unknown, unknown, unknown> {
 }
 
 export function* perform<R, A, E>(effect: Effect<R, A, E>): Effector<R, A, E> {
-  return (yield effect as any) as any
+  return (yield effect as unknown as
+    | (R extends any ? Use<R> : never)
+    | (E extends any ? Throw<E> : never)) as A
 }
