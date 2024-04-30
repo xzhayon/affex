@@ -97,7 +97,7 @@ describe('Error', () => {
       ).resolves.toStrictEqual(42)
     })
 
-    test('handling unexpected errors', async () => {
+    test('handling unexpected error', async () => {
       class FooError extends Error {
         readonly [uri]!: 'Foo'
       }
