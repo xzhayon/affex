@@ -75,11 +75,11 @@ describe('Fork', () => {
 
     test('raising error from generator function', async () => {
       await expect(
-        $Runtime.runPromise(
+        $Runtime.runExit(
           $Fork.fork()(() => $Exception.raise(new Error('foo'))),
           $Layer.layer(),
         ),
-      ).rejects.toThrow('foo')
+      ).resolves.toStrictEqual($Exit.failure($Cause.fail(new Error('foo'))))
     })
 
     test('forking function with effects', async () => {

@@ -9,9 +9,13 @@ import * as $Exception from './Exception'
 import * as $Proxy from './Proxy'
 
 describe('Exception', () => {
+  class FooError extends Error {
+    readonly [uri]!: 'Foo'
+  }
+
   interface Divide {
     readonly [uri]?: unique symbol
-    (a: number, b: number): Result<number, Error>
+    (a: number, b: number): Result<number, FooError>
   }
 
   const tag = $Tag.tag<Divide>()
@@ -42,10 +46,11 @@ describe('Exception', () => {
       )
     })
 
-    test('raising error', async () => {
+    test('raising error supertype', async () => {
       await expect(
         $Runtime.runExit(
           divide(42, 0),
+          // @ts-expect-error
           $Layer.layer().with(tag, function* (a, b) {
             if (b === 0) {
               yield* $Exception.raise(new Error('Cannot divide by zero'))
@@ -59,9 +64,7 @@ describe('Exception', () => {
       )
     })
 
-    test('raising error subclass', async () => {
-      class FooError extends Error {}
-
+    test('raising error', async () => {
       await expect(
         $Runtime.runExit(
           divide(42, 0),
@@ -112,14 +115,14 @@ describe('Exception', () => {
           },
           $Layer.layer().with(tag, function* (a, b) {
             if (b === 0) {
-              yield* $Exception.raise(new Error('Cannot divide by zero'))
+              yield* $Exception.raise(new FooError('Cannot divide by zero'))
             }
 
             return a / b
           }),
         ),
       ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new Error('Cannot divide by zero'))),
+        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
       )
     })
 
@@ -139,7 +142,7 @@ describe('Exception', () => {
             .layer()
             .with(tag, function* (_a, b) {
               if (b === 0) {
-                yield* $Exception.raise(new Error('Cannot divide by zero'))
+                yield* $Exception.raise(new FooError('Cannot divide by zero'))
               }
 
               return yield* random()
@@ -147,15 +150,11 @@ describe('Exception', () => {
             .with(tagRandom, () => Math.random()),
         ),
       ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new Error('Cannot divide by zero'))),
+        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
       )
     })
 
     test('expecting multiple errors', async () => {
-      class FooError extends Error {
-        readonly [uri]!: 'Foo'
-      }
-
       class BarError extends Error {
         readonly [uri]!: 'Bar'
       }
