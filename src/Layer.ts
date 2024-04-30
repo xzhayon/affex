@@ -4,12 +4,13 @@ import { AnyGenerator } from './Generator'
 import { Handler } from './Handler'
 import { Struct } from './Struct'
 import { Tag } from './Tag'
+import { Contravariant, Covariant } from './Type'
 
 const R = Symbol('R')
 const A = Symbol('A')
 export class Layer<R, A> {
-  readonly [R]!: R;
-  readonly [A]!: (a: A) => any
+  readonly [R]!: Covariant<R>;
+  readonly [A]!: Contravariant<A>
   private handlers: Readonly<Record<symbol, Handler<any>>> = {}
 
   static empty() {
