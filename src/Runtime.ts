@@ -17,7 +17,7 @@ export class Runtime<R> {
   private constructor(private readonly layer: Layer<never, R>) {}
 
   readonly run = async <
-    G extends AnyEffector<IsNever<R> extends false ? R : any, any, any>,
+    G extends AnyEffector<any, any, IsNever<R> extends false ? R : any>,
   >(
     effector: OrLazy<G>,
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
@@ -55,7 +55,7 @@ export class Runtime<R> {
     }
   }
 
-  private readonly handle = async <A, E>(effect: Effect<R, A, E>) => {
+  private readonly handle = async <A, E>(effect: Effect<A, E, R>) => {
     switch (effect[$Type.tag]) {
       case 'Exception':
         return $Exit.failure($Cause.fail(effect.error))

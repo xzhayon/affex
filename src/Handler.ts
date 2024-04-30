@@ -25,8 +25,7 @@ type ReturnHandler<A> =
   | Resulted<A>
   | Promise<Resulted<A>>
   | AnyEffector<
-      any,
       Resulted<A>,
-      A extends Result<any, any> ? $Result.EOf<A> : never
+      A extends Result<any, any> ? $Result.EOf<A> : never,
+      any
     >
-type A = ReturnHandler<number>

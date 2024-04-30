@@ -12,7 +12,7 @@ export class Fiber<A, E> {
       $Function.is(effector) ? effector() : effector,
     )
 
-  private constructor(private readonly effector: AnyEffector<any, A, E>) {}
+  private constructor(private readonly effector: AnyEffector<A, E, any>) {}
 
   readonly resume = async (value?: unknown) => {
     const result = await this.effector.next(value)

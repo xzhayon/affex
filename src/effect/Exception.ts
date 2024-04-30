@@ -5,7 +5,7 @@ export interface Exception<E> extends _Effect<'Exception'> {
   readonly error: E
 }
 
-function exception<E>(error: E): Effect<never, never, E> {
+function exception<E>(error: E): Effect<never, E, never> {
   return { ..._effect('Exception'), error }
 }
 

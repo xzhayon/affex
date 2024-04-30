@@ -5,28 +5,28 @@ import { OrLazy } from '../Type'
 import * as $Effect from './Effect'
 import { Effect, _Effect, _effect } from './Effect'
 
-export interface Fork<R, A, E> extends _Effect<'Fork'> {
+export interface Fork<A, E, R> extends _Effect<'Fork'> {
   readonly handle: (
-    run: <G extends AnyEffector<R, any, any>>(
+    run: <G extends AnyEffector<any, any, R>>(
       effector: OrLazy<G>,
     ) => Promise<Exit<OutputOf<G>, ErrorOf<G>>>,
-  ) => A | Promise<A> | AnyEffector<R, A, E>
+  ) => A | Promise<A> | AnyEffector<A, E, R>
 }
 
 function _fork<
   R,
   F extends (
-    run: <G extends AnyEffector<R, any, any>>(
+    run: <G extends AnyEffector<any, any, R>>(
       effector: OrLazy<G>,
     ) => Promise<Exit<OutputOf<G>, ErrorOf<G>>>,
   ) => any,
 >(
   handle: F,
 ): Effect<
-  | R
-  | (ReturnType<F> extends AnyGenerator ? RequirementOf<ReturnType<F>> : never),
   Awaited<Generated<ReturnType<F>>>,
-  ReturnType<F> extends AnyGenerator ? ErrorOf<ReturnType<F>> : never
+  ReturnType<F> extends AnyGenerator ? ErrorOf<ReturnType<F>> : never,
+  | R
+  | (ReturnType<F> extends AnyGenerator ? RequirementOf<ReturnType<F>> : never)
 > {
   return { ..._effect('Fork'), handle }
 }
@@ -34,7 +34,7 @@ function _fork<
 export function fork<R = never>() {
   return <
     F extends (
-      run: <G extends AnyEffector<R, any, any>>(
+      run: <G extends AnyEffector<any, any, R>>(
         effector: OrLazy<G>,
       ) => Promise<Exit<OutputOf<G>, ErrorOf<G>>>,
     ) => any,

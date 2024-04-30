@@ -54,7 +54,7 @@ describe('Proxy', () => {
 
     interface Cache {
       readonly [uri]?: unique symbol
-      get<A, G extends AnyEffector<any, A, any>>(
+      get<A, G extends AnyEffector<A, any, any>>(
         key: string,
         decoder: Decoder<A>,
         onMiss: () => G,
@@ -67,7 +67,7 @@ describe('Proxy', () => {
     const tagCache = $Tag.tag<Cache>()
     const { get } = $Proxy.structA(tagCache)('get')
     const cache = {
-      get: <A, G extends AnyEffector<any, A, any>>(
+      get: <A, G extends AnyEffector<A, any, any>>(
         key: string,
         decoder: Decoder<A>,
         onMiss: () => G,

@@ -110,7 +110,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
     test('performing side effects', async () => {
       function* enumerateFiles(
         dir: DirName,
-      ): Effector<OpenDirectory | Log | HandleFile, void> {
+      ): Effector<void, never, OpenDirectory | Log | HandleFile> {
         const contents = yield* openDirectory(dir)
         yield* log(`Enumerating files in ${dir}`)
         for (const file of contents.files) {
@@ -171,7 +171,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
     test('performing nested side effects', async () => {
       function* enumerateFiles(
         dir: DirName,
-      ): Effector<OpenDirectory | Log | HandleFile, void> {
+      ): Effector<void, never, OpenDirectory | Log | HandleFile> {
         const contents = yield* openDirectory(dir)
         yield* log(`Enumerating files in ${dir}`)
         for (const file of contents.files) {
