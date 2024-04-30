@@ -1,30 +1,26 @@
-import { Equal } from '@type-challenges/utils'
 import * as $Cause from './Cause'
-import { Use } from './Effector'
+import { AnyEffector, ErrorOf, OutputOf, RequirementOf } from './Effector'
 import * as $Exit from './Exit'
 import { Exit } from './Exit'
 import * as $Generator from './Generator'
-import { AnyGenerator } from './Generator'
 import { Layer } from './Layer'
 import * as $Type from './Type'
-import { OrLazy } from './Type'
+import { IsNever, OrLazy } from './Type'
 import * as $Effect from './effect/Effect'
 import { Effect } from './effect/Effect'
 import * as $Fiber from './fiber/Fiber'
 import * as $Result from './fiber/Result'
 
 export class Runtime<R> {
-  static create<R>(layer: Layer<never, R>) {
-    return new Runtime<R>(layer)
-  }
+  static readonly create = <R>(layer: Layer<never, R>) => new Runtime<R>(layer)
 
   private constructor(private readonly layer: Layer<never, R>) {}
 
-  async run<
-    G extends AnyGenerator<
-      Equal<R, never> extends false ? (R extends any ? Use<R> : never) : any
-    >,
-  >(effector: OrLazy<G>): Promise<Exit<$Generator.ROf<G>, $Generator.TOf<G>>> {
+  readonly run = async <
+    G extends AnyEffector<IsNever<R> extends false ? R : any, any, any>,
+  >(
+    effector: OrLazy<G>,
+  ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
     try {
       const fiber = $Fiber.fiber(effector)
       let result = await fiber.resume()
@@ -59,7 +55,7 @@ export class Runtime<R> {
     }
   }
 
-  private async handle<A, E>(effect: Effect<R, A, E>) {
+  private readonly handle = async <A, E>(effect: Effect<R, A, E>) => {
     switch (effect[$Type.tag]) {
       case 'Exception':
         return $Exit.failure($Cause.fail(effect.error))
@@ -81,16 +77,16 @@ export function runtime<R>(layer: Layer<never, R>) {
   return Runtime.create(layer)
 }
 
-export function runExit<G extends AnyGenerator>(
+export function runExit<G extends AnyEffector<any, any, any>>(
   effector: OrLazy<G>,
-  layer: Layer<never, $Generator.UOf<G>>,
+  layer: Layer<never, RequirementOf<G>>,
 ) {
   return runtime(layer).run(effector)
 }
 
-export async function runPromise<G extends AnyGenerator>(
+export async function runPromise<G extends AnyEffector<any, any, any>>(
   effector: OrLazy<G>,
-  layer: Layer<never, $Generator.UOf<G>>,
+  layer: Layer<never, RequirementOf<G>>,
 ) {
   const exit = await runExit(effector, layer)
   if ($Exit.isFailure(exit)) {

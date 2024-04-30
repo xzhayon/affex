@@ -1,8 +1,6 @@
-import { Equal } from '@type-challenges/utils'
-import { Throw } from './Effector'
-import { NullError } from './Error'
+import { AnyEffector } from './Effector'
 import { Function } from './Function'
-import { AnyGenerator, Generated } from './Generator'
+import { Generated } from './Generator'
 import * as $Result from './Result'
 import { Result, Resulted } from './Result'
 import { Struct } from './Struct'
@@ -15,7 +13,7 @@ export type Handler<R> = R extends Function
 
 type FunctionHandler<R extends Function> = (
   ...args: Parameters<R>
-) => ReturnTypeHandler<Awaited<Generated<ReturnType<R>>>>
+) => ReturnHandler<Awaited<Generated<ReturnType<R>>>>
 
 type StructHandler<R extends Struct> = {
   [K in keyof R as R[K] extends Function ? K : never]: R[K] extends Function
@@ -23,17 +21,12 @@ type StructHandler<R extends Struct> = {
     : never
 }
 
-type ReturnTypeHandler<A> =
+type ReturnHandler<A> =
   | Resulted<A>
   | Promise<Resulted<A>>
-  | AnyGenerator<
+  | AnyEffector<
       any,
       Resulted<A>,
-      A extends Result<any, any>
-        ? $Result.EOf<A> extends infer E
-          ? Equal<E, never> extends false
-            ? Throw<E>
-            : Throw<NullError>
-          : never
-        : Throw<NullError>
+      A extends Result<any, any> ? $Result.EOf<A> : never
     >
+type A = ReturnHandler<number>

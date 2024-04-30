@@ -2,15 +2,20 @@ import { die, fail } from './Cause'
 import { failure, success } from './Exit'
 
 export { is as isCause, isDie, isFail } from './Cause'
-export { AsyncEffector, Effector } from './Effector'
+export {
+  AsyncEffector,
+  Effector,
+  ErrorOf,
+  OutputOf,
+  RequirementOf,
+} from './Effector'
 export { tryCatch, tryCatchAsync } from './Error'
 export { is as isExit, isFailure, isSuccess } from './Exit'
 export {
-  NOf,
-  ROf,
-  TOf,
-  UOf,
-  YOf,
+  AnyGenerator,
+  NextOf,
+  ReturnOf,
+  YieldOf,
   sequence,
   sequenceAsync,
   traverse,

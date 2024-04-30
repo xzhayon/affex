@@ -1,27 +1,20 @@
-import { Equal } from '@type-challenges/utils'
-import { Throw } from '../Effector'
+import { AnyEffector, ErrorOf, OutputOf } from '../Effector'
 import * as $Exit from '../Exit'
-import * as $Generator from '../Generator'
-import { AnyGenerator } from '../Generator'
+import * as $Function from '../Function'
 import { OrLazy } from '../Type'
 import * as $Result from './Result'
 
 export class Fiber<A, E> {
-  static create<G extends AnyGenerator>(effector: OrLazy<G>) {
-    return new Fiber<$Generator.ROf<G>, $Generator.TOf<G>>(
-      $Generator.is(effector) ? effector : effector(),
+  static readonly create = <G extends AnyEffector<any, any, any>>(
+    effector: OrLazy<G>,
+  ) =>
+    new Fiber<OutputOf<G>, ErrorOf<G>>(
+      $Function.is(effector) ? effector() : effector,
     )
-  }
 
-  private constructor(
-    private readonly effector: AnyGenerator<
-      unknown,
-      A,
-      Equal<E, never> extends false ? Throw<E> : unknown
-    >,
-  ) {}
+  private constructor(private readonly effector: AnyEffector<any, A, E>) {}
 
-  async resume(value?: unknown) {
+  readonly resume = async (value?: unknown) => {
     const result = await this.effector.next(value)
     if (!result.done) {
       return $Result.yield(result.value)
@@ -30,7 +23,7 @@ export class Fiber<A, E> {
     return $Result.return($Exit.success(result.value))
   }
 
-  async except(error: unknown) {
+  readonly except = async (error: unknown) => {
     if (this.effector.throw === undefined) {
       throw new Error('Cannot recover from error', { cause: error })
     }
@@ -44,6 +37,8 @@ export class Fiber<A, E> {
   }
 }
 
-export function fiber<G extends AnyGenerator>(effector: OrLazy<G>) {
+export function fiber<G extends AnyEffector<any, any, any>>(
+  effector: OrLazy<G>,
+) {
   return Fiber.create(effector)
 }
