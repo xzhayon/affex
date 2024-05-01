@@ -97,7 +97,7 @@ describe('Error', () => {
       ).resolves.toStrictEqual(42)
     })
 
-    test('handling unexpected error', async () => {
+    test('ignoring unexpected error', async () => {
       class FooError extends Error {
         readonly [uri]!: 'Foo'
       }
@@ -108,7 +108,6 @@ describe('Error', () => {
 
       await expect(
         $Runtime.runExit(function* () {
-          // @ts-expect-error
           return (yield* $Error.tryCatch(
             function* () {
               if (false) {
@@ -125,15 +124,7 @@ describe('Error', () => {
             },
           )).length
         }, $Layer.layer()),
-      ).resolves.toStrictEqual(
-        $Exit.failure(
-          $Cause.die(
-            new TypeError(
-              "Cannot read properties of undefined (reading 'length')",
-            ),
-          ),
-        ),
-      )
+      ).resolves.toStrictEqual($Exit.failure($Cause.die(new BarError())))
     })
 
     test('handling multiple errors', async () => {
@@ -162,8 +153,6 @@ describe('Error', () => {
                 case 'Bar':
                   return 'bar'
               }
-
-              return 'qux'
             },
           ),
           $Layer.layer(),
@@ -173,28 +162,44 @@ describe('Error', () => {
   })
 
   describe('tryCatchAsync', () => {
-    test('catching error', async () => {
+    test('ignoring unexpected error', async () => {
       await expect(
-        $Runtime.runPromise(
+        $Runtime.runExit(
           $Error.tryCatchAsync(
             async function* () {
               throw new Error('foo')
             },
-            function* (error) {
-              return error
+            function* () {
+              return 'bar'
             },
           ),
           $Layer.layer(),
         ),
-      ).resolves.toStrictEqual(new Error('foo'))
+      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('foo'))))
     })
 
-    test('catching "asynchronous" error', async () => {
+    test('ignoring "asynchronous" unexpected error', async () => {
+      await expect(
+        $Runtime.runExit(
+          $Error.tryCatchAsync(
+            (async function* () {
+              return await Promise.reject(new Error('foo'))
+            })(),
+            function* () {
+              return 'bar'
+            },
+          ),
+          $Layer.layer(),
+        ),
+      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('foo'))))
+    })
+
+    test('catching exception', async () => {
       await expect(
         $Runtime.runPromise(
           $Error.tryCatchAsync(
             (async function* () {
-              return await Promise.reject(new Error('foo'))
+              return yield* $Exception.raise(new Error('foo'))
             })(),
             function* (error) {
               return error
