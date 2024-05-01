@@ -1,15 +1,17 @@
 import * as $Layer from './Layer'
 import * as $Tag from './Tag'
 import { uri } from './Type'
+import * as $Proxy from './effect/Proxy'
 
 describe('Layer', () => {
-  interface Random {
+  interface Foo {
     readonly [uri]?: unique symbol
-    (): number
+    (): 'foo'
   }
 
-  const tag = $Tag.tag<Random>()
-  const handler = () => 42
+  const tag = $Tag.tag<Foo>()
+  const foo = $Proxy.function(tag)
+  const handler = () => 'foo' as const
 
   describe('with', () => {
     test('adding handler to layer', () => {
@@ -29,6 +31,25 @@ describe('Layer', () => {
     test('forwarding layer', () => {
       const layer = $Layer.layer().with(tag, handler)
 
+      expect(layer.do()).toStrictEqual(layer)
+    })
+
+    test('forcing empty requirements', () => {
+      interface Bar {
+        readonly [uri]?: unique symbol
+        (): 'bar'
+      }
+
+      const tagBar = $Tag.tag<Bar>()
+      const handlerBar = function* () {
+        yield* foo()
+
+        return 'bar' as const
+      }
+
+      const layer = $Layer.layer().with(tagBar, handlerBar)
+
+      // @ts-expect-error
       expect(layer.do()).toStrictEqual(layer)
     })
   })

@@ -97,7 +97,7 @@ describe('Error', () => {
       ).resolves.toStrictEqual(42)
     })
 
-    test('handling unexpected errors', async () => {
+    test('handling unexpected error', async () => {
       class FooError extends Error {
         readonly [uri]!: 'Foo'
       }
@@ -134,6 +134,41 @@ describe('Error', () => {
           ),
         ),
       )
+    })
+
+    test('handling multiple errors', async () => {
+      class FooError extends Error {
+        readonly [uri]: 'Foo' = 'Foo'
+      }
+
+      class BarError extends Error {
+        readonly [uri]: 'Bar' = 'Bar'
+      }
+
+      await expect(
+        $Runtime.runPromise(
+          $Error.tryCatch(
+            function* () {
+              if (false) {
+                return yield* $Exception.raise(new FooError())
+              }
+
+              return yield* $Exception.raise(new BarError())
+            },
+            function* (error) {
+              switch (error[uri]) {
+                case 'Foo':
+                  return 'foo'
+                case 'Bar':
+                  return 'bar'
+              }
+
+              return 'qux'
+            },
+          ),
+          $Layer.layer(),
+        ),
+      ).resolves.toStrictEqual('bar')
     })
   })
 

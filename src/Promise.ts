@@ -1,16 +1,15 @@
 import * as $Cause from './Cause'
+import { AnyEffector, ErrorOf, RequirementOf } from './Effector'
 import * as $Error from './Error'
 import * as $Exit from './Exit'
-import * as $Generator from './Generator'
-import { AnyGenerator } from './Generator'
 import { OrLazy } from './Type'
 import * as $Exception from './effect/Exception'
 import * as $Fork from './effect/Fork'
 
-export function all<G extends AnyGenerator<any>>(
+export function all<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
 ) {
-  return $Fork.fork<$Generator.UOf<G>>()(async function* (run) {
+  return $Fork.fork<RequirementOf<G>>()(async function* (run) {
     try {
       return await Promise.all(
         effectors.map(run).map((promise) =>
@@ -32,23 +31,23 @@ export function all<G extends AnyGenerator<any>>(
         throw exit.cause.error
       }
 
-      return yield* $Exception.raise(exit.cause.error as $Generator.TOf<G>)
+      return yield* $Exception.raise(exit.cause.error as ErrorOf<G>)
     }
   })
 }
 
-export function settled<G extends AnyGenerator<any>>(
+export function settled<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
 ) {
-  return $Fork.fork<$Generator.UOf<G>>()((run) =>
+  return $Fork.fork<RequirementOf<G>>()((run) =>
     Promise.all(effectors.map(run)),
   )
 }
 
-export function any<G extends AnyGenerator<any>>(
+export function any<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
 ) {
-  return $Fork.fork<$Generator.UOf<G>>()(async function* (run) {
+  return $Fork.fork<RequirementOf<G>>()(async function* (run) {
     try {
       return await Promise.any(
         effectors.map(run).map((promise) =>
@@ -84,10 +83,10 @@ export function any<G extends AnyGenerator<any>>(
   })
 }
 
-export function race<G extends AnyGenerator<any>>(
+export function race<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
 ) {
-  return $Fork.fork<$Generator.UOf<G>>()(async function* (run) {
+  return $Fork.fork<RequirementOf<G>>()(async function* (run) {
     try {
       return await Promise.race(
         effectors.map(run).map((promise) =>
@@ -109,7 +108,7 @@ export function race<G extends AnyGenerator<any>>(
         throw exit.cause.error
       }
 
-      return yield* $Exception.raise(exit.cause.error as $Generator.TOf<G>)
+      return yield* $Exception.raise(exit.cause.error as ErrorOf<G>)
     }
   })
 }

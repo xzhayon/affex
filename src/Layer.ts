@@ -1,20 +1,19 @@
+import { RequirementOf } from './Effector'
 import { Function } from './Function'
-import * as $Generator from './Generator'
 import { AnyGenerator } from './Generator'
 import { Handler } from './Handler'
 import { Struct } from './Struct'
 import { Tag } from './Tag'
+import { Contravariant, Covariant } from './Type'
 
-const R = Symbol('R')
-const A = Symbol('A')
+const R = Symbol()
+const A = Symbol()
 export class Layer<R, A> {
-  readonly [R]!: R;
-  readonly [A]!: (a: A) => any
+  readonly [R]!: Covariant<R>;
+  readonly [A]!: Contravariant<A>
   private handlers: Readonly<Record<symbol, Handler<any>>> = {}
 
-  static empty() {
-    return new Layer<never, never>()
-  }
+  static readonly empty = () => new Layer<never, never>()
 
   private constructor() {}
 
@@ -25,14 +24,14 @@ export class Layer<R, A> {
     Exclude<
       | R
       | (H extends Function
-          ? ReturnType<H> extends infer G extends AnyGenerator
-            ? $Generator.UOf<G>
+          ? ReturnType<H> extends AnyGenerator
+            ? RequirementOf<ReturnType<H>>
             : never
           : H extends Struct
           ? {
               [K in keyof H]: H[K] extends Function
-                ? ReturnType<H[K]> extends infer G extends AnyGenerator
-                  ? $Generator.UOf<G>
+                ? ReturnType<H[K]> extends AnyGenerator
+                  ? RequirementOf<ReturnType<H[K]>>
                   : never
                 : never
             }[keyof H]
@@ -51,11 +50,11 @@ export class Layer<R, A> {
     return this as any
   }
 
-  do(this: Layer<never, A>) {
+  readonly do = function (this: Layer<never, A>) {
     return this
   }
 
-  handler<_A extends A>({ key }: Tag<_A>): Handler<_A> {
+  readonly handler = <_A extends A>({ key }: Tag<_A>): Handler<_A> => {
     const handler = this.handlers[key]
     if (handler === undefined) {
       throw new Error(

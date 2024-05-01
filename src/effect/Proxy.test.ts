@@ -1,4 +1,5 @@
-import * as $Generator from '../Generator'
+import { AnyEffector } from '../Effector'
+import { YieldOf } from '../Generator'
 import * as $Layer from '../Layer'
 import * as $Runtime from '../Runtime'
 import * as $Tag from '../Tag'
@@ -53,11 +54,11 @@ describe('Proxy', () => {
 
     interface Cache {
       readonly [uri]?: unique symbol
-      get<A, G extends Generator<unknown, A>>(
+      get<A, G extends AnyEffector<A, any, any>>(
         key: string,
         decoder: Decoder<A>,
         onMiss: () => G,
-      ): Generator<$Generator.YOf<G>, A>
+      ): Generator<YieldOf<G>, A>
     }
 
     const tagCrypto = $Tag.tag<Crypto>()
@@ -66,7 +67,7 @@ describe('Proxy', () => {
     const tagCache = $Tag.tag<Cache>()
     const { get } = $Proxy.structA(tagCache)('get')
     const cache = {
-      get: <A, G extends Generator<unknown, A>>(
+      get: <A, G extends AnyEffector<A, any, any>>(
         key: string,
         decoder: Decoder<A>,
         onMiss: () => G,
