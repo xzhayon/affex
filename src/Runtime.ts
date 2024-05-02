@@ -60,22 +60,25 @@ export class Runtime<R> {
       case 'Exception':
         return $Exit.failure($Cause.fail(effect.error))
       case 'Fork':
+        return this.resolve(effect.handle((effector) => this.run(effector)))
       case 'Proxy':
-        const value =
-          effect[$Type.tag] === 'Fork'
-            ? await effect.handle((effector) => this.run(effector))
-            : await effect.handle(this.layer.handler(effect.tag))
-
-        return $Generator.is(value)
-          ? await this.run(value)
-          : $Exit.success(value)
+        return this.resolve(effect.handle(this.layer.handler(effect.tag)))
       case 'Sandbox':
         const exit = await this.run(effect.try)
+        if ($Exit.isSuccess(exit) || $Cause.isDie(exit.cause)) {
+          return exit
+        }
 
-        return $Exit.isFailure(exit) && $Cause.isFail(exit.cause)
-          ? await this.run(effect.catch(exit.cause.error))
-          : exit
+        return this.resolve(effect.catch(exit.cause.error))
     }
+  }
+
+  private readonly resolve = async <A, E>(
+    value: A | Promise<A> | AnyEffector<A, E, R>,
+  ) => {
+    const _value = await value
+
+    return $Generator.is(_value) ? this.run(_value) : $Exit.success(_value)
   }
 }
 
