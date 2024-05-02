@@ -9,7 +9,6 @@ export {
   OutputOf,
   RequirementOf,
 } from './Effector'
-export { tryCatch, tryCatchAsync } from './Error'
 export { is as isExit, isFailure, isSuccess } from './Exit'
 export {
   AnyGenerator,
@@ -30,5 +29,6 @@ export { uri } from './Type'
 export { raise } from './effect/Exception'
 export { fork } from './effect/Fork'
 export { function, functionA, struct, structA } from './effect/Proxy'
+export { tryCatch } from './effect/Sandbox'
 export const Cause = { die, fail }
 export const Exit = { failure, success }
