@@ -21,12 +21,14 @@ function proxy<R, F extends (handler: any) => any>(
   handle: F,
 ): Effect<
   Unwrapped<ReturnType<F>>,
-  | (ReturnType<F> extends AnyGenerator ? ErrorOf<ReturnType<F>> : never)
+  | (ReturnType<F> extends infer G extends AnyGenerator ? ErrorOf<G> : never)
   | (Awaited<Generated<ReturnType<F>>> extends infer _R extends Result<any, any>
       ? $Result.EOf<_R>
       : never),
   | R
-  | (ReturnType<F> extends AnyGenerator ? RequirementOf<ReturnType<F>> : never)
+  | (ReturnType<F> extends infer G extends AnyGenerator
+      ? RequirementOf<G>
+      : never)
 > {
   return { ..._effect('Proxy'), tag, handle }
 }
@@ -96,8 +98,8 @@ export function struct<R extends Struct>(tag: Tag<R>) {
             ...args: Parameters<R[_K]>
           ) => Effector<
             Unwrapped<ReturnType<R[_K]>>,
-            | (ReturnType<R[_K]> extends AnyGenerator
-                ? ErrorOf<ReturnType<R[_K]>>
+            | (ReturnType<R[_K]> extends infer G extends AnyGenerator
+                ? ErrorOf<G>
                 : never)
             | (Awaited<
                 Generated<ReturnType<R[_K]>>
@@ -105,8 +107,8 @@ export function struct<R extends Struct>(tag: Tag<R>) {
                 ? $Result.EOf<_R>
                 : never),
             | R
-            | (ReturnType<R[_K]> extends AnyGenerator
-                ? RequirementOf<ReturnType<R[_K]>>
+            | (ReturnType<R[_K]> extends infer G extends AnyGenerator
+                ? RequirementOf<G>
                 : never)
           >
         : never

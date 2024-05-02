@@ -20,9 +20,11 @@ export function sandbox<
   _catch: F,
 ): Effect<
   OutputOf<G> | Awaited<Generated<ReturnType<F>>>,
-  ReturnType<F> extends AnyGenerator ? ErrorOf<ReturnType<F>> : never,
+  ReturnType<F> extends infer _G extends AnyGenerator ? ErrorOf<_G> : never,
   | RequirementOf<G>
-  | (ReturnType<F> extends AnyGenerator ? RequirementOf<ReturnType<F>> : never)
+  | (ReturnType<F> extends infer _G extends AnyGenerator
+      ? RequirementOf<_G>
+      : never)
 > {
   return { ..._effect('Sandbox'), try: _try, catch: _catch }
 }

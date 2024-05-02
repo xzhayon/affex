@@ -24,9 +24,11 @@ function _fork<
   handle: F,
 ): Effect<
   Awaited<Generated<ReturnType<F>>>,
-  ReturnType<F> extends AnyGenerator ? ErrorOf<ReturnType<F>> : never,
+  ReturnType<F> extends infer G extends AnyGenerator ? ErrorOf<G> : never,
   | R
-  | (ReturnType<F> extends AnyGenerator ? RequirementOf<ReturnType<F>> : never)
+  | (ReturnType<F> extends infer G extends AnyGenerator
+      ? RequirementOf<G>
+      : never)
 > {
   return { ..._effect('Fork'), handle }
 }

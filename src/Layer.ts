@@ -24,14 +24,14 @@ export class Layer<R, A> {
     Exclude<
       | R
       | (H extends Function
-          ? ReturnType<H> extends AnyGenerator
-            ? RequirementOf<ReturnType<H>>
+          ? ReturnType<H> extends infer G extends AnyGenerator
+            ? RequirementOf<G>
             : never
           : H extends Struct
           ? {
               [K in keyof H]: H[K] extends Function
-                ? ReturnType<H[K]> extends AnyGenerator
-                  ? RequirementOf<ReturnType<H[K]>>
+                ? ReturnType<H[K]> extends infer G extends AnyGenerator
+                  ? RequirementOf<G>
                   : never
                 : never
             }[keyof H]
