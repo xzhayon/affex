@@ -29,7 +29,7 @@ describe('Sandbox', () => {
     test('forwarding error', async () => {
       await expect(
         $Runtime.runExit(
-          $Sandbox.tryCatch(divide(42, 0), function* (error) {
+          $Sandbox.tryCatch(divide(42, 0), (error) => {
             throw error
           }),
           layer,
@@ -42,7 +42,7 @@ describe('Sandbox', () => {
     test('throwing new error', async () => {
       await expect(
         $Runtime.runExit(
-          $Sandbox.tryCatch(divide(42, 0), function* () {
+          $Sandbox.tryCatch(divide(42, 0), () => {
             throw new Error('Cannot recover from exception')
           }),
           layer,
@@ -68,9 +68,7 @@ describe('Sandbox', () => {
     test('returning value', async () => {
       await expect(
         $Runtime.runPromise(
-          $Sandbox.tryCatch(divide(42, 0), function* () {
-            return NaN
-          }),
+          $Sandbox.tryCatch(divide(42, 0), () => NaN),
           layer,
         ),
       ).resolves.toStrictEqual(NaN)
@@ -112,7 +110,7 @@ describe('Sandbox', () => {
 
               throw new BarError()
             },
-            function* (error) {
+            (error) => {
               switch (error[uri]) {
                 case 'Foo':
                   return 'foo'
@@ -142,7 +140,7 @@ describe('Sandbox', () => {
 
               return yield* $Exception.raise(new BarError())
             },
-            function* (error) {
+            (error) => {
               switch (error[uri]) {
                 case 'Foo':
                   return 'foo'
@@ -160,12 +158,10 @@ describe('Sandbox', () => {
       await expect(
         $Runtime.runExit(
           $Sandbox.tryCatch(
-            (async function* () {
+            async function* () {
               return await Promise.reject(new Error('foo'))
-            })(),
-            function* () {
-              return 'bar'
             },
+            () => 'bar',
           ),
           $Layer.layer(),
         ),
