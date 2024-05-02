@@ -88,7 +88,11 @@ describe('Proxy', () => {
         $Layer
           .layer()
           .with(tagCrypto, { number: () => 42 })
-          .with(tagCache, { get: (_key, _decoder, onMiss) => onMiss() }),
+          .with(tagCache, {
+            get: async function* (_key, _decoder, onMiss) {
+              return yield* onMiss()
+            },
+          }),
       ),
     ).resolves.toStrictEqual(42)
   })
