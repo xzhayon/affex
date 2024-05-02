@@ -3,6 +3,7 @@ import { failure, success } from './Exit'
 
 export { is as isCause, isDie, isFail } from './Cause'
 export {
+  AnyEffector,
   AsyncEffector,
   Effector,
   ErrorOf,
