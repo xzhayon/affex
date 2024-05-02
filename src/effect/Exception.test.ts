@@ -180,4 +180,66 @@ describe('Exception', () => {
       ).resolves.toStrictEqual($Exit.failure($Cause.fail(new BarError())))
     })
   })
+
+  describe('wrap', () => {
+    test('returning value', async () => {
+      await expect(
+        $Runtime.runPromise(
+          $Exception.wrap(
+            () => 42,
+            (cause) => new Error('bar', { cause }),
+          ),
+          $Layer.layer(),
+        ),
+      ).resolves.toStrictEqual(42)
+    })
+
+    test('mapping error', async () => {
+      await expect(
+        $Runtime.runExit(
+          $Exception.wrap(
+            () => {
+              throw new Error('foo')
+            },
+            (cause) => new Error('bar', { cause }),
+          ),
+          $Layer.layer(),
+        ),
+      ).resolves.toStrictEqual(
+        $Exit.failure(
+          $Cause.fail(new Error('bar', { cause: new Error('foo') })),
+        ),
+      )
+    })
+  })
+
+  describe('wrapAsync', () => {
+    test('returning asynchronous value', async () => {
+      await expect(
+        $Runtime.runPromise(
+          $Exception.wrapAsync(
+            async () => 42,
+            (cause) => new Error('bar', { cause }),
+          ),
+          $Layer.layer(),
+        ),
+      ).resolves.toStrictEqual(42)
+    })
+
+    test('mapping asynchronous error', async () => {
+      await expect(
+        $Runtime.runExit(
+          $Exception.wrapAsync(
+            () => Promise.reject(new Error('foo')),
+            (cause) => new Error('bar', { cause }),
+          ),
+          $Layer.layer(),
+        ),
+      ).resolves.toStrictEqual(
+        $Exit.failure(
+          $Cause.fail(new Error('bar', { cause: new Error('foo') })),
+        ),
+      )
+    })
+  })
 })
