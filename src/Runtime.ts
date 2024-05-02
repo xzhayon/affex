@@ -69,6 +69,12 @@ export class Runtime<R> {
         return $Generator.is(value)
           ? await this.run(value)
           : $Exit.success(value)
+      case 'Sandbox':
+        const exit = await this.run(effect.try)
+
+        return $Exit.isFailure(exit) && $Cause.isFail(exit.cause)
+          ? await this.run(effect.catch(exit.cause.error))
+          : exit
     }
   }
 }

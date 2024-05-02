@@ -1,15 +1,15 @@
-import * as $Cause from './Cause'
-import * as $Error from './Error'
-import * as $Exit from './Exit'
-import * as $Layer from './Layer'
-import { Result } from './Result'
-import * as $Runtime from './Runtime'
-import * as $Tag from './Tag'
-import { uri } from './Type'
-import * as $Exception from './effect/Exception'
-import * as $Proxy from './effect/Proxy'
+import * as $Cause from '../Cause'
+import * as $Exit from '../Exit'
+import * as $Layer from '../Layer'
+import { Result } from '../Result'
+import * as $Runtime from '../Runtime'
+import * as $Tag from '../Tag'
+import { uri } from '../Type'
+import * as $Exception from './Exception'
+import * as $Proxy from './Proxy'
+import * as $Sandbox from './Sandbox'
 
-describe('Error', () => {
+describe('Sandbox', () => {
   interface Divide {
     readonly [uri]?: unique symbol
     (a: number, b: number): Result<number, Error>
@@ -26,10 +26,10 @@ describe('Error', () => {
   })
 
   describe('tryCatch', () => {
-    test.failing('forwarding error', async () => {
+    test('forwarding error', async () => {
       await expect(
         $Runtime.runExit(
-          $Error.tryCatch(divide(42, 0), function* (error) {
+          $Sandbox.tryCatch(divide(42, 0), function* (error) {
             throw error
           }),
           layer,
@@ -42,7 +42,7 @@ describe('Error', () => {
     test('throwing new error', async () => {
       await expect(
         $Runtime.runExit(
-          $Error.tryCatch(divide(42, 0), function* () {
+          $Sandbox.tryCatch(divide(42, 0), function* () {
             throw new Error('Cannot recover from exception')
           }),
           layer,
@@ -55,11 +55,9 @@ describe('Error', () => {
     test('raising new error', async () => {
       await expect(
         $Runtime.runExit(
-          $Error.tryCatch(divide(42, 0), function* () {
-            return yield* $Exception.raise(
-              new Error('Cannot recover from exception'),
-            )
-          }),
+          $Sandbox.tryCatch(divide(42, 0), () =>
+            $Exception.raise(new Error('Cannot recover from exception')),
+          ),
           layer,
         ),
       ).resolves.toStrictEqual(
@@ -70,7 +68,7 @@ describe('Error', () => {
     test('returning value', async () => {
       await expect(
         $Runtime.runPromise(
-          $Error.tryCatch(divide(42, 0), function* () {
+          $Sandbox.tryCatch(divide(42, 0), function* () {
             return NaN
           }),
           layer,
@@ -89,9 +87,7 @@ describe('Error', () => {
 
       await expect(
         $Runtime.runPromise(
-          $Error.tryCatch(divide(42, 0), function* () {
-            return yield* random()
-          }),
+          $Sandbox.tryCatch(divide(42, 0), random),
           layer.with(tagRandom, () => 42),
         ),
       ).resolves.toStrictEqual(42)
@@ -108,7 +104,7 @@ describe('Error', () => {
 
       await expect(
         $Runtime.runExit(function* () {
-          return (yield* $Error.tryCatch(
+          return (yield* $Sandbox.tryCatch(
             function* () {
               if (false) {
                 return yield* $Exception.raise(new FooError())
@@ -138,7 +134,7 @@ describe('Error', () => {
 
       await expect(
         $Runtime.runPromise(
-          $Error.tryCatch(
+          $Sandbox.tryCatch(
             function* () {
               if (false) {
                 return yield* $Exception.raise(new FooError())
@@ -159,29 +155,11 @@ describe('Error', () => {
         ),
       ).resolves.toStrictEqual('bar')
     })
-  })
-
-  describe('tryCatchAsync', () => {
-    test('ignoring unexpected error', async () => {
-      await expect(
-        $Runtime.runExit(
-          $Error.tryCatchAsync(
-            async function* () {
-              throw new Error('foo')
-            },
-            function* () {
-              return 'bar'
-            },
-          ),
-          $Layer.layer(),
-        ),
-      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('foo'))))
-    })
 
     test('ignoring "asynchronous" unexpected error', async () => {
       await expect(
         $Runtime.runExit(
-          $Error.tryCatchAsync(
+          $Sandbox.tryCatch(
             (async function* () {
               return await Promise.reject(new Error('foo'))
             })(),
@@ -192,22 +170,6 @@ describe('Error', () => {
           $Layer.layer(),
         ),
       ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('foo'))))
-    })
-
-    test('catching exception', async () => {
-      await expect(
-        $Runtime.runPromise(
-          $Error.tryCatchAsync(
-            (async function* () {
-              return yield* $Exception.raise(new Error('foo'))
-            })(),
-            function* (error) {
-              return error
-            },
-          ),
-          $Layer.layer(),
-        ),
-      ).resolves.toStrictEqual(new Error('foo'))
     })
   })
 })

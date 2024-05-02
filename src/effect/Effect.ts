@@ -5,8 +5,13 @@ import { Variant } from '../Type'
 import { Exception } from './Exception'
 import { Fork } from './Fork'
 import { Proxy } from './Proxy'
+import { Sandbox } from './Sandbox'
 
-export type Effect<A, E, R> = Exception<E> | Fork<A, E, R> | Proxy<A, E, R>
+export type Effect<A, E, R> =
+  | Exception<E>
+  | Fork<A, E, R>
+  | Proxy<A, E, R>
+  | Sandbox<A, E, R>
 
 export type _Effect<T extends string> = Variant<typeof uri, T>
 
