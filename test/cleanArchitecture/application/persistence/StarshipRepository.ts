@@ -1,4 +1,4 @@
-import { fx } from 'fx'
+import { fx } from 'affex'
 import { IdOf } from '../../domain/entity/Entity'
 import {
   Starship,

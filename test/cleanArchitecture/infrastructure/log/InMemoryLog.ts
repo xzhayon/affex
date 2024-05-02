@@ -1,4 +1,4 @@
-import { fx } from 'fx'
+import { fx } from 'affex'
 import { Severity, tag } from '../../application/log/Log'
 
 function _log(

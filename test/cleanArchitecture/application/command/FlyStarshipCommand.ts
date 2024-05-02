@@ -1,4 +1,4 @@
-import { fx } from 'fx'
+import { fx } from 'affex'
 import {
   Character,
   flyStarship as _flyStarship,

@@ -1,4 +1,4 @@
-import { fx } from 'fx'
+import { fx } from 'affex'
 import { tag } from '../../application/query/GetStarshipByNameQuery'
 import { id } from '../../domain/valueObject/Id'
 

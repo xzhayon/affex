@@ -1,4 +1,4 @@
-import { fx } from 'fx'
+import { fx } from 'affex'
 import { Entity, IdOf, entity } from './Entity'
 import { Starship } from './Starship'
 

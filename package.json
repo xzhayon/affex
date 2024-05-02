@@ -1,14 +1,14 @@
 {
-  "name": "@xzhayon/fx",
+  "name": "affex",
   "version": "0.9.1",
   "description": "",
-  "homepage": "https://github.com/xzhavilla/fx#readme",
+  "homepage": "https://github.com/xzhayon/affex#readme",
   "bugs": {
-    "url": "https://github.com/xzhavilla/fx/issues"
+    "url": "https://github.com/xzhayon/affex/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/xzhavilla/fx.git"
+    "url": "https://github.com/xzhayon/affex.git"
   },
   "license": "MIT",
   "author": "Alberto Villa <villa.alberto@gmail.com>",

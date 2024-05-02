@@ -1,4 +1,4 @@
-import { fx } from 'fx'
+import { fx } from 'affex'
 import { StarshipSearchTerm } from '../../domain/entity/Starship'
 import { StarshipDto } from '../dto/StarshipDto'
 

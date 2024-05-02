@@ -1,4 +1,4 @@
-import { fx } from 'fx'
+import { fx } from 'affex'
 import { flyStarship } from './application/useCase/FlyStarshipUseCase'
 import { InMemoryLog } from './infrastructure/log/InMemoryLog'
 import { InMemoryCharacterRepository } from './infrastructure/persistence/InMemoryCharacterRepository'

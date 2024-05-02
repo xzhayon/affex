@@ -1,4 +1,4 @@
-import { fx } from 'fx'
+import { fx } from 'affex'
 
 export type Id = string
 
