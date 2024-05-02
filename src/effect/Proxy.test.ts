@@ -1,5 +1,5 @@
 import { AnyEffector } from '../Effector'
-import { YieldOf } from '../Generator'
+import { AnyGenerator, YieldOf } from '../Generator'
 import * as $Layer from '../Layer'
 import * as $Runtime from '../Runtime'
 import * as $Tag from '../Tag'
@@ -58,7 +58,7 @@ describe('Proxy', () => {
         key: string,
         decoder: Decoder<A>,
         onMiss: () => G,
-      ): Generator<YieldOf<G>, A>
+      ): AnyGenerator<YieldOf<G>, A>
     }
 
     const tagCrypto = $Tag.tag<Crypto>()
