@@ -1,4 +1,4 @@
-import { fx } from 'fx'
+import { fx } from 'affex'
 import { CharaterSearchTerm } from '../../domain/entity/Character'
 import { CharacterDto } from '../dto/CharacterDto'
 

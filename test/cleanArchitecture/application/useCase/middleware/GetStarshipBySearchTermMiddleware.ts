@@ -1,4 +1,4 @@
-import { fx } from 'fx'
+import { fx } from 'affex'
 import { Starship, StarshipSearchTerm } from '../../../domain/entity/Starship'
 import { cacheStarshipSearchTerm } from '../../command/CacheStarshipSearchTermCommand'
 import { createStarship } from '../../command/CreateStarshipCommand'

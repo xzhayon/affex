@@ -1,4 +1,4 @@
-import { fx } from 'fx'
+import { fx } from 'affex'
 import { StarshipDto } from '../../application/dto/StarshipDto'
 import { tag } from '../../application/query/GetStarshipByNameQuery'
 

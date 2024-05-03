@@ -1,4 +1,4 @@
-import { fx } from 'fx'
+import { fx } from 'affex'
 import { CharacterDto } from '../../application/dto/CharacterDto'
 import { tag } from '../../application/query/GetCharacterByNameQuery'
 

@@ -1,4 +1,4 @@
-import { fx } from 'fx'
+import { fx } from 'affex'
 import { Character, CharaterSearchTerm } from '../../../domain/entity/Character'
 import { Starship } from '../../../domain/entity/Starship'
 import { cacheCharacterSearchTerm } from '../../command/CacheCharacterSearchTermCommand'

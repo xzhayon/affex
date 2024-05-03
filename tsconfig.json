@@ -2,7 +2,7 @@
   "compilerOptions": {
     "strict": true,
     "module": "commonjs",
-    "paths": { "fx": ["./src"] },
+    "paths": { "affex": ["./src"] },
     "declaration": true,
     "outDir": "dist",
     "esModuleInterop": true,

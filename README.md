@@ -1,22 +1,22 @@
-# fx
+# affex
 
-[![GitHub](https://img.shields.io/github/license/xzhavilla/fx)](LICENSE.md)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/xzhavilla/fx/test.yaml?branch=main)](https://github.com/xzhavilla/fx/actions)
-[![Codecov](https://img.shields.io/codecov/c/gh/xzhavilla/fx)](https://app.codecov.io/gh/xzhavilla/fx)
-[![npm](https://img.shields.io/npm/v/@xzhayon/fx)](https://www.npmjs.com/package/@xzhayon/fx)
+[![GitHub](https://img.shields.io/github/license/xzhayon/affex)](LICENSE.md)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/xzhayon/affex/test.yaml?branch=main)](https://github.com/xzhayon/affex/actions)
+[![Codecov](https://img.shields.io/codecov/c/gh/xzhayon/affex)](https://app.codecov.io/gh/xzhayon/affex)
+[![npm](https://img.shields.io/npm/v/affex)](https://www.npmjs.com/package/affex)
 
 ## Installation
 
-The package is available via [npm](https://www.npmjs.com/package/@xzhayon/fx):
+The package is available via [npm](https://www.npmjs.com/package/affex):
 
 ```sh
-npm install @xzhayon/fx
+npm install affex
 ```
 
 ## Usage
 
 ```typescript
-import { fx } from '@xzhayon/fx'
+import { fx } from 'affex'
 
 // Define effect interface.
 interface Log {
