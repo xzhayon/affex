@@ -6,9 +6,9 @@ import * as $Effect from './Effect'
 import { Effect, _Effect, _effect } from './Effect'
 
 export interface Sandbox<A, E, R> extends _Effect<'Sandbox'> {
-  readonly try: AnyEffector<A, any, R>
+  readonly try: () => AnyEffector<A, any, R>
   readonly catch: (
-    error: ErrorOf<this['try']>,
+    error: ErrorOf<ReturnType<this['try']>>,
   ) => A | Promise<A> | AnyEffector<A, E, R>
 }
 
@@ -16,7 +16,7 @@ export function sandbox<
   G extends AnyEffector<any, any, any>,
   F extends (error: ErrorOf<G>) => any,
 >(
-  _try: G,
+  _try: () => G,
   _catch: F,
 ): Effect<
   OutputOf<G> | Awaited<Generated<ReturnType<F>>>,
@@ -33,5 +33,7 @@ export function tryCatch<
   G extends AnyEffector<any, any, any>,
   F extends (error: ErrorOf<G>) => any,
 >(_try: OrLazy<G>, _catch: F) {
-  return $Effect.perform(sandbox($Function.is(_try) ? _try() : _try, _catch))
+  return $Effect.perform(
+    sandbox($Function.is(_try) ? _try : () => _try, _catch),
+  )
 }
