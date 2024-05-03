@@ -22,7 +22,7 @@ export class Fiber<T, S> {
     return this._status
   }
 
-  readonly start = () => {
+  readonly start = async () => {
     this.assertStatus('Idle', 'start')
 
     try {
