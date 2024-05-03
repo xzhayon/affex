@@ -24,10 +24,17 @@ export class Fiber<T, S> {
 
   readonly start = () => {
     this.assertStatus('Idle', 'start')
-    this._status = $Status.started()
-    this._generator = this.generator()
 
-    return this.resolve(() => this._generator.next())
+    try {
+      this._status = $Status.started()
+      this._generator = this.generator()
+
+      return this.resolve(() => this._generator.next())
+    } catch (error) {
+      this._status = $Status.failed(error)
+
+      return this._status
+    }
   }
 
   readonly resume = async (value?: unknown) => {
