@@ -38,9 +38,6 @@ export class Fiber<T, S> {
 
   readonly throw = async (error: unknown) => {
     this.assertStatus('Suspended', 'throw')
-    if (this._generator.throw === undefined) {
-      throw new Error('Cannot recover from error')
-    }
 
     return this.resolve(() => this._generator.throw(error))
   }
