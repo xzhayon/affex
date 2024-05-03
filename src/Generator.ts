@@ -25,7 +25,18 @@ export type NextOf<G extends AnyGenerator> = G extends AnyGenerator<
 export type Generated<A> = A extends AnyGenerator ? ReturnOf<A> : A
 
 export function is(u: unknown): u is AnyGenerator {
-  return $Struct.is(u) && $Struct.has(u, 'next') && $Function.is(u.next)
+  return (
+    $Struct.is(u) &&
+    $Struct.has(u, 'next') &&
+    $Function.is(u.next) &&
+    $Struct.has(u, 'return') &&
+    $Function.is(u.return) &&
+    $Struct.has(u, 'throw') &&
+    $Function.is(u.throw) &&
+    (($Struct.has(u, Symbol.iterator) && $Function.is(u[Symbol.iterator])) ||
+      ($Struct.has(u, Symbol.asyncIterator) &&
+        $Function.is(u[Symbol.asyncIterator])))
+  )
 }
 
 export function* sequence<G extends Generator>(
