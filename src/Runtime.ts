@@ -9,7 +9,7 @@ import { IsNever, OrLazy } from './Type'
 import * as $Effect from './effect/Effect'
 import { Effect } from './effect/Effect'
 import * as $Fiber from './fiber/Fiber'
-import * as $Result from './fiber/Result'
+import * as $Status from './fiber/Status'
 
 export class Runtime<R> {
   static readonly create = <R>(layer: Layer<never, R>) => new Runtime<R>(layer)
@@ -23,33 +23,36 @@ export class Runtime<R> {
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
     try {
       const fiber = $Fiber.fiber(effector)
-      let result = await fiber.resume()
-      while (!$Result.isReturn(result)) {
-        if (!$Effect.is(result.value)) {
-          result = await fiber.resume()
+      let status = await fiber.start()
+      while (!$Status.isFailed(status) && !$Status.isTerminated(status)) {
+        if (!$Status.isSuspended(status)) {
+          continue
+        }
+
+        if (!$Effect.is(status.value)) {
+          status = await fiber.resume()
 
           continue
         }
 
-        const exit = await this.handle(result.value as Effect<any, any, any>)
-        if ($Exit.isFailure(exit)) {
-          try {
-            result = await fiber.except(exit.cause.error)
-
-            continue
-          } catch (error) {
-            if (error !== exit.cause.error) {
-              throw error
-            }
-
-            return exit
-          }
+        const exit = await this.handle(status.value as Effect<any, any, any>)
+        status = $Exit.isFailure(exit)
+          ? await fiber.throw(exit.cause.error)
+          : await fiber.resume(exit.value)
+        if (
+          $Status.isFailed(status) &&
+          $Exit.isFailure(exit) &&
+          status.error === exit.cause.error
+        ) {
+          return exit
         }
-
-        result = await fiber.resume(exit.value)
       }
 
-      return result.value
+      if ($Status.isFailed(status)) {
+        throw status.error
+      }
+
+      return $Exit.success(status.value)
     } catch (error) {
       return $Exit.failure($Cause.die(error))
     }
