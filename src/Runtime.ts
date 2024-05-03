@@ -29,13 +29,9 @@ export class Runtime<R> {
           continue
         }
 
-        if (!$Effect.is(status.value)) {
-          status = await fiber.resume()
-
-          continue
-        }
-
-        const exit = await this.handle(status.value as Effect<any, any, any>)
+        const exit = $Effect.is(status.value)
+          ? await this.handle(status.value as Effect<any, any, any>)
+          : $Exit.success(undefined)
         status = $Exit.isFailure(exit)
           ? await fiber.throw(exit.cause.error)
           : await fiber.resume(exit.value)
