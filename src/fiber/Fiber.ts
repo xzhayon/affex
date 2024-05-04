@@ -49,6 +49,25 @@ export class Fiber<T, S> {
     return this.resolve(() => this._generator.throw(error))
   }
 
+  readonly interrupt = async () => {
+    try {
+      switch (this._status[$Type.tag]) {
+        case 'Running':
+        case 'Suspended':
+          await this._generator.return(undefined as any)
+
+          break
+        case 'Failed':
+        case 'Terminated':
+          return this._status
+      }
+    } catch {}
+
+    this._status = $Status.interrupted()
+
+    return this._status
+  }
+
   private readonly assertStatus = (
     status: Status<T, S>[typeof $Type.tag],
     action: string,

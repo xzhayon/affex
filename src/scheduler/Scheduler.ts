@@ -38,10 +38,12 @@ export class Scheduler<F extends Fiber<any, any>>
   readonly next = async (): Promise<
     IteratorResult<F extends any ? Task<F> : never, void>
   > => {
-    if (this.attached.length === 0) {
-      this.clear()
-
+    if (this.tasks.length === 0) {
       return $Iterator.return()
+    }
+
+    if (this.attached.length === 0) {
+      await Promise.all(this.tasks.map((task) => task.fiber.interrupt()))
     }
 
     const pointer = this.rotate()
@@ -56,6 +58,7 @@ export class Scheduler<F extends Fiber<any, any>>
         return this.next()
       case 'Suspended':
         return $Iterator.yield(task)
+      case 'Interrupted':
       case 'Failed':
       case 'Terminated':
         this.remove(pointer)
@@ -73,12 +76,9 @@ export class Scheduler<F extends Fiber<any, any>>
   private readonly rotate = () => this.pointer++ % this.tasks.length
 
   private readonly remove = (pointer: number) => {
-    this.pointer--
     this.tasks.splice(pointer, 1)
+    this.pointer--
   }
-
-  private readonly clear = () =>
-    [...this.tasks.keys()].forEach((pointer) => this.remove(pointer))
 }
 
 export function scheduler(): Scheduler<never>

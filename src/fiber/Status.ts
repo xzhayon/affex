@@ -6,20 +6,23 @@ export type Status<T, S> =
   | Started
   | Running
   | Suspended<S>
+  | Interrupted
   | Failed
   | Terminated<T>
 
 type _Status<T extends string> = Variant<typeof uri, T>
 
-export interface Idle extends _Status<'Idle'> {}
+export type Idle = _Status<'Idle'>
 
-export interface Started extends _Status<'Started'> {}
+export type Started = _Status<'Started'>
 
-export interface Running extends _Status<'Running'> {}
+export type Running = _Status<'Running'>
 
 export interface Suspended<S> extends _Status<'Suspended'> {
   readonly value: S
 }
+
+export type Interrupted = _Status<'Interrupted'>
 
 export interface Failed extends _Status<'Failed'> {
   readonly error: unknown
@@ -48,6 +51,10 @@ export function suspended<S>(value: S): Status<never, S> {
   return { ..._status('Suspended'), value }
 }
 
+export function interrupted(): Status<never, never> {
+  return _status('Interrupted')
+}
+
 export function failed(error: unknown): Status<never, never> {
   return { ..._status('Failed'), error }
 }
@@ -70,6 +77,10 @@ export function isRunning(status: Status<any, any>): status is Running {
 
 export function isSuspended<S>(status: Status<any, S>): status is Suspended<S> {
   return status[$Type.tag] === 'Suspended'
+}
+
+export function isInterrupted(status: Status<any, any>): status is Interrupted {
+  return status[$Type.tag] === 'Interrupted'
 }
 
 export function isFailed(status: Status<any, any>): status is Failed {

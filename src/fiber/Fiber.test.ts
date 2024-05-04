@@ -132,4 +132,56 @@ describe('Fiber', () => {
       )
     })
   })
+
+  describe('interrupt', () => {
+    test('interrupting idle fiber', async () => {
+      const fiber = $Fiber.fiber(f)
+
+      await expect(fiber.interrupt()).resolves.toStrictEqual(
+        $Status.interrupted(),
+      )
+    })
+
+    test('interrupting suspended fiber', async () => {
+      const fiber = $Fiber.fiber(f)
+      await fiber.start()
+
+      await expect(fiber.interrupt()).resolves.toStrictEqual(
+        $Status.interrupted(),
+      )
+    })
+
+    test('interrupting interrupted fiber', async () => {
+      const fiber = $Fiber.fiber(f)
+      await fiber.start()
+      await fiber.interrupt()
+
+      await expect(fiber.interrupt()).resolves.toStrictEqual(
+        $Status.interrupted(),
+      )
+    })
+
+    test('interrupting failed fiber', async () => {
+      const fiber = $Fiber.fiber(f)
+      await fiber.start()
+      await fiber.throw(new Error('foo'))
+
+      await expect(fiber.interrupt()).resolves.toStrictEqual(
+        $Status.failed(new Error('foo')),
+      )
+    })
+
+    test('interrupting terminated fiber', async () => {
+      const fiber = $Fiber.fiber(f)
+      await fiber.start()
+      await fiber.resume()
+      await fiber.resume()
+      await fiber.resume()
+      await fiber.resume()
+
+      await expect(fiber.interrupt()).resolves.toStrictEqual(
+        $Status.terminated(4),
+      )
+    })
+  })
 })

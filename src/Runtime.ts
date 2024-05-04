@@ -34,15 +34,36 @@ export class Runtime<R> {
                 )
               : $Exit.success(undefined)
             const status = $Exit.isFailure(exit)
-              ? await task.fiber.throw(exit.cause.error)
+              ? await task.fiber.throw(
+                  $Cause.isInterrupt(exit.cause)
+                    ? new Error(
+                        `Fiber for effect "${
+                          (
+                            task.fiber.status.value as unknown as Effect<
+                              any,
+                              any,
+                              any
+                            >
+                          )[$Type.tag]
+                        }" was interrupted`,
+                      )
+                    : exit.cause.error,
+                )
               : await task.fiber.resume(exit.value)
             if (
               $Task.isAttached(task) &&
               $Exit.isFailure(exit) &&
+              !$Cause.isInterrupt(exit.cause) &&
               $Status.isFailed(status) &&
               status.error === exit.cause.error
             ) {
               return exit
+            }
+
+            break
+          case 'Interrupted':
+            if ($Task.isAttached(task)) {
+              return $Exit.failure($Cause.interrupt())
             }
 
             break
@@ -77,7 +98,7 @@ export class Runtime<R> {
         return this.resolve(effect.handle(this.layer.handler(effect.tag)))
       case 'Sandbox':
         const exit = await this.run(effect.try)
-        if ($Exit.isSuccess(exit) || $Cause.isDie(exit.cause)) {
+        if ($Exit.isSuccess(exit) || !$Cause.isFail(exit.cause)) {
           return exit
         }
 
@@ -111,7 +132,9 @@ export async function runPromise<G extends AnyEffector<any, any, any>>(
 ) {
   const exit = await runExit(effector, layer)
   if ($Exit.isFailure(exit)) {
-    throw exit.cause.error
+    throw $Cause.isInterrupt(exit.cause)
+      ? new Error('Fiber was interrupted')
+      : exit.cause.error
   }
 
   return exit.value
