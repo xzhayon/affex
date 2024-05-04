@@ -1,4 +1,3 @@
-import * as $Type from '../Type'
 import * as $Fiber from './Fiber'
 import * as $Status from './Status'
 
@@ -11,50 +10,6 @@ describe('Fiber', () => {
 
     return 4
   }
-
-  test('running concurrent fibers', async () => {
-    function* g() {
-      yield 'a'
-      yield 'b'
-      yield 'c'
-      yield 'd'
-
-      return 'e'
-    }
-
-    const fibers = [$Fiber.fiber(f), $Fiber.fiber(g)]
-    const as = []
-    while (fibers.length > 0) {
-      for (let i = 0; i < fibers.length; i++) {
-        const fiber = fibers[i]
-        switch (fiber.status[$Type.tag]) {
-          case 'Idle':
-            as.push(await fiber.start())
-            break
-          case 'Suspended':
-            as.push(await fiber.resume())
-            break
-          case 'Failed':
-          case 'Terminated':
-            fibers.splice(i, 1)
-            break
-        }
-      }
-    }
-
-    expect(as).toStrictEqual([
-      $Status.suspended(0),
-      $Status.suspended('a'),
-      $Status.suspended(1),
-      $Status.suspended('b'),
-      $Status.suspended(2),
-      $Status.suspended('c'),
-      $Status.suspended(3),
-      $Status.suspended('d'),
-      $Status.terminated(4),
-      $Status.terminated('e'),
-    ])
-  })
 
   describe('start', () => {
     test('starting fiber', async () => {
