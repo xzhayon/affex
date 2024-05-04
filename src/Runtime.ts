@@ -10,6 +10,8 @@ import * as $Effect from './effect/Effect'
 import { Effect } from './effect/Effect'
 import * as $Fiber from './fiber/Fiber'
 import * as $Status from './fiber/Status'
+import * as $Scheduler from './scheduler/Scheduler'
+import * as $Task from './scheduler/Task'
 
 export class Runtime<R> {
   static readonly create = <R>(layer: Layer<never, R>) => new Runtime<R>(layer)
@@ -22,33 +24,44 @@ export class Runtime<R> {
     effector: OrLazy<G>,
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
     try {
-      const fiber = $Fiber.fiber(effector)
-      let status = await fiber.start()
-      while (!$Status.isFailed(status) && !$Status.isTerminated(status)) {
-        if (!$Status.isSuspended(status)) {
-          continue
-        }
+      const scheduler = $Scheduler.scheduler().attach($Fiber.fiber(effector))
+      for await (const task of scheduler) {
+        switch (task.fiber.status[$Type.tag]) {
+          case 'Suspended':
+            const exit = $Effect.is(task.fiber.status.value)
+              ? await this.handle(
+                  task.fiber.status.value as Effect<any, any, any>,
+                )
+              : $Exit.success(undefined)
+            const status = $Exit.isFailure(exit)
+              ? await task.fiber.throw(exit.cause.error)
+              : await task.fiber.resume(exit.value)
+            if (
+              $Task.isAttached(task) &&
+              $Exit.isFailure(exit) &&
+              $Status.isFailed(status) &&
+              status.error === exit.cause.error
+            ) {
+              return exit
+            }
 
-        const exit = $Effect.is(status.value)
-          ? await this.handle(status.value as Effect<any, any, any>)
-          : $Exit.success(undefined)
-        status = $Exit.isFailure(exit)
-          ? await fiber.throw(exit.cause.error)
-          : await fiber.resume(exit.value)
-        if (
-          $Status.isFailed(status) &&
-          $Exit.isFailure(exit) &&
-          status.error === exit.cause.error
-        ) {
-          return exit
+            break
+          case 'Failed':
+            if ($Task.isAttached(task)) {
+              throw task.fiber.status.error
+            }
+
+            break
+          case 'Terminated':
+            if ($Task.isAttached(task)) {
+              return $Exit.success(task.fiber.status.value)
+            }
+
+            break
         }
       }
 
-      if ($Status.isFailed(status)) {
-        throw status.error
-      }
-
-      return $Exit.success(status.value)
+      throw new Error('Cannot resolve effector')
     } catch (error) {
       return $Exit.failure($Cause.die(error))
     }
