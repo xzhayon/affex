@@ -1,7 +1,7 @@
-import * as $Cause from './Cause'
 import { AnyEffector, ErrorOf, RequirementOf } from './Effector'
 import * as $Error from './Error'
 import * as $Exit from './Exit'
+import * as $Type from './Type'
 import { OrLazy } from './Type'
 import * as $Exception from './effect/Exception'
 import * as $Fork from './effect/Fork'
@@ -27,11 +27,14 @@ export function all<G extends AnyEffector<any, any, any>>(
         throw new Error('Cannot find Promise failure')
       }
 
-      if ($Cause.isDie(exit.cause)) {
-        throw exit.cause.error
+      switch (exit.cause[$Type.tag]) {
+        case 'Die':
+          throw exit.cause.error
+        case 'Interrupt':
+          throw new Error('Child fiber was interrupted')
+        case 'Fail':
+          return yield* $Exception.raise(exit.cause.error as ErrorOf<G>)
       }
-
-      return yield* $Exception.raise(exit.cause.error as ErrorOf<G>)
     }
   })
 }
@@ -75,7 +78,14 @@ export function any<G extends AnyEffector<any, any, any>>(
             throw new Error('Cannot find Promise failure')
           }
 
-          return exit.cause.error
+          switch (exit.cause[$Type.tag]) {
+            case 'Die':
+              return exit.cause.error
+            case 'Interrupt':
+              throw new Error('Child fiber was interrupted')
+            case 'Fail':
+              return exit.cause.error
+          }
         }),
         error.message,
       )
@@ -104,11 +114,14 @@ export function race<G extends AnyEffector<any, any, any>>(
         throw new Error('Cannot find Promise failure')
       }
 
-      if ($Cause.isDie(exit.cause)) {
-        throw exit.cause.error
+      switch (exit.cause[$Type.tag]) {
+        case 'Die':
+          throw exit.cause.error
+        case 'Interrupt':
+          throw new Error('Child fiber was interrupted')
+        case 'Fail':
+          return yield* $Exception.raise(exit.cause.error as ErrorOf<G>)
       }
-
-      return yield* $Exception.raise(exit.cause.error as ErrorOf<G>)
     }
   })
 }
