@@ -1,13 +1,13 @@
-function _yield(): IteratorYieldResult<void>
-function _yield<A>(value: A): IteratorYieldResult<A>
-function _yield<A>(value?: A): IteratorYieldResult<A | void> {
+function _yield(): IteratorResult<void, never>
+function _yield<A>(value: A): IteratorResult<A, never>
+function _yield<A>(value?: A): IteratorResult<A | void, never> {
   return { value }
 }
 export { _yield as yield }
 
-function _return(): IteratorReturnResult<void>
-function _return<A>(value: A): IteratorReturnResult<A>
-function _return<A>(value?: A): IteratorReturnResult<A | void> {
+function _return(): IteratorResult<never, void>
+function _return<A>(value: A): IteratorResult<never, A>
+function _return<A>(value?: A): IteratorResult<never, A | void> {
   return { done: true, value }
 }
 export { _return as return }
