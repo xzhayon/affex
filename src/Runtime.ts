@@ -9,9 +9,9 @@ import { IsNever, OrLazy } from './Type'
 import * as $Effect from './effect/Effect'
 import { Effect } from './effect/Effect'
 import * as $Fiber from './fiber/Fiber'
+import { Id } from './fiber/Id'
 import * as $Status from './fiber/Status'
-import * as $Scheduler from './scheduler/Scheduler'
-import * as $Task from './scheduler/Task'
+import * as $Loop from './loop/Loop'
 
 export class Runtime<R> {
   static readonly create = <R>(layer: Layer<never, R>) => new Runtime<R>(layer)
@@ -24,62 +24,57 @@ export class Runtime<R> {
     effector: OrLazy<G>,
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
     try {
-      const scheduler = $Scheduler.scheduler().attach($Fiber.fiber(effector))
-      for await (const task of scheduler) {
-        switch (task.fiber.status[$Type.tag]) {
-          case 'Suspended':
+      const fiber = $Fiber.fiber(effector)
+      const exits: Record<Id, Exit<any, any>> = {}
+      const tasks = await $Loop
+        .loop()
+        .attach(fiber)
+        .run({
+          onSuspended: async (task) => {
             const exit = $Effect.is(task.fiber.status.value)
               ? await this.handle(
                   task.fiber.status.value as Effect<any, any, any>,
                 )
               : $Exit.success(undefined)
-            const status = $Exit.isFailure(exit)
-              ? await task.fiber.throw(
-                  $Cause.isInterrupt(exit.cause)
-                    ? new Error(
-                        `Fiber for effect "${
-                          (
-                            task.fiber.status.value as unknown as Effect<
-                              any,
-                              any,
-                              any
-                            >
-                          )[$Type.tag]
-                        }" was interrupted`,
-                      )
-                    : exit.cause.error,
-                )
-              : await task.fiber.resume(exit.value)
-            if (
-              $Task.isAttached(task) &&
-              $Exit.isFailure(exit) &&
-              !$Cause.isInterrupt(exit.cause) &&
-              $Status.isFailed(status) &&
-              status.error === exit.cause.error
-            ) {
-              return exit
+            if ($Exit.isFailure(exit)) {
+              const error = $Cause.isInterrupt(exit.cause)
+                ? new Error(
+                    `Fiber ${task.fiber.id} for effect "${
+                      (
+                        task.fiber.status.value as unknown as Effect<
+                          any,
+                          any,
+                          any
+                        >
+                      )[$Type.tag]
+                    }" was interrupted`,
+                  )
+                : exit.cause.error
+              const status = await task.fiber.throw(error)
+              if ($Status.isFailed(status) && status.error === error) {
+                exits[task.fiber.id] = exit
+              }
+            } else {
+              await task.fiber.resume(exit.value)
             }
+          },
+        })
+      const task = tasks.find((task) => task.fiber.id === fiber.id)
+      if (task === undefined) {
+        throw new Error('Cannot find main task')
+      }
 
-            break
-          case 'Interrupted':
-            if ($Task.isAttached(task)) {
-              return $Exit.failure($Cause.interrupt())
-            }
+      if (exits[fiber.id]) {
+        return exits[fiber.id]
+      }
 
-            break
-          case 'Failed':
-            if ($Task.isAttached(task)) {
-              throw task.fiber.status.error
-            }
-
-            break
-          case 'Terminated':
-            if ($Task.isAttached(task)) {
-              return $Exit.success(task.fiber.status.value)
-            }
-
-            break
-        }
+      switch (task.fiber.status[$Type.tag]) {
+        case 'Interrupted':
+          return $Exit.failure($Cause.interrupt(task.fiber.id))
+        case 'Failed':
+          throw task.fiber.status.error
+        case 'Terminated':
+          return $Exit.success(task.fiber.status.value)
       }
 
       throw new Error('Cannot resolve effector')

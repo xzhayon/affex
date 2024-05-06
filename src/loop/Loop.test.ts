@@ -1,9 +1,8 @@
 import * as $Fiber from '../fiber/Fiber'
 import * as $Status from '../fiber/Status'
-import * as $Type from '../Type'
-import * as $Scheduler from './Scheduler'
+import * as $Loop from './Loop'
 
-describe('Scheduler', () => {
+describe('Loop', () => {
   function* f() {
     yield 0
     yield 1
@@ -21,25 +20,20 @@ describe('Scheduler', () => {
   }
 
   test('attaching all fibers', async () => {
-    const scheduler = $Scheduler
-      .scheduler()
+    const as: any[] = []
+    await $Loop
+      .loop()
       .attach($Fiber.fiber(f))
       .attach($Fiber.fiber(g))
-
-    const as = []
-    for await (const task of scheduler) {
-      switch (task.fiber.status[$Type.tag]) {
-        case 'Suspended':
+      .run({
+        onSuspended: async (task) => {
           as.push(task.fiber.status)
           await task.fiber.resume()
-
-          break
-        case 'Terminated':
+        },
+        onTerminated: async (task) => {
           as.push(task.fiber.status)
-
-          break
-      }
-    }
+        },
+      })
 
     expect(as).toStrictEqual([
       $Status.suspended(0),
@@ -53,26 +47,21 @@ describe('Scheduler', () => {
     ])
   })
 
-  test('detaching one fiber', async () => {
-    const scheduler = $Scheduler
-      .scheduler()
+  test('detaching some fibers', async () => {
+    const as: any[] = []
+    await $Loop
+      .loop()
       .attach($Fiber.fiber(f))
       .detach($Fiber.fiber(g))
-
-    const as = []
-    for await (const task of scheduler) {
-      switch (task.fiber.status[$Type.tag]) {
-        case 'Suspended':
+      .run({
+        onSuspended: async (task) => {
           as.push(task.fiber.status)
           await task.fiber.resume()
-
-          break
-        case 'Terminated':
+        },
+        onTerminated: async (task) => {
           as.push(task.fiber.status)
-
-          break
-      }
-    }
+        },
+      })
 
     expect(as).toStrictEqual([
       $Status.suspended(0),
@@ -84,25 +73,20 @@ describe('Scheduler', () => {
   })
 
   test('detaching all fibers', async () => {
-    const scheduler = $Scheduler
-      .scheduler()
+    const as: any[] = []
+    await $Loop
+      .loop()
       .detach($Fiber.fiber(f))
       .detach($Fiber.fiber(g))
-
-    const as = []
-    for await (const task of scheduler) {
-      switch (task.fiber.status[$Type.tag]) {
-        case 'Suspended':
+      .run({
+        onSuspended: async (task) => {
           as.push(task.fiber.status)
           await task.fiber.resume()
-
-          break
-        case 'Terminated':
+        },
+        onTerminated: async (task) => {
           as.push(task.fiber.status)
-
-          break
-      }
-    }
+        },
+      })
 
     expect(as).toStrictEqual([])
   })
