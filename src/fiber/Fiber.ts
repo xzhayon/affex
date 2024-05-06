@@ -2,11 +2,13 @@ import * as $Function from '../Function'
 import { AnyGenerator, ReturnOf, YieldOf } from '../Generator'
 import * as $Type from '../Type'
 import { OrLazy } from '../Type'
+import * as $Id from './Id'
 import * as $Status from './Status'
 import { Status } from './Status'
 
 export class Fiber<T, S> {
-  private _status: Status<T, S> = $Status.idle()
+  readonly id = $Id.id()
+  private _status: Status<T, S> = $Status.ready()
   private _generator!: AnyGenerator<S, T>
 
   static readonly create = <G extends AnyGenerator<any, any>>(
@@ -23,7 +25,7 @@ export class Fiber<T, S> {
   }
 
   readonly start = async () => {
-    this.assertStatus('Idle', 'start')
+    this.assertStatus('Ready', 'start')
 
     try {
       this._status = $Status.started()
@@ -74,7 +76,9 @@ export class Fiber<T, S> {
   ) => {
     if (this._status[$Type.tag] !== status) {
       throw new Error(
-        `Cannot ${action} fiber in status "${this._status[$Type.tag]}"`,
+        `Cannot ${action} fiber ${this.id} in status "${
+          this._status[$Type.tag]
+        }"`,
       )
     }
   }
@@ -95,6 +99,13 @@ export class Fiber<T, S> {
     }
   }
 }
+
+export type TOf<F extends Fiber<any, any>> = F extends Fiber<infer T, any>
+  ? T
+  : never
+export type SOf<F extends Fiber<any, any>> = F extends Fiber<any, infer S>
+  ? S
+  : never
 
 export function fiber<G extends AnyGenerator>(generator: OrLazy<G>) {
   return Fiber.create(generator)

@@ -2,7 +2,7 @@ import * as $Type from '../Type'
 import { Variant } from '../Type'
 
 export type Status<T, S> =
-  | Idle
+  | Ready
   | Started
   | Running
   | Suspended<S>
@@ -12,7 +12,7 @@ export type Status<T, S> =
 
 type _Status<T extends string> = Variant<typeof uri, T>
 
-export type Idle = _Status<'Idle'>
+export type Ready = _Status<'Ready'>
 
 export type Started = _Status<'Started'>
 
@@ -35,8 +35,8 @@ export interface Terminated<T> extends _Status<'Terminated'> {
 const uri = Symbol('Status')
 const _status = $Type.variant(uri)
 
-export function idle(): Status<never, never> {
-  return _status('Idle')
+export function ready(): Status<never, never> {
+  return _status('Ready')
 }
 
 export function started(): Status<never, never> {
@@ -63,8 +63,8 @@ export function terminated<T>(value: T): Status<T, never> {
   return { ..._status('Terminated'), value }
 }
 
-export function isIdle(status: Status<any, any>): status is Idle {
-  return status[$Type.tag] === 'Idle'
+export function isReady(status: Status<any, any>): status is Ready {
+  return status[$Type.tag] === 'Ready'
 }
 
 export function isStarted(status: Status<any, any>): status is Started {
