@@ -23,7 +23,7 @@ describe('Fiber', () => {
       await fiber.start()
 
       await expect(fiber.start()).rejects.toThrow(
-        /Cannot start fiber #\w+ in status "Suspended"/,
+        /Cannot start fiber [^ ]+ in status "Suspended"/,
       )
     })
 
@@ -33,7 +33,7 @@ describe('Fiber', () => {
       await fiber.throw(new Error('foo'))
 
       await expect(fiber.start()).rejects.toThrow(
-        /Cannot start fiber #\w+ in status "Failed"/,
+        /Cannot start fiber [^ ]+ in status "Failed"/,
       )
     })
 
@@ -46,7 +46,7 @@ describe('Fiber', () => {
       await fiber.resume()
 
       await expect(fiber.start()).rejects.toThrow(
-        /Cannot start fiber #\w+ in status "Terminated"/,
+        /Cannot start fiber [^ ]+ in status "Terminated"/,
       )
     })
   })
@@ -63,7 +63,7 @@ describe('Fiber', () => {
       const fiber = $Fiber.fiber(f)
 
       await expect(fiber.resume()).rejects.toThrow(
-        /Cannot resume fiber #\w+ in status "Ready"/,
+        /Cannot resume fiber [^ ]+ in status "Ready"/,
       )
     })
 
@@ -73,7 +73,7 @@ describe('Fiber', () => {
       await fiber.throw(new Error('foo'))
 
       await expect(fiber.resume()).rejects.toThrow(
-        /Cannot resume fiber #\w+ in status "Failed"/,
+        /Cannot resume fiber [^ ]+ in status "Failed"/,
       )
     })
 
@@ -86,7 +86,7 @@ describe('Fiber', () => {
       await fiber.resume()
 
       await expect(fiber.resume()).rejects.toThrow(
-        /Cannot resume fiber #\w+ in status "Terminated"/,
+        /Cannot resume fiber [^ ]+ in status "Terminated"/,
       )
     })
   })
@@ -105,7 +105,7 @@ describe('Fiber', () => {
       const fiber = $Fiber.fiber(f)
 
       await expect(fiber.throw(new Error('foo'))).rejects.toThrow(
-        /Cannot throw fiber #\w+ in status "Ready"/,
+        /Cannot throw fiber [^ ]+ in status "Ready"/,
       )
     })
 
@@ -115,7 +115,7 @@ describe('Fiber', () => {
       await fiber.throw(new Error('foo'))
 
       await expect(fiber.throw(new Error('foo'))).rejects.toThrow(
-        /Cannot throw fiber #\w+ in status "Failed"/,
+        /Cannot throw fiber [^ ]+ in status "Failed"/,
       )
     })
 
@@ -128,7 +128,7 @@ describe('Fiber', () => {
       await fiber.resume()
 
       await expect(fiber.throw(new Error('foo'))).rejects.toThrow(
-        /Cannot throw fiber #\w+ in status "Terminated"/,
+        /Cannot throw fiber [^ ]+ in status "Terminated"/,
       )
     })
   })

@@ -1,11 +1,24 @@
-export type Id = string
+export class Id {
+  private static counter = 0
+  private readonly id: number
 
-const _id = (function* () {
-  for (let i = 0; true; i++) {
-    yield `#${i}`
+  static readonly create = (parentId?: Id) => new Id(parentId)
+
+  static readonly reset = () => {
+    Id.counter = 0
   }
-})()
 
-export function id() {
-  return _id.next().value
+  private constructor(private readonly parentId?: Id) {
+    this.id = Id.counter++
+  }
+
+  readonly [Symbol.toPrimitive] = (hint: 'default' | 'number' | 'string') => {
+    return hint === 'string'
+      ? `#${this.parentId !== undefined ? `${this.parentId.id}.` : ''}${
+          this.id
+        }`
+      : this.id
+  }
 }
+
+export const id = Id.create
