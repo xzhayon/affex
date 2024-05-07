@@ -7,6 +7,7 @@ import { Fork } from './Fork'
 import { Interrupt } from './Interrupt'
 import { Proxy } from './Proxy'
 import { Sandbox } from './Sandbox'
+import { Suspend } from './Suspend'
 
 export type Effect<A, E, R> =
   | Exception<E>
@@ -14,6 +15,7 @@ export type Effect<A, E, R> =
   | Interrupt
   | Proxy<A, E, R>
   | Sandbox<A, E, R>
+  | Suspend
 
 export type _Effect<T extends string> = Variant<typeof uri, T>
 

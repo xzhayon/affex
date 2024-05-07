@@ -130,7 +130,9 @@ export class Runtime<R> {
           return exit
         }
 
-        return this.resolve(effect.catch(exit.cause.error))
+        return this.resolve(effect.catch(exit.cause.error), fiber)
+      case 'Suspend':
+        return $Exit.success(undefined)
     }
   }
 
