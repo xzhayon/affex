@@ -160,5 +160,51 @@ describe('Runtime', () => {
         $Exit.failure($Cause.fail(new Error('foo'), {} as any)),
       )
     })
+
+    test('recording fiber ID in failure cause', async () => {
+      interface Foo {
+        readonly [uri]?: unique symbol
+        (): string
+      }
+
+      interface Bar {
+        readonly [uri]?: unique symbol
+        (): string
+      }
+
+      interface Qux {
+        readonly [uri]?: unique symbol
+        (): string
+      }
+
+      const tagFoo = $Tag.tag<Foo>()
+      const foo = $Proxy.function(tagFoo)
+
+      const tagBar = $Tag.tag<Bar>()
+      const bar = $Proxy.function(tagBar)
+
+      const tagQux = $Tag.tag<Qux>()
+      const qux = $Proxy.function(tagQux)
+
+      const exit = await $Runtime.runExit(
+        function* () {
+          return yield* foo()
+        },
+        $Layer
+          .layer()
+          .with(tagFoo, function* () {
+            return yield* bar()
+          })
+          .with(tagBar, function* () {
+            return yield* qux()
+          })
+          .with(tagQux, () => {
+            throw new Error()
+          }),
+      )
+
+      // @ts-ignore
+      expect(`${exit.cause.fiberId}`).toStrictEqual('#0.1.2')
+    })
   })
 })
