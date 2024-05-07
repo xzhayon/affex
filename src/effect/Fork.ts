@@ -1,4 +1,4 @@
-import { AnyEffector, ErrorOf, OutputOf, RequirementOf } from '../Effector'
+import { AnyEffector, ContextOf, ErrorOf, OutputOf } from '../Effector'
 import { Exit } from '../Exit'
 import { AnyGenerator, Generated } from '../Generator'
 import { OrLazy } from '../Type'
@@ -26,9 +26,7 @@ function _fork<
   Awaited<Generated<ReturnType<F>>>,
   ReturnType<F> extends infer G extends AnyGenerator ? ErrorOf<G> : never,
   | R
-  | (ReturnType<F> extends infer G extends AnyGenerator
-      ? RequirementOf<G>
-      : never)
+  | (ReturnType<F> extends infer G extends AnyGenerator ? ContextOf<G> : never)
 > {
   return { ..._effect('Fork'), handle }
 }

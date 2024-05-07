@@ -5,10 +5,10 @@ export { is as isCause, isDie, isFail } from './Cause'
 export {
   AnyEffector,
   AsyncEffector,
+  ContextOf,
   Effector,
   ErrorOf,
   OutputOf,
-  RequirementOf,
 } from './Effector'
 export { is as isExit, isFailure, isSuccess } from './Exit'
 export {

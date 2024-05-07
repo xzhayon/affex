@@ -36,7 +36,7 @@ export type ErrorOf<G extends AnyGenerator> = YieldOf<G> extends infer Y
       : never
     : never
   : never
-export type RequirementOf<G extends AnyGenerator> = YieldOf<G> extends infer Y
+export type ContextOf<G extends AnyGenerator> = YieldOf<G> extends infer Y
   ? IsAny<Y> extends false
     ? Y extends Use<infer R>
       ? R

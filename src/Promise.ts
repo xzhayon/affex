@@ -1,4 +1,4 @@
-import { AnyEffector, ErrorOf, RequirementOf } from './Effector'
+import { AnyEffector, ContextOf, ErrorOf } from './Effector'
 import * as $Error from './Error'
 import * as $Exit from './Exit'
 import * as $Type from './Type'
@@ -9,7 +9,7 @@ import * as $Fork from './effect/Fork'
 export function all<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
 ) {
-  return $Fork.fork<RequirementOf<G>>()(async function* (run) {
+  return $Fork.fork<ContextOf<G>>()(async function* (run) {
     try {
       return await Promise.all(
         effectors.map(run).map((promise) =>
@@ -42,15 +42,13 @@ export function all<G extends AnyEffector<any, any, any>>(
 export function settled<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
 ) {
-  return $Fork.fork<RequirementOf<G>>()((run) =>
-    Promise.all(effectors.map(run)),
-  )
+  return $Fork.fork<ContextOf<G>>()((run) => Promise.all(effectors.map(run)))
 }
 
 export function any<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
 ) {
-  return $Fork.fork<RequirementOf<G>>()(async function* (run) {
+  return $Fork.fork<ContextOf<G>>()(async function* (run) {
     try {
       return await Promise.any(
         effectors.map(run).map((promise) =>
@@ -96,7 +94,7 @@ export function any<G extends AnyEffector<any, any, any>>(
 export function race<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
 ) {
-  return $Fork.fork<RequirementOf<G>>()(async function* (run) {
+  return $Fork.fork<ContextOf<G>>()(async function* (run) {
     try {
       return await Promise.race(
         effectors.map(run).map((promise) =>

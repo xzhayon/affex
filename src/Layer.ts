@@ -1,4 +1,4 @@
-import { RequirementOf } from './Effector'
+import { ContextOf } from './Effector'
 import { Function } from './Function'
 import { AnyGenerator } from './Generator'
 import { Handler } from './Handler'
@@ -25,13 +25,13 @@ export class Layer<R, A> {
       | R
       | (H extends Function
           ? ReturnType<H> extends infer G extends AnyGenerator
-            ? RequirementOf<G>
+            ? ContextOf<G>
             : never
           : H extends Struct
           ? {
               [K in keyof H]: H[K] extends Function
                 ? ReturnType<H[K]> extends infer G extends AnyGenerator
-                  ? RequirementOf<G>
+                  ? ContextOf<G>
                   : never
                 : never
             }[keyof H]

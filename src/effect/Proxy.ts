@@ -1,4 +1,4 @@
-import { AnyEffector, Effector, ErrorOf, RequirementOf } from '../Effector'
+import { AnyEffector, ContextOf, Effector, ErrorOf } from '../Effector'
 import { Function } from '../Function'
 import { AnyGenerator, Generated } from '../Generator'
 import { NonEmptyArray } from '../NonEmptyArray'
@@ -26,9 +26,7 @@ function proxy<R, F extends (handler: any) => any>(
       ? $Result.EOf<_R>
       : never),
   | R
-  | (ReturnType<F> extends infer G extends AnyGenerator
-      ? RequirementOf<G>
-      : never)
+  | (ReturnType<F> extends infer G extends AnyGenerator ? ContextOf<G> : never)
 > {
   return { ..._effect('Proxy'), tag, handle }
 }
@@ -42,7 +40,7 @@ export function functionA<R extends Function>(tag: Tag<R>) {
     | (Awaited<Generated<A>> extends infer _R extends Result<any, any>
         ? $Result.EOf<_R>
         : never),
-    R | (A extends AnyGenerator ? RequirementOf<A> : never)
+    R | (A extends AnyGenerator ? ContextOf<A> : never)
   > => $Effect.perform(proxy(tag, handle))
 }
 
@@ -74,7 +72,7 @@ export function structA<R extends Struct>(tag: Tag<R>) {
         | (Awaited<Generated<A>> extends infer _R extends Result<any, any>
             ? $Result.EOf<_R>
             : never),
-        R | (A extends AnyGenerator ? RequirementOf<A> : never)
+        R | (A extends AnyGenerator ? ContextOf<A> : never)
       >
     }
 }
@@ -108,7 +106,7 @@ export function struct<R extends Struct>(tag: Tag<R>) {
                 : never),
             | R
             | (ReturnType<R[_K]> extends infer G extends AnyGenerator
-                ? RequirementOf<G>
+                ? ContextOf<G>
                 : never)
           >
         : never

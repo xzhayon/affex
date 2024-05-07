@@ -1,4 +1,4 @@
-import { AnyEffector, ErrorOf, OutputOf, RequirementOf } from '../Effector'
+import { AnyEffector, ContextOf, ErrorOf, OutputOf } from '../Effector'
 import * as $Function from '../Function'
 import { AnyGenerator, Generated } from '../Generator'
 import { OrLazy } from '../Type'
@@ -21,9 +21,9 @@ export function sandbox<
 ): Effect<
   OutputOf<G> | Awaited<Generated<ReturnType<F>>>,
   ReturnType<F> extends infer _G extends AnyGenerator ? ErrorOf<_G> : never,
-  | RequirementOf<G>
+  | ContextOf<G>
   | (ReturnType<F> extends infer _G extends AnyGenerator
-      ? RequirementOf<_G>
+      ? ContextOf<_G>
       : never)
 > {
   return { ..._effect('Sandbox'), try: _try, catch: _catch }

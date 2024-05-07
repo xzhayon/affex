@@ -1,5 +1,5 @@
 import * as $Cause from './Cause'
-import { AnyEffector, ErrorOf, OutputOf, RequirementOf } from './Effector'
+import { AnyEffector, ContextOf, ErrorOf, OutputOf } from './Effector'
 import * as $Exit from './Exit'
 import { Exit } from './Exit'
 import * as $Generator from './Generator'
@@ -154,14 +154,14 @@ export function runtime<R>(layer: Layer<never, R>) {
 
 export function runExit<G extends AnyEffector<any, any, any>>(
   effector: OrLazy<G>,
-  layer: Layer<never, RequirementOf<G>>,
+  layer: Layer<never, ContextOf<G>>,
 ) {
   return runtime(layer).run(effector)
 }
 
 export async function runPromise<G extends AnyEffector<any, any, any>>(
   effector: OrLazy<G>,
-  layer: Layer<never, RequirementOf<G>>,
+  layer: Layer<never, ContextOf<G>>,
 ) {
   const exit = await runExit(effector, layer)
   if ($Exit.isFailure(exit)) {
