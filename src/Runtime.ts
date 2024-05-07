@@ -148,9 +148,7 @@ export class Runtime<R> {
   }
 }
 
-export function runtime<R>(layer: Layer<never, R>) {
-  return Runtime.create(layer)
-}
+export const runtime = Runtime.create
 
 export function runExit<G extends AnyEffector<any, any, any>>(
   effector: OrLazy<G>,

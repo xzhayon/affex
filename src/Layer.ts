@@ -68,9 +68,7 @@ export class Layer<R, A> {
   }
 }
 
-export function layer() {
-  return Layer.empty()
-}
+export const layer = Layer.empty
 
 export function is(u: unknown): u is Layer<unknown, unknown> {
   return u instanceof Layer
