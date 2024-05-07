@@ -39,7 +39,9 @@ describe('Fork', () => {
           ),
           $Layer.layer(),
         ),
-      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('foo'))))
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.die(new Error('foo'), {} as any)),
+      )
     })
 
     test('raising error', async () => {
@@ -52,7 +54,9 @@ describe('Fork', () => {
           ),
           $Layer.layer(),
         ),
-      ).resolves.toStrictEqual($Exit.failure($Cause.fail(new Error('foo'))))
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.fail(new Error('foo'), {} as any)),
+      )
     })
 
     test('forking generator function', async () => {
@@ -79,7 +83,9 @@ describe('Fork', () => {
           $Fork.fork()(() => $Exception.raise(new Error('foo'))),
           $Layer.layer(),
         ),
-      ).resolves.toStrictEqual($Exit.failure($Cause.fail(new Error('foo'))))
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.fail(new Error('foo'), {} as any)),
+      )
     })
 
     test('forking function with effects', async () => {
@@ -132,8 +138,10 @@ describe('Fork', () => {
           $Fork.fork()((run) => run(random)),
           $Layer.layer(),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.die(new Error('Cannot find handler for effect'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.die(new Error('Cannot find handler for effect'), {} as any),
+        ),
       )
     })
 

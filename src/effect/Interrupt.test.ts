@@ -30,6 +30,6 @@ describe('Interrupt', () => {
           return yield* $Interrupt.interrupt()
         }),
       ),
-    ).resolves.toMatchObject($Exit.failure($Cause.die({})))
+    ).resolves.toMatchObject($Exit.failure($Cause.die({}, {} as any)))
   })
 })

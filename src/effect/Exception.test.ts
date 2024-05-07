@@ -41,8 +41,10 @@ describe('Exception', () => {
             )
           }),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new Error('Cannot return random number'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new Error('Cannot return random number'), {} as any),
+        ),
       )
     })
 
@@ -59,8 +61,10 @@ describe('Exception', () => {
             return a / b
           }),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new Error('Cannot divide by zero'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new Error('Cannot divide by zero'), {} as any),
+        ),
       )
     })
 
@@ -76,8 +80,10 @@ describe('Exception', () => {
             return a / b
           }),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new FooError('Cannot divide by zero'), {} as any),
+        ),
       )
     })
 
@@ -98,8 +104,10 @@ describe('Exception', () => {
             return a / b
           }),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new BarError('Cannot divide by zero'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new BarError('Cannot divide by zero'), {} as any),
+        ),
       )
     })
 
@@ -121,8 +129,10 @@ describe('Exception', () => {
             return a / b
           }),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new FooError('Cannot divide by zero'), {} as any),
+        ),
       )
     })
 
@@ -149,8 +159,10 @@ describe('Exception', () => {
             })
             .with(tagRandom, () => Math.random()),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new FooError('Cannot divide by zero'), {} as any),
+        ),
       )
     })
 
@@ -177,7 +189,9 @@ describe('Exception', () => {
             return yield* $Exception.raise(new BarError())
           }),
         ),
-      ).resolves.toStrictEqual($Exit.failure($Cause.fail(new BarError())))
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.fail(new BarError(), {} as any)),
+      )
     })
   })
 
@@ -205,9 +219,9 @@ describe('Exception', () => {
           ),
           $Layer.layer(),
         ),
-      ).resolves.toStrictEqual(
+      ).resolves.toMatchObject(
         $Exit.failure(
-          $Cause.fail(new Error('bar', { cause: new Error('foo') })),
+          $Cause.fail(new Error('bar', { cause: new Error('foo') }), {} as any),
         ),
       )
     })
@@ -235,9 +249,9 @@ describe('Exception', () => {
           ),
           $Layer.layer(),
         ),
-      ).resolves.toStrictEqual(
+      ).resolves.toMatchObject(
         $Exit.failure(
-          $Cause.fail(new Error('bar', { cause: new Error('foo') })),
+          $Cause.fail(new Error('bar', { cause: new Error('foo') }), {} as any),
         ),
       )
     })

@@ -26,10 +26,10 @@ export class Runtime<R> {
     G extends AnyEffector<any, any, IsNever<R> extends false ? R : any>,
   >(
     effector: OrLazy<G>,
-    parent?: Fiber<ReturnOf<G>, YieldOf<G>>,
+    parentFiber?: Fiber<ReturnOf<G>, YieldOf<G>>,
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
+    const fiber = $Fiber.fiber(effector, parentFiber?.id)
     try {
-      const fiber = $Fiber.fiber(effector, parent?.id)
       const exits = new Map<Id, Exit<any, any>>()
       const tasks = await $Loop
         .loop()
@@ -45,7 +45,7 @@ export class Runtime<R> {
             if ($Exit.isFailure(exit)) {
               if (
                 $Cause.isInterrupt(exit.cause) &&
-                exit.cause.fiberId === fiber.id
+                exit.cause.fiberId === task.fiber.id
               ) {
                 exits.set(task.fiber.id, exit)
                 await task.fiber.interrupt()
@@ -101,7 +101,7 @@ export class Runtime<R> {
 
       throw new Error('Cannot resolve effector')
     } catch (error) {
-      return $Exit.failure($Cause.die(error))
+      return $Exit.failure($Cause.die(error, fiber.id))
     }
   }
 
@@ -111,7 +111,7 @@ export class Runtime<R> {
   ) => {
     switch (effect[$Type.tag]) {
       case 'Exception':
-        return $Exit.failure($Cause.fail(effect.error))
+        return $Exit.failure($Cause.fail(effect.error, fiber.id))
       case 'Fork':
         return this.resolve(
           effect.handle((effector) => this.run(effector, fiber)),
@@ -164,7 +164,7 @@ export async function runPromise<G extends AnyEffector<any, any, any>>(
   const exit = await runExit(effector, layer)
   if ($Exit.isFailure(exit)) {
     throw $Cause.isInterrupt(exit.cause)
-      ? new Error('Fiber was interrupted')
+      ? new Error(`Fiber ${exit.cause.fiberId} was interrupted`)
       : exit.cause.error
   }
 

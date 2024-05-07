@@ -34,8 +34,10 @@ describe('Sandbox', () => {
           }),
           layer,
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.die(new Error('Cannot divide by zero'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.die(new Error('Cannot divide by zero'), {} as any),
+        ),
       )
     })
 
@@ -47,8 +49,10 @@ describe('Sandbox', () => {
           }),
           layer,
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.die(new Error('Cannot recover from exception'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.die(new Error('Cannot recover from exception'), {} as any),
+        ),
       )
     })
 
@@ -60,8 +64,10 @@ describe('Sandbox', () => {
           ),
           layer,
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new Error('Cannot recover from exception'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new Error('Cannot recover from exception'), {} as any),
+        ),
       )
     })
 
@@ -118,7 +124,9 @@ describe('Sandbox', () => {
             },
           )).length
         }, $Layer.layer()),
-      ).resolves.toStrictEqual($Exit.failure($Cause.die(new BarError())))
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.die(new BarError(), {} as any)),
+      )
     })
 
     test('handling multiple errors', async () => {
@@ -165,7 +173,9 @@ describe('Sandbox', () => {
           ),
           $Layer.layer(),
         ),
-      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('foo'))))
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.die(new Error('foo'), {} as any)),
+      )
     })
   })
 })

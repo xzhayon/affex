@@ -46,17 +46,17 @@ describe('Promise', () => {
     if (!success) {
       await expect(
         $Runtime.runExit($Promise.all(input.map(sleep)), failLayer),
-      ).resolves.toStrictEqual($Exit.failure($Cause.fail(output)))
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(output, {} as any)))
     }
   })
 
   test.each([
     [[0, 2], true, [$Exit.success(0), $Exit.success(2)]],
-    [[1, 2], true, [$Exit.failure($Cause.die(1)), $Exit.success(2)]],
+    [[1, 2], true, [$Exit.failure($Cause.die(1, {} as any)), $Exit.success(2)]],
   ])('settled', async (input, success, output) => {
     await expect(
       $Runtime.runPromise($Promise.settled(input.map(sleep)), dieLayer),
-    )[success ? 'resolves' : 'rejects'].toStrictEqual(output)
+    )[success ? 'resolves' : 'rejects'].toMatchObject(output)
   })
 
   test.each([
@@ -68,10 +68,11 @@ describe('Promise', () => {
 
     await (success
       ? expect($Runtime.runPromise(f, dieLayer)).resolves.toStrictEqual(output)
-      : expect($Runtime.runExit(f, failLayer)).resolves.toStrictEqual(
+      : expect($Runtime.runExit(f, failLayer)).resolves.toMatchObject(
           $Exit.failure(
             $Cause.die(
               new AggregateError([1, 3], 'All promises were rejected'),
+              {} as any,
             ),
           ),
         ))
@@ -88,7 +89,7 @@ describe('Promise', () => {
     if (!success) {
       await expect(
         $Runtime.runExit($Promise.race(input.map(sleep)), failLayer),
-      ).resolves.toStrictEqual($Exit.failure($Cause.fail(output)))
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(output, {} as any)))
     }
   })
 })

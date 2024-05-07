@@ -35,7 +35,7 @@ describe('Runtime', () => {
         await expect(
           // @ts-expect-error
           $Runtime.runExit(add(42, 1337), $Layer.layer()),
-        ).resolves.toStrictEqual(
+        ).resolves.toMatchObject(
           $Exit.failure(
             $Cause.die(
               new Error(
@@ -43,6 +43,7 @@ describe('Runtime', () => {
                   description ? ` "${description}"` : ''
                 }`,
               ),
+              {} as any,
             ),
           ),
         )
@@ -54,7 +55,9 @@ describe('Runtime', () => {
         $Runtime.runExit(function* () {
           throw new Error('foo')
         }, $Layer.layer()),
-      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('foo'))))
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.die(new Error('foo'), {} as any)),
+      )
     })
 
     test('throwing error from effect handler', async () => {
@@ -77,8 +80,10 @@ describe('Runtime', () => {
             return a / b
           }),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.die(new Error('Cannot divide by zero'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.die(new Error('Cannot divide by zero'), {} as any),
+        ),
       )
     })
 
@@ -91,7 +96,9 @@ describe('Runtime', () => {
             throw new Error('bar')
           }
         }, $Layer.layer()),
-      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('bar'))))
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.die(new Error('bar'), {} as any)),
+      )
     })
 
     test('throwing error after catching exception in nested fiber', async () => {
@@ -103,7 +110,9 @@ describe('Runtime', () => {
             throw new Error('bar')
           }
         }, $Layer.layer()),
-      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('bar'))))
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.die(new Error('bar'), {} as any)),
+      )
     })
 
     test('catching error from nested generator', async () => {
@@ -131,7 +140,9 @@ describe('Runtime', () => {
             throw error
           }
         }, $Layer.layer()),
-      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('foo'))))
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.die(new Error('foo'), {} as any)),
+      )
     })
 
     test('rethrowing exception from nested effector', async () => {
@@ -145,7 +156,9 @@ describe('Runtime', () => {
             throw error
           }
         }, $Layer.layer()),
-      ).resolves.toStrictEqual($Exit.failure($Cause.fail(new Error('foo'))))
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.fail(new Error('foo'), {} as any)),
+      )
     })
   })
 })

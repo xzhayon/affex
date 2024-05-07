@@ -9,10 +9,12 @@ type _Cause<T extends string> = Variant<typeof uri, T>
 
 export interface Fail<E> extends _Cause<'Fail'> {
   readonly error: E
+  readonly fiberId: Id
 }
 
 export interface Die extends _Cause<'Die'> {
   readonly error: unknown
+  readonly fiberId: Id
 }
 
 export interface Interrupt extends _Cause<'Interrupt'> {
@@ -22,12 +24,12 @@ export interface Interrupt extends _Cause<'Interrupt'> {
 const uri = Symbol('Cause')
 const _cause = $Type.variant(uri)
 
-export function fail<E>(error: E): Cause<E> {
-  return { ..._cause('Fail'), error }
+export function fail<E>(error: E, fiberId: Id): Cause<E> {
+  return { ..._cause('Fail'), error, fiberId }
 }
 
-export function die(error: unknown): Cause<never> {
-  return { ..._cause('Die'), error }
+export function die(error: unknown, fiberId: Id): Cause<never> {
+  return { ..._cause('Die'), error, fiberId }
 }
 
 export function interrupt(fiberId: Id): Cause<never> {
