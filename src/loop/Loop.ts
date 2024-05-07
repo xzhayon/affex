@@ -42,7 +42,7 @@ export class Loop<F extends Fiber<any, any>> {
       task: F extends any ? Task<F> & { fiber: F & { status: S } } : never,
     ) => Promise<void>
   }) => {
-    const terminated = []
+    const terminated = new Map<Id, F extends any ? Task<F> : never>()
     for (const task of this.queue) {
       const handler = handlers?.[`on${task.fiber.status[$Type.tag]}`]
       switch (task.fiber.status[$Type.tag]) {
@@ -66,7 +66,7 @@ export class Loop<F extends Fiber<any, any>> {
         case 'Failed':
         case 'Terminated':
           await handler?.(task as any)
-          terminated.push(task)
+          terminated.set(task.fiber.id, task)
 
           break
       }

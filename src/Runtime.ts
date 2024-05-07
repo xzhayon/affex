@@ -25,7 +25,7 @@ export class Runtime<R> {
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
     try {
       const fiber = $Fiber.fiber(effector)
-      const exits: Record<Id, Exit<any, any>> = {}
+      const exits = new Map<Id, Exit<any, any>>()
       const tasks = await $Loop
         .loop()
         .attach(fiber)
@@ -52,20 +52,22 @@ export class Runtime<R> {
                 : exit.cause.error
               const status = await task.fiber.throw(error)
               if ($Status.isFailed(status) && status.error === error) {
-                exits[task.fiber.id] = exit
+                exits.set(task.fiber.id, exit)
               }
             } else {
               await task.fiber.resume(exit.value)
             }
           },
         })
-      const task = tasks.find((task) => task.fiber.id === fiber.id)
-      if (task === undefined) {
-        throw new Error('Cannot find main task')
+
+      const exit = exits.get(fiber.id)
+      if (exit !== undefined) {
+        return exit
       }
 
-      if (exits[fiber.id]) {
-        return exits[fiber.id]
+      const task = tasks.get(fiber.id)
+      if (task === undefined) {
+        throw new Error('Cannot find main task')
       }
 
       switch (task.fiber.status[$Type.tag]) {
