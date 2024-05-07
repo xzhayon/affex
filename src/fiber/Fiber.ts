@@ -18,6 +18,7 @@ export class Fiber<T, S> {
   ) =>
     new Fiber<ReturnOf<G>, YieldOf<G>>(
       $Function.is(generator) ? generator : () => generator,
+      parentId,
     )
 
   private constructor(

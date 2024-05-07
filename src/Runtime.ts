@@ -18,7 +18,9 @@ import * as $Loop from './loop/Loop'
 export class Runtime<R> {
   static readonly create = <R>(layer: Layer<never, R>) => new Runtime<R>(layer)
 
-  private constructor(private readonly layer: Layer<never, R>) {}
+  private constructor(private readonly layer: Layer<never, R>) {
+    Id.reset()
+  }
 
   readonly run = async <
     G extends AnyEffector<any, any, IsNever<R> extends false ? R : any>,
@@ -37,12 +39,23 @@ export class Runtime<R> {
             const exit = $Effect.is(task.fiber.status.value)
               ? await this.handle(
                   task.fiber.status.value as Effect<any, any, any>,
+                  task.fiber,
                 )
               : $Exit.success(undefined)
             if ($Exit.isFailure(exit)) {
+              if (
+                $Cause.isInterrupt(exit.cause) &&
+                exit.cause.fiberId === fiber.id
+              ) {
+                exits.set(task.fiber.id, exit)
+                await task.fiber.interrupt()
+
+                return
+              }
+
               const error = $Cause.isInterrupt(exit.cause)
                 ? new Error(
-                    `Fiber ${task.fiber.id} for effect "${
+                    `Fiber ${exit.cause.fiberId} for effect "${
                       (
                         task.fiber.status.value as unknown as Effect<
                           any,
@@ -54,7 +67,11 @@ export class Runtime<R> {
                   )
                 : exit.cause.error
               const status = await task.fiber.throw(error)
-              if ($Status.isFailed(status) && status.error === error) {
+              if (
+                !$Cause.isInterrupt(exit.cause) &&
+                $Status.isFailed(status) &&
+                status.error === exit.cause.error
+              ) {
                 exits.set(task.fiber.id, exit)
               }
             } else {
@@ -88,16 +105,27 @@ export class Runtime<R> {
     }
   }
 
-  private readonly handle = async <A, E>(effect: Effect<A, E, R>) => {
+  private readonly handle = async <A, E>(
+    effect: Effect<A, E, R>,
+    fiber: Fiber<any, any>,
+  ) => {
     switch (effect[$Type.tag]) {
       case 'Exception':
         return $Exit.failure($Cause.fail(effect.error))
       case 'Fork':
-        return this.resolve(effect.handle((effector) => this.run(effector)))
+        return this.resolve(
+          effect.handle((effector) => this.run(effector, fiber)),
+          fiber,
+        )
+      case 'Interrupt':
+        return $Exit.failure($Cause.interrupt(fiber.id))
       case 'Proxy':
-        return this.resolve(effect.handle(this.layer.handler(effect.tag)))
+        return this.resolve(
+          effect.handle(this.layer.handler(effect.tag)),
+          fiber,
+        )
       case 'Sandbox':
-        const exit = await this.run(effect.try)
+        const exit = await this.run(effect.try, fiber)
         if ($Exit.isSuccess(exit) || !$Cause.isFail(exit.cause)) {
           return exit
         }
@@ -108,10 +136,13 @@ export class Runtime<R> {
 
   private readonly resolve = async <A, E>(
     value: A | Promise<A> | AnyEffector<A, E, R>,
+    fiber: Fiber<any, any>,
   ) => {
     const _value = await value
 
-    return $Generator.is(_value) ? this.run(_value) : $Exit.success(_value)
+    return $Generator.is(_value)
+      ? this.run(_value, fiber)
+      : $Exit.success(_value)
   }
 }
 

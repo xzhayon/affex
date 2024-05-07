@@ -15,7 +15,7 @@ export class Id {
   readonly [Symbol.toPrimitive] = (hint: 'default' | 'number' | 'string') => {
     return hint === 'string'
       ? this.parentId !== undefined
-        ? `${this.parentId.id}.${this.id}`
+        ? `#${this.parentId.id}.${this.id}`
         : `#${this.id}`
       : this.id
   }

@@ -4,12 +4,14 @@ import * as $Type from '../Type'
 import { Variant } from '../Type'
 import { Exception } from './Exception'
 import { Fork } from './Fork'
+import { Interrupt } from './Interrupt'
 import { Proxy } from './Proxy'
 import { Sandbox } from './Sandbox'
 
 export type Effect<A, E, R> =
   | Exception<E>
   | Fork<A, E, R>
+  | Interrupt
   | Proxy<A, E, R>
   | Sandbox<A, E, R>
 

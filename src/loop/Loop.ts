@@ -12,9 +12,7 @@ export class Loop<F extends Fiber<any, any>> {
 
   static readonly create = () => new Loop<never>()
 
-  private constructor() {
-    Id.reset()
-  }
+  private constructor() {}
 
   readonly attach = <_F extends Fiber<any, any>>(fiber: _F): Loop<F | _F> => {
     const self = this as Loop<F | _F>
