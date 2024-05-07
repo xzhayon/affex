@@ -16,7 +16,7 @@ export interface Die extends _Cause<'Die'> {
 }
 
 export interface Interrupt extends _Cause<'Interrupt'> {
-  readonly id: Id
+  readonly fiberId: Id
 }
 
 const uri = Symbol('Cause')
@@ -30,8 +30,8 @@ export function die(error: unknown): Cause<never> {
   return { ..._cause('Die'), error }
 }
 
-export function interrupt(id: Id): Cause<never> {
-  return { ..._cause('Interrupt'), id }
+export function interrupt(fiberId: Id): Cause<never> {
+  return { ..._cause('Interrupt'), fiberId }
 }
 
 export function is(u: unknown): u is Cause<unknown> {

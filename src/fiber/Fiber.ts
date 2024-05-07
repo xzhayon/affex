@@ -3,22 +3,29 @@ import { AnyGenerator, ReturnOf, YieldOf } from '../Generator'
 import * as $Type from '../Type'
 import { OrLazy } from '../Type'
 import * as $Id from './Id'
+import { Id } from './Id'
 import * as $Status from './Status'
 import { Status } from './Status'
 
 export class Fiber<T, S> {
-  readonly id = $Id.id()
+  readonly id: Id
   private _status: Status<T, S> = $Status.ready()
   private _generator!: AnyGenerator<S, T>
 
   static readonly create = <G extends AnyGenerator<any, any>>(
     generator: OrLazy<G>,
+    parentId?: Id,
   ) =>
     new Fiber<ReturnOf<G>, YieldOf<G>>(
       $Function.is(generator) ? generator : () => generator,
     )
 
-  private constructor(private readonly generator: () => AnyGenerator<S, T>) {}
+  private constructor(
+    private readonly generator: () => AnyGenerator<S, T>,
+    parentId?: Id,
+  ) {
+    this.id = $Id.id(parentId)
+  }
 
   get status() {
     return this._status
@@ -107,6 +114,4 @@ export type SOf<F extends Fiber<any, any>> = F extends Fiber<any, infer S>
   ? S
   : never
 
-export function fiber<G extends AnyGenerator>(generator: OrLazy<G>) {
-  return Fiber.create(generator)
-}
+export const fiber = Fiber.create

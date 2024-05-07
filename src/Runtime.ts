@@ -3,12 +3,14 @@ import { AnyEffector, ErrorOf, OutputOf, RequirementOf } from './Effector'
 import * as $Exit from './Exit'
 import { Exit } from './Exit'
 import * as $Generator from './Generator'
+import { ReturnOf, YieldOf } from './Generator'
 import { Layer } from './Layer'
 import * as $Type from './Type'
 import { IsNever, OrLazy } from './Type'
 import * as $Effect from './effect/Effect'
 import { Effect } from './effect/Effect'
 import * as $Fiber from './fiber/Fiber'
+import { Fiber } from './fiber/Fiber'
 import { Id } from './fiber/Id'
 import * as $Status from './fiber/Status'
 import * as $Loop from './loop/Loop'
@@ -22,9 +24,10 @@ export class Runtime<R> {
     G extends AnyEffector<any, any, IsNever<R> extends false ? R : any>,
   >(
     effector: OrLazy<G>,
+    parent?: Fiber<ReturnOf<G>, YieldOf<G>>,
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
     try {
-      const fiber = $Fiber.fiber(effector)
+      const fiber = $Fiber.fiber(effector, parent?.id)
       const exits = new Map<Id, Exit<any, any>>()
       const tasks = await $Loop
         .loop()
