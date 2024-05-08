@@ -75,7 +75,7 @@ export class Runtime<R> {
 
       const task = tasks.get(fiber.id)
       if (task === undefined) {
-        throw new Error('Cannot find root task')
+        throw new Error(`Cannot find root task in fiber ${fiber.id}`)
       }
 
       switch (task.fiber.status[$Type.tag]) {
