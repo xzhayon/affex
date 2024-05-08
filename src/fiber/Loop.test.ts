@@ -1,6 +1,6 @@
-import * as $Fiber from '../fiber/Fiber'
-import * as $Status from '../fiber/Status'
+import * as $Fiber from './Fiber'
 import * as $Loop from './Loop'
+import * as $Status from './Status'
 
 describe('Loop', () => {
   function* f() {

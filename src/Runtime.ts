@@ -18,8 +18,8 @@ import { Effect } from './effect/Effect'
 import * as $Fiber from './fiber/Fiber'
 import { Fiber } from './fiber/Fiber'
 import { Id } from './fiber/Id'
+import * as $Loop from './fiber/Loop'
 import * as $Status from './fiber/Status'
-import * as $Loop from './loop/Loop'
 
 export class Runtime<R> {
   static readonly create = <R>(layer: Layer<never, R>) => new Runtime<R>(layer)

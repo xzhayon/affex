@@ -1,9 +1,9 @@
 import * as $Queue from '../Queue'
 import * as $Type from '../Type'
-import * as $Fiber from '../fiber/Fiber'
-import { Fiber } from '../fiber/Fiber'
-import { Id } from '../fiber/Id'
-import { Status } from '../fiber/Status'
+import * as $Fiber from './Fiber'
+import { Fiber } from './Fiber'
+import { Id } from './Id'
+import { Status } from './Status'
 import * as $Task from './Task'
 import { Task } from './Task'
 

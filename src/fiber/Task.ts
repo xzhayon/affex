@@ -1,6 +1,6 @@
 import * as $Type from '../Type'
 import { Variant } from '../Type'
-import { Fiber } from '../fiber/Fiber'
+import { Fiber } from './Fiber'
 
 export type Task<F extends Fiber<any, any>> = Attached<F> | Detached<F>
 
