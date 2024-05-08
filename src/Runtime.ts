@@ -43,32 +43,15 @@ export class Runtime<R> {
                 )
               : $Exit.success(undefined)
             if ($Exit.isFailure(exit)) {
-              if (
-                $Cause.isInterrupt(exit.cause) &&
-                exit.cause.fiberId === task.fiber.id
-              ) {
+              if ($Cause.isInterrupt(exit.cause)) {
                 exits.set(task.fiber.id, exit)
                 await task.fiber.interrupt()
 
                 return
               }
 
-              const error = $Cause.isInterrupt(exit.cause)
-                ? new Error(
-                    `Fiber ${exit.cause.fiberId} for effect "${
-                      (
-                        task.fiber.status.value as unknown as Effect<
-                          any,
-                          any,
-                          any
-                        >
-                      )[$Type.tag]
-                    }" was interrupted`,
-                  )
-                : exit.cause.error
-              const status = await task.fiber.throw(error)
+              const status = await task.fiber.throw(exit.cause.error)
               if (
-                !$Cause.isInterrupt(exit.cause) &&
                 $Status.isFailed(status) &&
                 status.error === exit.cause.error
               ) {
@@ -99,7 +82,7 @@ export class Runtime<R> {
           return $Exit.success(task.fiber.status.value)
       }
 
-      throw new Error('Cannot resolve effector')
+      throw new Error(`Cannot resolve effector in fiber ${fiber.id}`)
     } catch (error) {
       return $Exit.failure($Cause.die(error, fiber.id))
     }

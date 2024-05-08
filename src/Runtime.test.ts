@@ -1,11 +1,13 @@
 import * as $Cause from './Cause'
 import * as $Exit from './Exit'
 import * as $Layer from './Layer'
+import { Result } from './Result'
 import * as $Runtime from './Runtime'
 import * as $Tag from './Tag'
 import { uri } from './Type'
 import * as $Exception from './effect/Exception'
 import * as $Fork from './effect/Fork'
+import * as $Interrupt from './effect/Interrupt'
 import * as $Proxy from './effect/Proxy'
 
 describe('Runtime', () => {
@@ -161,7 +163,7 @@ describe('Runtime', () => {
       )
     })
 
-    test('recording fiber ID in failure cause', async () => {
+    test('recording fiber ID in Die cause', async () => {
       interface Foo {
         readonly [uri]?: unique symbol
         (): string
@@ -204,7 +206,105 @@ describe('Runtime', () => {
       )
 
       // @ts-ignore
+      expect($Cause.isDie(exit.cause)).toStrictEqual(true)
+      // @ts-ignore
       expect(`${exit.cause.fiberId}`).toStrictEqual('#0.1.2')
+    })
+
+    test('recording fiber ID in Fail cause', async () => {
+      interface Foo {
+        readonly [uri]?: unique symbol
+        (): Result<string, Error>
+      }
+
+      interface Bar {
+        readonly [uri]?: unique symbol
+        (): Result<string, Error>
+      }
+
+      interface Qux {
+        readonly [uri]?: unique symbol
+        (): Result<string, Error>
+      }
+
+      const tagFoo = $Tag.tag<Foo>()
+      const foo = $Proxy.function(tagFoo)
+
+      const tagBar = $Tag.tag<Bar>()
+      const bar = $Proxy.function(tagBar)
+
+      const tagQux = $Tag.tag<Qux>()
+      const qux = $Proxy.function(tagQux)
+
+      const exit = await $Runtime.runExit(
+        function* () {
+          return yield* foo()
+        },
+        $Layer
+          .layer()
+          .with(tagFoo, function* () {
+            return yield* bar()
+          })
+          .with(tagBar, function* () {
+            return yield* qux()
+          })
+          .with(tagQux, function* () {
+            return yield* $Exception.raise(new Error())
+          }),
+      )
+
+      // @ts-ignore
+      expect($Cause.isFail(exit.cause)).toStrictEqual(true)
+      // @ts-ignore
+      expect(`${exit.cause.fiberId}`).toStrictEqual('#0.1.2.3')
+    })
+
+    test('recording fiber ID in Interrupt cause', async () => {
+      interface Foo {
+        readonly [uri]?: unique symbol
+        (): string
+      }
+
+      interface Bar {
+        readonly [uri]?: unique symbol
+        (): string
+      }
+
+      interface Qux {
+        readonly [uri]?: unique symbol
+        (): string
+      }
+
+      const tagFoo = $Tag.tag<Foo>()
+      const foo = $Proxy.function(tagFoo)
+
+      const tagBar = $Tag.tag<Bar>()
+      const bar = $Proxy.function(tagBar)
+
+      const tagQux = $Tag.tag<Qux>()
+      const qux = $Proxy.function(tagQux)
+
+      const exit = await $Runtime.runExit(
+        function* () {
+          return yield* foo()
+        },
+        $Layer
+          .layer()
+          .with(tagFoo, function* () {
+            return yield* bar()
+          })
+          .with(tagBar, function* () {
+            return yield* qux()
+          })
+          .with(tagQux, function* () {
+            return yield* $Interrupt.interrupt()
+          }),
+      )
+
+      // @ts-ignore
+      expect($Cause.isInterrupt(exit.cause)).toStrictEqual(true)
+      // @ts-ignore
+      expect(`${exit.cause.fiberId}`).toStrictEqual('#0.1.2.3')
     })
   })
 })
