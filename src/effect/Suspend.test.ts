@@ -6,7 +6,7 @@ import * as $Proxy from './Proxy'
 import * as $Suspend from './Suspend'
 
 describe('Suspend', () => {
-  test('suspending main fiber', async () => {
+  test('suspending root fiber', async () => {
     await expect(
       $Runtime.runPromise(function* () {
         yield* $Suspend.suspend()
