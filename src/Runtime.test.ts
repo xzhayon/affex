@@ -208,7 +208,7 @@ describe('Runtime', () => {
       // @ts-ignore
       expect($Cause.isDie(exit.cause)).toStrictEqual(true)
       // @ts-ignore
-      expect(`${exit.cause.fiberId}`).toStrictEqual('#0.1.2')
+      expect(`${exit.cause.fiberId}`).toStrictEqual('#2')
     })
 
     test('recording fiber ID in Fail cause', async () => {
@@ -256,7 +256,7 @@ describe('Runtime', () => {
       // @ts-ignore
       expect($Cause.isFail(exit.cause)).toStrictEqual(true)
       // @ts-ignore
-      expect(`${exit.cause.fiberId}`).toStrictEqual('#0.1.2.3')
+      expect(`${exit.cause.fiberId}`).toStrictEqual('#3')
     })
 
     test('recording fiber ID in Interrupt cause', async () => {
@@ -304,7 +304,7 @@ describe('Runtime', () => {
       // @ts-ignore
       expect($Cause.isInterrupt(exit.cause)).toStrictEqual(true)
       // @ts-ignore
-      expect(`${exit.cause.fiberId}`).toStrictEqual('#0.1.2.3')
+      expect(`${exit.cause.fiberId}`).toStrictEqual('#3')
     })
   })
 })

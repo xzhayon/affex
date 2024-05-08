@@ -1,9 +1,15 @@
 import * as $Cause from './Cause'
-import { AnyEffector, ContextOf, ErrorOf, OutputOf } from './Effector'
+import {
+  AnyEffector,
+  ContextOf,
+  ErrorOf,
+  OutputOf,
+  Throw,
+  Use,
+} from './Effector'
 import * as $Exit from './Exit'
 import { Exit } from './Exit'
 import * as $Generator from './Generator'
-import { ReturnOf, YieldOf } from './Generator'
 import { Layer } from './Layer'
 import * as $Type from './Type'
 import { IsNever, OrLazy } from './Type'
@@ -26,9 +32,8 @@ export class Runtime<R> {
     G extends AnyEffector<any, any, IsNever<R> extends false ? R : any>,
   >(
     effector: OrLazy<G>,
-    parentFiber?: Fiber<ReturnOf<G>, YieldOf<G>>,
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
-    const fiber = $Fiber.fiber(effector, parentFiber?.id)
+    const fiber = $Fiber.fiber(effector)
     try {
       const exits = new Map<Id, Exit<any, any>>()
       const tasks = await $Loop
@@ -39,7 +44,7 @@ export class Runtime<R> {
             const exit = $Effect.is(task.fiber.status.value)
               ? await this.handle(
                   task.fiber.status.value as Effect<any, any, any>,
-                  task.fiber,
+                  task.fiber as Fiber<any, any>,
                 )
               : $Exit.success(undefined)
             if ($Exit.isFailure(exit)) {
@@ -90,30 +95,27 @@ export class Runtime<R> {
 
   private readonly handle = async <A, E>(
     effect: Effect<A, E, R>,
-    fiber: Fiber<any, any>,
+    fiber: Fiber<
+      A,
+      (R extends any ? Use<R> : never) | (E extends any ? Throw<E> : never)
+    >,
   ) => {
     switch (effect[$Type.tag]) {
       case 'Exception':
         return $Exit.failure($Cause.fail(effect.error, fiber.id))
       case 'Fork':
-        return this.resolve(
-          effect.handle((effector) => this.run(effector, fiber)),
-          fiber,
-        )
+        return this.resolve(effect.handle((effector) => this.run(effector)))
       case 'Interrupt':
         return $Exit.failure($Cause.interrupt(fiber.id))
       case 'Proxy':
-        return this.resolve(
-          effect.handle(this.layer.handler(effect.tag)),
-          fiber,
-        )
+        return this.resolve(effect.handle(this.layer.handler(effect.tag)))
       case 'Sandbox':
-        const exit = await this.run(effect.try, fiber)
+        const exit = await this.run(effect.try)
         if ($Exit.isSuccess(exit) || !$Cause.isFail(exit.cause)) {
           return exit
         }
 
-        return this.resolve(effect.catch(exit.cause.error), fiber)
+        return this.resolve(effect.catch(exit.cause.error))
       case 'Suspend':
         return $Exit.success(undefined)
     }
@@ -121,13 +123,10 @@ export class Runtime<R> {
 
   private readonly resolve = async <A, E>(
     value: A | Promise<A> | AnyEffector<A, E, R>,
-    fiber: Fiber<any, any>,
   ) => {
     const _value = await value
 
-    return $Generator.is(_value)
-      ? this.run(_value, fiber)
-      : $Exit.success(_value)
+    return $Generator.is(_value) ? this.run(_value) : $Exit.success(_value)
   }
 }
 
