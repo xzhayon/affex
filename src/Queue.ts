@@ -1,7 +1,7 @@
 import * as $Iterator from './Iterator'
 
 export class Queue<A> implements Iterator<A, void> {
-  static readonly create = <A>(as: A[] = []) => new Queue<A>(as)
+  static readonly create = <A>(as?: A[]) => new Queue<A>(as)
 
   private constructor(private readonly as: A[] = []) {}
 
