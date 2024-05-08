@@ -12,7 +12,7 @@ export class Id {
     this.id = Id.counter++
   }
 
-  readonly toString = () => `#${this.id}`
+  readonly toString = () => String(this.id)
 }
 
 export const id = Id.create

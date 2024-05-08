@@ -75,7 +75,7 @@ export class Runtime<R> {
 
       const task = tasks.get(fiber.id)
       if (task === undefined) {
-        throw new Error(`Cannot find root task in fiber ${fiber.id}`)
+        throw new Error(`Cannot find root task in fiber "${fiber.id}"`)
       }
 
       switch (task.fiber.status[$Type.tag]) {
@@ -87,7 +87,7 @@ export class Runtime<R> {
           return $Exit.success(task.fiber.status.value)
       }
 
-      throw new Error(`Cannot resolve effector in fiber ${fiber.id}`)
+      throw new Error(`Cannot resolve effector in fiber "${fiber.id}"`)
     } catch (error) {
       return $Exit.failure($Cause.die(error, fiber.id))
     }

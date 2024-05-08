@@ -76,7 +76,7 @@ export class Fiber<T, S> {
   ) => {
     if (this._status[$Type.tag] !== status) {
       throw new Error(
-        `Cannot ${action} fiber ${this.id} in status "${
+        `Cannot ${action} fiber "${this.id}" in status "${
           this._status[$Type.tag]
         }"`,
       )
