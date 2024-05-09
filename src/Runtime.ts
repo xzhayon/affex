@@ -28,9 +28,7 @@ export class Runtime<R> {
     Id.reset()
   }
 
-  readonly run = async <
-    G extends AnyEffector<any, any, IsNever<R> extends false ? R : any>,
-  >(
+  readonly run = async <G extends AnyEffector<any, any, R>>(
     effector: OrLazy<G>,
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
     const fiber = $Fiber.fiber(effector)
