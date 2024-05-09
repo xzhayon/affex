@@ -4,10 +4,10 @@ import * as $Layer from '../Layer'
 import * as $Runtime from '../Runtime'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
-import * as $Interrupt from './Interrupt'
+import * as $Interruption from './Interruption'
 import * as $Proxy from './Proxy'
 
-describe('Interrupt', () => {
+describe('Interruption', () => {
   interface Random {
     readonly [uri]?: unique symbol
     (): number
@@ -18,7 +18,7 @@ describe('Interrupt', () => {
 
   test('interrupting root fiber', async () => {
     await expect(
-      $Runtime.runExit($Interrupt.interrupt(), $Layer.layer()),
+      $Runtime.runExit($Interruption.interrupt(), $Layer.layer()),
     ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
   })
 
@@ -27,7 +27,7 @@ describe('Interrupt', () => {
       $Runtime.runExit(
         random,
         $Layer.layer().with(tag, function* () {
-          return yield* $Interrupt.interrupt()
+          return yield* $Interruption.interrupt()
         }),
       ),
     ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
@@ -46,7 +46,7 @@ describe('Interrupt', () => {
           }
         },
         $Layer.layer().with(tag, function* () {
-          return yield* $Interrupt.interrupt()
+          return yield* $Interruption.interrupt()
         }),
       ),
     ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
@@ -66,7 +66,7 @@ describe('Interrupt', () => {
           }
         },
         $Layer.layer().with(tag, function* () {
-          return yield* $Interrupt.interrupt()
+          return yield* $Interruption.interrupt()
         }),
       ),
     ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))

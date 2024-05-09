@@ -105,7 +105,7 @@ export class Runtime<R> {
         return $Exit.failure($Cause.fail(effect.error, fiber.id))
       case 'Fork':
         return this.resolve(effect.handle((effector) => this.run(effector)))
-      case 'Interrupt':
+      case 'Interruption':
         return $Exit.failure($Cause.interrupt(fiber.id))
       case 'Proxy':
         return this.resolve(effect.handle(this.layer.handler(effect.tag)))
@@ -116,7 +116,7 @@ export class Runtime<R> {
         }
 
         return this.resolve(effect.catch(exit.cause.error))
-      case 'Suspend':
+      case 'Suspension':
         return $Exit.success(undefined)
     }
   }

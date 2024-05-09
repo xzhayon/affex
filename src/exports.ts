@@ -29,9 +29,9 @@ export { tag } from './Tag'
 export { uri } from './Type'
 export { wrapAsync as async, raise, wrap as sync } from './effect/Exception'
 export { fork } from './effect/Fork'
-export { interrupt } from './effect/Interrupt'
+export { interrupt } from './effect/Interruption'
 export { function, functionA, struct, structA } from './effect/Proxy'
 export { tryCatch } from './effect/Sandbox'
-export { suspend } from './effect/Suspend'
+export { suspend } from './effect/Suspension'
 export const Cause = { die, fail }
 export const Exit = { failure, success }

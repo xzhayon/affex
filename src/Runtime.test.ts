@@ -7,7 +7,7 @@ import * as $Tag from './Tag'
 import { uri } from './Type'
 import * as $Exception from './effect/Exception'
 import * as $Fork from './effect/Fork'
-import * as $Interrupt from './effect/Interrupt'
+import * as $Interruption from './effect/Interruption'
 import * as $Proxy from './effect/Proxy'
 
 describe('Runtime', () => {
@@ -297,7 +297,7 @@ describe('Runtime', () => {
             return yield* qux()
           })
           .with(tagQux, function* () {
-            return yield* $Interrupt.interrupt()
+            return yield* $Interruption.interrupt()
           }),
       )
 

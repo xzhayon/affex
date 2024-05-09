@@ -3,13 +3,13 @@ import * as $Runtime from '../Runtime'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
 import * as $Proxy from './Proxy'
-import * as $Suspend from './Suspend'
+import * as $Suspension from './Suspension'
 
-describe('Suspend', () => {
+describe('Suspension', () => {
   test('suspending root fiber', async () => {
     await expect(
       $Runtime.runPromise(function* () {
-        yield* $Suspend.suspend()
+        yield* $Suspension.suspend()
 
         return 42
       }, $Layer.layer()),
@@ -29,7 +29,7 @@ describe('Suspend', () => {
       $Runtime.runPromise(
         random,
         $Layer.layer().with(tag, function* () {
-          yield* $Suspend.suspend()
+          yield* $Suspension.suspend()
 
           return 42
         }),
