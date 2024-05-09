@@ -12,7 +12,7 @@ import { Exit } from './Exit'
 import * as $Generator from './Generator'
 import { Layer } from './Layer'
 import * as $Type from './Type'
-import { IsNever, OrLazy } from './Type'
+import { OrLazy } from './Type'
 import * as $Effect from './effect/Effect'
 import { Effect } from './effect/Effect'
 import * as $Fiber from './fiber/Fiber'
@@ -22,6 +22,8 @@ import * as $Loop from './fiber/Loop'
 import * as $Status from './fiber/Status'
 
 export class Runtime<R> {
+  private readonly loop = $Loop.loop()
+
   static readonly create = <R>(layer: Layer<never, R>) => new Runtime<R>(layer)
 
   private constructor(private readonly layer: Layer<never, R>) {
@@ -34,37 +36,31 @@ export class Runtime<R> {
     const fiber = $Fiber.fiber(effector)
     try {
       const exits = new Map<Id, Exit<any, any>>()
-      const tasks = await $Loop
-        .loop()
-        .attach(fiber)
-        .run({
-          onSuspended: async (task) => {
-            const exit = $Effect.is(task.fiber.status.value)
-              ? await this.handle(
-                  task.fiber.status.value as Effect<any, any, any>,
-                  task.fiber as Fiber<any, any>,
-                )
-              : $Exit.success(undefined)
-            if ($Exit.isFailure(exit)) {
-              if ($Cause.isInterrupt(exit.cause)) {
-                exits.set(task.fiber.id, exit)
-                await task.fiber.interrupt()
+      const tasks = await this.loop.attach(fiber).run({
+        onSuspended: async (task) => {
+          const exit = $Effect.is(task.fiber.status.value)
+            ? await this.handle(
+                task.fiber.status.value as Effect<any, any, any>,
+                task.fiber as Fiber<any, any>,
+              )
+            : $Exit.success(undefined)
+          if ($Exit.isFailure(exit)) {
+            if ($Cause.isInterrupt(exit.cause)) {
+              exits.set(task.fiber.id, exit)
+              await task.fiber.interrupt()
 
-                return
-              }
-
-              const status = await task.fiber.throw(exit.cause.error)
-              if (
-                $Status.isFailed(status) &&
-                status.error === exit.cause.error
-              ) {
-                exits.set(task.fiber.id, exit)
-              }
-            } else {
-              await task.fiber.resume(exit.value)
+              return
             }
-          },
-        })
+
+            const status = await task.fiber.throw(exit.cause.error)
+            if ($Status.isFailed(status) && status.error === exit.cause.error) {
+              exits.set(task.fiber.id, exit)
+            }
+          } else {
+            await task.fiber.resume(exit.value)
+          }
+        },
+      })
 
       const exit = exits.get(fiber.id)
       if (exit !== undefined) {
@@ -101,7 +97,7 @@ export class Runtime<R> {
     switch (effect[$Type.tag]) {
       case 'Exception':
         return $Exit.failure($Cause.fail(effect.error, fiber.id))
-      case 'Fork':
+      case 'Backdoor':
         return this.resolve(effect.handle((effector) => this.run(effector)))
       case 'Interruption':
         return $Exit.failure($Cause.interrupt(fiber.id))

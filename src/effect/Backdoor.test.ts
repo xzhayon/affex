@@ -4,16 +4,16 @@ import * as $Layer from '../Layer'
 import * as $Runtime from '../Runtime'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
+import * as $Backdoor from './Backdoor'
 import * as $Exception from './Exception'
-import * as $Fork from './Fork'
 import * as $Proxy from './Proxy'
 
-describe('Fork', () => {
-  describe('fork', () => {
+describe('Backdoor', () => {
+  describe('exploit', () => {
     test('forking normal function', async () => {
       await expect(
         $Runtime.runPromise(
-          $Fork.fork()(
+          $Backdoor.exploit()(
             async (run) =>
               [
                 await run(function* () {
@@ -32,7 +32,7 @@ describe('Fork', () => {
     test('throwing error', async () => {
       await expect(
         $Runtime.runPromise(
-          $Fork.fork()((run) =>
+          $Backdoor.exploit()((run) =>
             run(function* () {
               throw new Error('foo')
             }),
@@ -47,7 +47,7 @@ describe('Fork', () => {
     test('raising error', async () => {
       await expect(
         $Runtime.runPromise(
-          $Fork.fork()((run) =>
+          $Backdoor.exploit()((run) =>
             run(function* () {
               return yield* $Exception.raise(new Error('foo'))
             }),
@@ -62,7 +62,7 @@ describe('Fork', () => {
     test('forking generator function', async () => {
       await expect(
         $Runtime.runPromise(
-          $Fork.fork()(async function* (run) {
+          $Backdoor.exploit()(async function* (run) {
             return [
               await run(function* () {
                 return 42
@@ -80,7 +80,7 @@ describe('Fork', () => {
     test('raising error from generator function', async () => {
       await expect(
         $Runtime.runExit(
-          $Fork.fork()(() => $Exception.raise(new Error('foo'))),
+          $Backdoor.exploit()(() => $Exception.raise(new Error('foo'))),
           $Layer.layer(),
         ),
       ).resolves.toMatchObject(
@@ -107,7 +107,7 @@ describe('Fork', () => {
 
       await expect(
         $Runtime.runPromise(
-          $Fork.fork()(async function* (run) {
+          $Backdoor.exploit()(async function* (run) {
             const a = yield* get42()
             const b = yield* get1337()
 
@@ -135,7 +135,7 @@ describe('Fork', () => {
       await expect(
         $Runtime.runPromise(
           // @ts-expect-error
-          $Fork.fork()((run) => run(random)),
+          $Backdoor.exploit()((run) => run(random)),
           $Layer.layer(),
         ),
       ).resolves.toMatchObject(
@@ -164,7 +164,7 @@ describe('Fork', () => {
 
       await expect(
         $Runtime.runPromise(
-          $Fork.fork<Get42 | Get1337>()(
+          $Backdoor.exploit<Get42 | Get1337>()(
             async (run) => [await run(get42), await run(get1337)] as const,
           ),
           $Layer

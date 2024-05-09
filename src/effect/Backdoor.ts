@@ -5,7 +5,7 @@ import { OrLazy } from '../Type'
 import * as $Effect from './Effect'
 import { Effect, _Effect, _effect } from './Effect'
 
-export interface Fork<A, E, R> extends _Effect<'Fork'> {
+export interface Backdoor<A, E, R> extends _Effect<'Backdoor'> {
   readonly handle: (
     run: <G extends AnyEffector<any, any, R>>(
       effector: OrLazy<G>,
@@ -13,7 +13,7 @@ export interface Fork<A, E, R> extends _Effect<'Fork'> {
   ) => A | Promise<A> | AnyEffector<A, E, R>
 }
 
-function _fork<
+function backdoor<
   R,
   F extends (
     run: <G extends AnyEffector<any, any, R>>(
@@ -28,10 +28,10 @@ function _fork<
   | R
   | (ReturnType<F> extends infer G extends AnyGenerator ? ContextOf<G> : never)
 > {
-  return { ..._effect('Fork'), handle }
+  return { ..._effect('Backdoor'), handle }
 }
 
-export function fork<R = never>() {
+export function exploit<R = never>() {
   return <
     F extends (
       run: <G extends AnyEffector<any, any, R>>(
@@ -40,5 +40,5 @@ export function fork<R = never>() {
     ) => any,
   >(
     handle: F,
-  ) => $Effect.perform(_fork<R, F>(handle))
+  ) => $Effect.perform(backdoor<R, F>(handle))
 }

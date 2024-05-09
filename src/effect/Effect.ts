@@ -2,8 +2,8 @@ import { Effector, Throw, Use } from '../Effector'
 import * as $Struct from '../Struct'
 import * as $Type from '../Type'
 import { Variant } from '../Type'
+import { Backdoor } from './Backdoor'
 import { Exception } from './Exception'
-import { Fork } from './Fork'
 import { Interruption } from './Interruption'
 import { Proxy } from './Proxy'
 import { Sandbox } from './Sandbox'
@@ -11,7 +11,7 @@ import { Suspension } from './Suspension'
 
 export type Effect<A, E, R> =
   | Exception<E>
-  | Fork<A, E, R>
+  | Backdoor<A, E, R>
   | Interruption
   | Proxy<A, E, R>
   | Sandbox<A, E, R>

@@ -5,8 +5,8 @@ import { Result } from './Result'
 import * as $Runtime from './Runtime'
 import * as $Tag from './Tag'
 import { uri } from './Type'
+import * as $Backdoor from './effect/Backdoor'
 import * as $Exception from './effect/Exception'
-import * as $Fork from './effect/Fork'
 import * as $Interruption from './effect/Interruption'
 import * as $Proxy from './effect/Proxy'
 
@@ -121,7 +121,7 @@ describe('Runtime', () => {
       await expect(
         $Runtime.runExit(function* () {
           try {
-            return yield* $Fork.fork()(function* () {
+            return yield* $Backdoor.exploit()(function* () {
               throw new Error('foo')
             })
           } catch {
@@ -135,7 +135,7 @@ describe('Runtime', () => {
       await expect(
         $Runtime.runExit(function* () {
           try {
-            return yield* $Fork.fork()(function* () {
+            return yield* $Backdoor.exploit()(function* () {
               throw new Error('foo')
             })
           } catch (error) {
@@ -151,7 +151,7 @@ describe('Runtime', () => {
       await expect(
         $Runtime.runExit(function* () {
           try {
-            return yield* $Fork.fork()(function* () {
+            return yield* $Backdoor.exploit()(function* () {
               return yield* $Exception.raise(new Error('foo'))
             })
           } catch (error) {
