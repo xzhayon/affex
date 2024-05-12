@@ -11,23 +11,31 @@ import * as $Exit from './Exit'
 import { Exit } from './Exit'
 import * as $Generator from './Generator'
 import { Layer } from './Layer'
+import * as $Promise from './Promise'
+import { trace } from './Trace'
 import * as $Type from './Type'
 import { OrLazy } from './Type'
 import * as $Effect from './effect/Effect'
 import { Effect } from './effect/Effect'
+import * as $EffectId from './effect/Id'
 import * as $Fiber from './fiber/Fiber'
 import { Fiber } from './fiber/Fiber'
-import { Id } from './fiber/Id'
+import * as $FiberId from './fiber/Id'
 import * as $Loop from './fiber/Loop'
+import { Loop } from './fiber/Loop'
 import * as $Status from './fiber/Status'
 
+const _trace = trace('Runtime')
+
 export class Runtime<R> {
-  private readonly loop = $Loop.loop()
+  private readonly loop = $Loop.loop() as unknown as Loop<Fiber<any, any>>
+  private readonly effects = new Map<$EffectId.Id, Exit<any, any>>()
 
   static readonly create = <R>(layer: Layer<never, R>) => new Runtime<R>(layer)
 
   private constructor(private readonly layer: Layer<never, R>) {
-    Id.reset()
+    $FiberId.Id.reset()
+    $EffectId.Id.reset()
   }
 
   readonly run = async <G extends AnyEffector<any, any, R>>(
@@ -35,7 +43,7 @@ export class Runtime<R> {
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
     const fiber = $Fiber.fiber(effector)
     try {
-      const exits = new Map<Id, Exit<any, any>>()
+      const fibers = new Map<$FiberId.Id, Exit<any, any>>()
       const tasks = await this.loop.attach(fiber).run({
         onSuspended: async (task) => {
           const exit = $Effect.is(task.fiber.status.value)
@@ -44,9 +52,13 @@ export class Runtime<R> {
                 task.fiber as Fiber<any, any>,
               )
             : $Exit.success(undefined)
+          if (exit === undefined) {
+            return
+          }
+
           if ($Exit.isFailure(exit)) {
             if ($Cause.isInterrupt(exit.cause)) {
-              exits.set(task.fiber.id, exit)
+              fibers.set(task.fiber.id, exit)
               await task.fiber.interrupt()
 
               return
@@ -54,7 +66,7 @@ export class Runtime<R> {
 
             const status = await task.fiber.throw(exit.cause.error)
             if ($Status.isFailed(status) && status.error === exit.cause.error) {
-              exits.set(task.fiber.id, exit)
+              fibers.set(task.fiber.id, exit)
             }
           } else {
             await task.fiber.resume(exit.value)
@@ -62,7 +74,7 @@ export class Runtime<R> {
         },
       })
 
-      const exit = exits.get(fiber.id)
+      const exit = fibers.get(fiber.id)
       if (exit !== undefined) {
         return exit
       }
@@ -94,33 +106,138 @@ export class Runtime<R> {
       (R extends any ? Use<R> : never) | (E extends any ? Throw<E> : never)
     >,
   ) => {
+    if (this.effects.has(effect.id)) {
+      const exit = this.effects.get(effect.id)
+      if (exit === undefined) {
+        _trace('Await effect', fiber.id, {
+          effectType: effect[$Type.tag],
+          effectDescription:
+            effect[$Type.tag] === 'Proxy'
+              ? effect.tag.key.description
+              : undefined,
+          effectId: effect.id,
+        })
+        await new Promise<void>((resolve) => setTimeout(resolve))
+
+        return
+      }
+
+      _trace('Resolve effect', fiber.id, {
+        effectType: effect[$Type.tag],
+        effectDescription:
+          effect[$Type.tag] === 'Proxy'
+            ? effect.tag.key.description
+            : undefined,
+        effectId: effect.id,
+      })
+      this.effects.delete(effect.id)
+
+      return exit
+    }
+
+    _trace('Handle effect', fiber.id, {
+      effectType: effect[$Type.tag],
+      effectDescription:
+        effect[$Type.tag] === 'Proxy' ? effect.tag.key.description : undefined,
+      effectId: effect.id,
+    })
     switch (effect[$Type.tag]) {
+      case 'Backdoor':
+        return this.resolve(
+          effect,
+          effect.handle((effector) => this.run(effector)),
+          fiber,
+        )
       case 'Exception':
         return $Exit.failure($Cause.fail(effect.error, fiber.id))
-      case 'Backdoor':
-        return this.resolve(effect.handle((effector) => this.run(effector)))
+      case 'Fork':
+        const child = $Fiber.fiber(effect.effector)
+        this.loop.detach(child)
+
+        return $Exit.success(child)
       case 'Interruption':
         return $Exit.failure($Cause.interrupt(fiber.id))
+      case 'Join':
+        const task = this.loop.tasks.get(effect.fiber.id)
+        if (task !== undefined) {
+          switch (task.fiber.status[$Type.tag]) {
+            case 'Interrupted':
+              return $Exit.failure($Cause.interrupt(task.fiber.id))
+            case 'Failed':
+              return $Exit.failure(
+                $Cause.die(task.fiber.status.error, task.fiber.id),
+              )
+            case 'Terminated':
+              return $Exit.success(task.fiber.status.value)
+          }
+        }
+
+        return undefined
       case 'Proxy':
-        return this.resolve(effect.handle(this.layer.handler(effect.tag)))
+        return await this.resolve(
+          effect,
+          effect.handle(this.layer.handler(effect.tag)),
+          fiber,
+        )
       case 'Sandbox':
         const exit = await this.run(effect.try)
         if ($Exit.isSuccess(exit) || !$Cause.isFail(exit.cause)) {
           return exit
         }
 
-        return this.resolve(effect.catch(exit.cause.error))
+        return this.resolve(effect, effect.catch(exit.cause.error), fiber)
       case 'Suspension':
         return $Exit.success(undefined)
     }
   }
 
   private readonly resolve = async <A, E>(
+    effect: Effect<A, E, R>,
     value: A | Promise<A> | AnyEffector<A, E, R>,
+    fiber: Fiber<
+      A,
+      (R extends any ? Use<R> : never) | (E extends any ? Throw<E> : never)
+    >,
   ) => {
-    const _value = await value
+    if ($Promise.is(value)) {
+      _trace('Create promise', fiber.id, {
+        effectType: effect[$Type.tag],
+        effectDescription:
+          effect[$Type.tag] === 'Proxy'
+            ? effect.tag.key.description
+            : undefined,
+        effectId: effect.id,
+      })
+      this.effects.set(effect.id, undefined as any)
+      value
+        .then((a) => {
+          this.effects.set(effect.id, $Exit.success(a))
+        })
+        .catch((error) => {
+          this.effects.set(
+            effect.id,
+            $Exit.failure($Cause.die(error, fiber.id)),
+          )
+        })
+        .finally(() => {
+          _trace('Settle promise', fiber.id, {
+            effectType: effect[$Type.tag],
+            effectDescription:
+              effect[$Type.tag] === 'Proxy'
+                ? effect.tag.key.description
+                : undefined,
+            effectId: effect.id,
+          })
+        })
 
-    return $Generator.is(_value) ? this.run(_value) : $Exit.success(_value)
+      return undefined
+    }
+
+    if ($Generator.is(value)) {
+      return this.run(value)
+    }
+
+    return $Exit.success(value)
   }
 }
 

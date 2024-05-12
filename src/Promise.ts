@@ -6,6 +6,10 @@ import { OrLazy } from './Type'
 import * as $Backdoor from './effect/Backdoor'
 import * as $Exception from './effect/Exception'
 
+export function is(u: unknown): u is Promise<unknown> {
+  return u instanceof Promise
+}
+
 export function all<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
 ) {
@@ -31,7 +35,7 @@ export function all<G extends AnyEffector<any, any, any>>(
         case 'Die':
           throw exit.cause.error
         case 'Interrupt':
-          throw new Error('Child fiber was interrupted')
+          throw new Error(`Child fiber "${exit.cause.fiberId}" was interrupted`)
         case 'Fail':
           return yield* $Exception.raise(exit.cause.error as ErrorOf<G>)
       }
@@ -82,7 +86,9 @@ export function any<G extends AnyEffector<any, any, any>>(
             case 'Die':
               return exit.cause.error
             case 'Interrupt':
-              throw new Error('Child fiber was interrupted')
+              throw new Error(
+                `Child fiber "${exit.cause.fiberId}" was interrupted`,
+              )
             case 'Fail':
               return exit.cause.error
           }
@@ -118,7 +124,7 @@ export function race<G extends AnyEffector<any, any, any>>(
         case 'Die':
           throw exit.cause.error
         case 'Interrupt':
-          throw new Error('Child fiber was interrupted')
+          throw new Error(`Child fiber "${exit.cause.fiberId}" was interrupted`)
         case 'Fail':
           return yield* $Exception.raise(exit.cause.error as ErrorOf<G>)
       }

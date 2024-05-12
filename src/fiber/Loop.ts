@@ -1,4 +1,5 @@
 import * as $Queue from '../Queue'
+import { trace } from '../Trace'
 import * as $Type from '../Type'
 import * as $Fiber from './Fiber'
 import { Fiber } from './Fiber'
@@ -7,7 +8,10 @@ import { Status } from './Status'
 import * as $Task from './Task'
 import { Task } from './Task'
 
+const _trace = trace('Loop')
+
 export class Loop<F extends Fiber<any, any>> {
+  readonly tasks = new Map<Id, F extends any ? Task<F> : never>()
   private readonly queue = $Queue.queue<F extends any ? Task<F> : never>()
 
   static readonly create = () => new Loop<never>()
@@ -16,18 +20,18 @@ export class Loop<F extends Fiber<any, any>> {
 
   readonly attach = <_F extends Fiber<any, any>>(fiber: _F): Loop<F | _F> => {
     const self = this as Loop<F | _F>
-    self.queue.enqueue(
-      $Task.attached(fiber) as _F extends any ? Task<_F> : never,
-    )
+    const task = $Task.attached(fiber) as _F extends any ? Task<_F> : never
+    _trace('Attach fiber', fiber.id, { taskType: task[$Type.tag] })
+    self.enqueue(task)
 
     return self
   }
 
   readonly detach = <_F extends Fiber<any, any>>(fiber: _F): Loop<F | _F> => {
     const self = this as Loop<F | _F>
-    self.queue.enqueue(
-      $Task.detached(fiber) as _F extends any ? Task<_F> : never,
-    )
+    const task = $Task.detached(fiber) as _F extends any ? Task<_F> : never
+    _trace('Detach fiber', fiber.id, { taskType: task[$Type.tag] })
+    self.enqueue(task)
 
     return self
   }
@@ -40,31 +44,34 @@ export class Loop<F extends Fiber<any, any>> {
       task: F extends any ? Task<F> & { fiber: F & { status: S } } : never,
     ) => Promise<void>
   }) => {
-    const terminated = new Map<Id, F extends any ? Task<F> : never>()
     for (const task of this.queue) {
+      _trace('Dequeue task', task.fiber.id, {
+        fiberStatus: task.fiber.status[$Type.tag],
+        taskType: task[$Type.tag],
+      })
       const handler = handlers?.[`on${task.fiber.status[$Type.tag]}`]
       switch (task.fiber.status[$Type.tag]) {
         case 'Ready':
           await (handler?.(task as any) ?? task.fiber.start())
-          this.queue.enqueue(task)
+          this.enqueue(task)
 
           break
         case 'Started':
         case 'Running':
           await handler?.(task as any)
-          this.queue.enqueue(task)
+          this.enqueue(task)
 
           break
         case 'Suspended':
           await (handler?.(task as any) ?? task.fiber.resume())
-          this.queue.enqueue(task)
+          this.enqueue(task)
 
           break
         case 'Interrupted':
         case 'Failed':
         case 'Terminated':
           await handler?.(task as any)
-          terminated.set(task.fiber.id, task)
+          this.tasks.set(task.fiber.id, task)
 
           break
       }
@@ -74,19 +81,25 @@ export class Loop<F extends Fiber<any, any>> {
       }
     }
 
-    return terminated
+    return this.tasks
   }
 
   readonly halt = async () => {
-    await Promise.all(this.tasks.map((task) => task.fiber.interrupt()))
-  }
-
-  private get tasks() {
-    return this.queue.toArray()
+    await Promise.all(
+      this.queue.toArray().map((task) => task.fiber.interrupt()),
+    )
   }
 
   private get attached() {
-    return this.tasks.filter($Task.isAttached)
+    return this.queue.toArray().filter($Task.isAttached)
+  }
+
+  private enqueue(task: F extends any ? Task<F> : never) {
+    _trace('Enqueue task', task.fiber.id, {
+      fiberStatus: task.fiber.status[$Type.tag],
+      taskType: task[$Type.tag],
+    })
+    this.queue.enqueue(task)
   }
 }
 
