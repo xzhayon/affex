@@ -6,7 +6,7 @@ import * as $Id from './Id'
 import * as $Status from './Status'
 import { Status } from './Status'
 
-export class Fiber<T, S> {
+export class Fiber<out T, out S> {
   readonly id = $Id.id()
   private _status: Status<T, S> = $Status.ready()
   private _generator!: AnyGenerator<S, T>
@@ -83,8 +83,8 @@ export class Fiber<T, S> {
     }
   }
 
-  private readonly resolve = async (
-    result: () => IteratorResult<S, T> | Promise<IteratorResult<S, T>>,
+  private readonly resolve = async <_S extends S, _T extends T>(
+    result: () => IteratorResult<_S, _T> | Promise<IteratorResult<_S, _T>>,
   ) => {
     try {
       this._status = $Status.running()
