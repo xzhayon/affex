@@ -1,6 +1,8 @@
 import { Effect } from 'effect'
 import * as effection from 'effection'
 import { Bench } from 'tinybench'
+import { Effector } from '../src/Effector'
+import * as $Fiber from '../src/Fiber'
 import * as $Layer from '../src/Layer'
 import * as $Promise from '../src/Promise'
 import * as $Runtime from '../src/Runtime'
@@ -8,24 +10,24 @@ import * as $Tag from '../src/Tag'
 import { uri } from '../src/Type'
 import * as $Proxy from '../src/effect/Proxy'
 
-async function benchmark() {
+async function sleep() {
+  function _sleep(ms: number) {
+    return new Promise<void>((resolve) => setTimeout(resolve, ms))
+  }
+
   interface Sleep {
     readonly [uri]?: unique symbol
     (ms: number): Promise<void>
   }
 
-  function sleep(ms: number) {
-    return new Promise<void>((resolve) => setTimeout(resolve, ms))
-  }
-
   const tag = $Tag.tag<Sleep>()
   const affexSleep = $Proxy.function(tag)
-  const layer = $Layer.layer().with(tag, sleep)
+  const layer = $Layer.layer().with(tag, _sleep)
   const runtime = $Runtime.runtime(layer)
 
   async function vanillaSeq(n: number, ms: number) {
     for (let i = 0; i < n; i++) {
-      await sleep(ms)
+      await _sleep(ms)
     }
   }
 
@@ -33,7 +35,7 @@ async function benchmark() {
     await Promise.all(
       Array(n)
         .fill(undefined)
-        .map(() => sleep(ms)),
+        .map(() => _sleep(ms)),
     )
   }
 
@@ -81,32 +83,43 @@ async function benchmark() {
     )
   }
 
+  function* affexParFiber(n: number, ms: number) {
+    return yield* $Fiber.all(
+      Array(n)
+        .fill(undefined)
+        .map(() => affexSleep(ms)),
+    )
+  }
+
   const n = 10
   const ms = 10
   const bench = new Bench()
-    .add('vanilla: sequential', async () => {
+    .add('sleep: vanilla (sequential)', async () => {
       await vanillaSeq(n, ms)
     })
-    .add('vanilla: parallel', async () => {
+    .add('sleep: vanilla (parallel)', async () => {
       await vanillaPar(n, ms)
     })
-    .add('effect: sequential', async () => {
+    .add('sleep: Effect (sequential)', async () => {
       await Effect.runPromise(effectSeq(n, ms))
     })
-    .add('effect: parallel', async () => {
+    .add('sleep: Effect (parallel)', async () => {
       await Effect.runPromise(effectPar(n, ms))
     })
-    .add('effection: sequential', async () => {
+    .add('sleep: Effection (sequential)', async () => {
       await effection.run(() => effectionSeq(n, ms))
     })
-    .add('effection: parallel', async () => {
+    .add('sleep: Effection (parallel)', async () => {
       await effection.run(() => effectionPar(n, ms))
     })
-    .add('affex: sequential', async () => {
+    .add('sleep: affex (sequential)', async () => {
       await runtime.run(affexSeq(n, ms))
     })
-    .add('affex: parallel', async () => {
+    .add('sleep: affex (parallel, promise)', async () => {
       await runtime.run(affexParPromise(n, ms))
+    })
+    .add('sleep: affex (parallel, fiber)', async () => {
+      await runtime.run(affexParFiber(n, ms))
     })
 
   await bench.warmup()
@@ -115,4 +128,145 @@ async function benchmark() {
   console.table(bench.table())
 }
 
-benchmark()
+async function fibonacci() {
+  const runtime = $Runtime.runtime($Layer.layer())
+
+  function vanillaSeq(n: number): number {
+    switch (n) {
+      case 0:
+      case 1:
+        return n
+      default:
+        return vanillaSeq(n - 2) + vanillaSeq(n - 1)
+    }
+  }
+
+  function effectSeq(n: number): Effect.Effect<number> {
+    return Effect.gen(function* () {
+      switch (n) {
+        case 0:
+        case 1:
+          return n
+        default:
+          return (yield* effectSeq(n - 2)) + (yield* effectSeq(n - 1))
+      }
+    })
+  }
+
+  function effectPar(n: number): Effect.Effect<number> {
+    return Effect.gen(function* () {
+      switch (n) {
+        case 0:
+        case 1:
+          return n
+        default:
+          const [a, b] = yield* Effect.all(
+            [effectPar(n - 2), effectPar(n - 1)],
+            { concurrency: 'unbounded' },
+          )
+
+          return a + b
+      }
+    })
+  }
+
+  function* effectionSeq(n: number): effection.Operation<number> {
+    switch (n) {
+      case 0:
+      case 1:
+        return n
+      default:
+        return (yield* effectionSeq(n - 2)) + (yield* effectionSeq(n - 1))
+    }
+  }
+
+  function* effectionPar(n: number): effection.Operation<number> {
+    switch (n) {
+      case 0:
+      case 1:
+        return n
+      default:
+        const [a, b] = yield* effection.all([
+          effectionPar(n - 2),
+          effectionPar(n - 1),
+        ])
+
+        return a + b
+    }
+  }
+
+  function* affexSeq(n: number): Effector<number, never, never> {
+    switch (n) {
+      case 0:
+      case 1:
+        return n
+      default:
+        return (yield* affexSeq(n - 2)) + (yield* affexSeq(n - 1))
+    }
+  }
+
+  function* affexParPromise(n: number): Effector<number, never, never> {
+    switch (n) {
+      case 0:
+      case 1:
+        return n
+      default:
+        const [a, b] = yield* $Promise.all([
+          affexParPromise(n - 2),
+          affexParPromise(n - 1),
+        ])
+
+        return a + b
+    }
+  }
+
+  function* affexParFiber(n: number): Effector<number, never, never> {
+    switch (n) {
+      case 0:
+      case 1:
+        return n
+      default:
+        const [a, b] = yield* $Fiber.all([
+          affexParFiber(n - 2),
+          affexParFiber(n - 1),
+        ])
+
+        return a + b
+    }
+  }
+
+  const n = 10
+  const bench = new Bench()
+    .add('Fibonacci: vanilla (sequential)', async () => {
+      await vanillaSeq(n)
+    })
+    .add('Fibonacci: Effect (sequential)', async () => {
+      await Effect.runPromise(effectSeq(n))
+    })
+    .add('Fibonacci: Effect (parallel)', async () => {
+      await Effect.runPromise(effectPar(n))
+    })
+    .add('Fibonacci: Effection (sequential)', async () => {
+      await effection.run(() => effectionSeq(n))
+    })
+    .add('Fibonacci: Effection (parallel)', async () => {
+      await effection.run(() => effectionPar(n))
+    })
+    .add('Fibonacci: affex (sequential)', async () => {
+      await runtime.run(affexSeq(n))
+    })
+    .add('Fibonacci: affex (parallel, promise)', async () => {
+      await runtime.run(affexParPromise(n))
+    })
+    .add('Fibonacci: affex (parallel, fiber)', async () => {
+      await runtime.run(affexParFiber(n))
+    })
+
+  await bench.warmup()
+  await bench.run()
+
+  console.table(bench.table())
+}
+
+sleep()
+fibonacci()
