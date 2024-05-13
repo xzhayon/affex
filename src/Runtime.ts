@@ -46,6 +46,10 @@ export class Runtime<R> {
       const fibers = new Map<$FiberId.Id, Exit<any, any>>()
       const tasks = await this.loop.attach(fiber).run({
         onSuspended: async (task) => {
+          if (task.fiber.id === fiber.id) {
+            await nextTick()
+          }
+
           const exit = $Effect.is(task.fiber.status.value)
             ? await this.handle(
                 task.fiber.status.value as Effect<any, any, any>,
@@ -117,9 +121,8 @@ export class Runtime<R> {
               : undefined,
           effectId: effect.id,
         })
-        await new Promise<void>((resolve) => setTimeout(resolve))
 
-        return
+        return undefined
       }
 
       _trace('Resolve effect', fiber.id, {
@@ -262,4 +265,10 @@ export async function runPromise<G extends AnyEffector<any, any, any>>(
   }
 
   return exit.value
+}
+
+function nextTick() {
+  return new Promise<void>((resolve) =>
+    setImmediate !== undefined ? setImmediate(resolve) : setTimeout(resolve, 0),
+  )
 }
