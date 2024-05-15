@@ -3,7 +3,7 @@ import { Effect, _Effect, _effect } from './Effect'
 
 export interface Interruption extends _Effect<'Interruption'> {}
 
-export function interruption(): Effect<never, never, never> {
+export function interruption(): Effect<never> {
   return _effect('Interruption')
 }
 

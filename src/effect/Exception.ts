@@ -6,7 +6,7 @@ export interface Exception<E> extends _Effect<'Exception'> {
   readonly error: E
 }
 
-function exception<E>(error: E): Effect<never, E, never> {
+function exception<E>(error: E): Effect<never, E> {
   return { ..._effect('Exception'), error }
 }
 
@@ -17,7 +17,7 @@ export function raise<E>(error: E) {
 export function* wrap<A, E>(
   f: () => A,
   onError: (error: unknown) => E,
-): Effector<A, E, never> {
+): Effector<A, E> {
   try {
     return f()
   } catch (error) {
@@ -28,7 +28,7 @@ export function* wrap<A, E>(
 export async function* wrapAsync<A, E>(
   f: () => Promise<A>,
   onError: (error: unknown) => E,
-): AsyncEffector<A, E, never> {
+): AsyncEffector<A, E> {
   try {
     return await f()
   } catch (error) {

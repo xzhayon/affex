@@ -13,7 +13,7 @@ import { Proxy } from './Proxy'
 import { Sandbox } from './Sandbox'
 import { Suspension } from './Suspension'
 
-export type Effect<A, E, R> =
+export type Effect<A, E = never, R = never> =
   | Exception<E>
   | Backdoor<A, E, R>
   | Fork<A, R>
