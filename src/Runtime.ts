@@ -31,6 +31,7 @@ const _trace = trace('Runtime')
 
 export class Runtime<R> {
   private readonly loop = $Loop.loop() as unknown as Loop<Fiber<any, any>>
+  private fibers = new Map<$FiberId.Id, Exit<any, any>>()
   private readonly _effects = new Map<$EffectId.Id, $FiberId.Id>()
 
   static readonly create = <R>(layer: Layer<never, R>) => new Runtime<R>(layer)
@@ -46,8 +47,7 @@ export class Runtime<R> {
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
     const fiber = $Fiber.fiber(effector)
     try {
-      const fibers = new Map<$FiberId.Id, Exit<any, any>>()
-      const tasks = await loop.attach(fiber).run({
+      await loop.attach(fiber).run({
         onSuspended: async (task) => {
           if (task.fiber.id === fiber.id) {
             await nextTick()
@@ -72,7 +72,7 @@ export class Runtime<R> {
 
           if ($Exit.isFailure(boh.exit)) {
             if ($Cause.isInterrupt(boh.exit.cause)) {
-              fibers.set(task.fiber.id, boh.exit)
+              this.fibers.set(task.fiber.id, boh.exit)
               await task.fiber.interrupt()
 
               return
@@ -83,7 +83,7 @@ export class Runtime<R> {
               $Status.isFailed(status) &&
               status.error === boh.exit.cause.error
             ) {
-              fibers.set(task.fiber.id, boh.exit)
+              this.fibers.set(task.fiber.id, boh.exit)
             }
           } else {
             await task.fiber.resume(boh.exit.value)
@@ -91,26 +91,12 @@ export class Runtime<R> {
         },
       })
 
-      const exit = fibers.get(fiber.id)
-      if (exit !== undefined) {
-        return exit
+      const exit = this.exit(fiber.id, loop)
+      if (exit === undefined) {
+        throw new Error(`Cannot resolve effector in fiber "${fiber.id}"`)
       }
 
-      const task = tasks.get(fiber.id)
-      if (task === undefined) {
-        throw new Error(`Cannot find root task in fiber "${fiber.id}"`)
-      }
-
-      switch (task.fiber.status[$Type.tag]) {
-        case 'Interrupted':
-          return $Exit.failure($Cause.interrupt(task.fiber.id))
-        case 'Failed':
-          throw task.fiber.status.error
-        case 'Terminated':
-          return $Exit.success(task.fiber.status.value)
-      }
-
-      throw new Error(`Cannot resolve effector in fiber "${fiber.id}"`)
+      return exit
     } catch (error) {
       return $Exit.failure($Cause.die(error, fiber.id))
     }
@@ -126,9 +112,9 @@ export class Runtime<R> {
   ) => {
     const fiberId = this._effects.get(effect.id)
     if (fiberId !== undefined) {
-      const task = loop.tasks.get(fiberId)
-      if (task !== undefined) {
-        _trace('Resolve effect', fiber.id, {
+      const exit = this.exit(fiberId, loop)
+      if (exit === undefined) {
+        _trace('Await effect', fiber.id, {
           effectType: effect[$Type.tag],
           effectDescription:
             effect[$Type.tag] === 'Proxy'
@@ -136,19 +122,11 @@ export class Runtime<R> {
               : undefined,
           effectId: effect.id,
         })
-        switch (task.fiber.status[$Type.tag]) {
-          case 'Interrupted':
-            return $Boh.done($Exit.failure($Cause.interrupt(task.fiber.id)))
-          case 'Failed':
-            return $Boh.done(
-              $Exit.failure($Cause.die(task.fiber.status.error, task.fiber.id)),
-            )
-          case 'Terminated':
-            return $Boh.done($Exit.success(task.fiber.status.value))
-        }
+
+        return $Boh.waiting(fiberId)
       }
 
-      _trace('Await effect', fiber.id, {
+      _trace('Resolve effect', fiber.id, {
         effectType: effect[$Type.tag],
         effectDescription:
           effect[$Type.tag] === 'Proxy'
@@ -157,7 +135,7 @@ export class Runtime<R> {
         effectId: effect.id,
       })
 
-      return $Boh.waiting(fiberId)
+      return $Boh.done(exit)
     }
 
     _trace('Handle effect', fiber.id, {
@@ -231,6 +209,32 @@ export class Runtime<R> {
     }
 
     return $Fiber.fromValue(value)
+  }
+
+  private readonly exit = (
+    fiberId: $FiberId.Id,
+    loop: Loop<Fiber<any, any>>,
+  ) => {
+    const exit = this.fibers.get(fiberId)
+    if (exit !== undefined) {
+      return exit
+    }
+
+    const task = loop.tasks.get(fiberId)
+    if (task === undefined) {
+      return undefined
+    }
+
+    switch (task.fiber.status[$Type.tag]) {
+      case 'Interrupted':
+        return $Exit.failure($Cause.interrupt(task.fiber.id))
+      case 'Failed':
+        return $Exit.failure($Cause.die(task.fiber.status.error, task.fiber.id))
+      case 'Terminated':
+        return $Exit.success(task.fiber.status.value)
+    }
+
+    return undefined
   }
 }
 
