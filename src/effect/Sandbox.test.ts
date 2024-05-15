@@ -19,7 +19,7 @@ describe('Sandbox', () => {
   const divide = $Proxy.function(tag)
   const layer = $Layer.layer().with(tag, function* (a, b) {
     if (b === 0) {
-      yield* $Exception.raise(new Error('Cannot divide by zero'))
+      return yield* $Exception.raise(new Error('Cannot divide by zero'))
     }
 
     return a / b

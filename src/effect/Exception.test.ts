@@ -55,7 +55,7 @@ describe('Exception', () => {
           // @ts-expect-error
           $Layer.layer().with(tag, function* (a, b) {
             if (b === 0) {
-              yield* $Exception.raise(new Error('Cannot divide by zero'))
+              return yield* $Exception.raise(new Error('Cannot divide by zero'))
             }
 
             return a / b
@@ -74,7 +74,9 @@ describe('Exception', () => {
           divide(42, 0),
           $Layer.layer().with(tag, function* (a, b) {
             if (b === 0) {
-              yield* $Exception.raise(new FooError('Cannot divide by zero'))
+              return yield* $Exception.raise(
+                new FooError('Cannot divide by zero'),
+              )
             }
 
             return a / b
@@ -98,7 +100,9 @@ describe('Exception', () => {
           // @ts-expect-error
           $Layer.layer().with(tag, function* (a, b) {
             if (b === 0) {
-              yield* $Exception.raise(new BarError('Cannot divide by zero'))
+              return yield* $Exception.raise(
+                new BarError('Cannot divide by zero'),
+              )
             }
 
             return a / b
@@ -123,7 +127,9 @@ describe('Exception', () => {
           },
           $Layer.layer().with(tag, function* (a, b) {
             if (b === 0) {
-              yield* $Exception.raise(new FooError('Cannot divide by zero'))
+              return yield* $Exception.raise(
+                new FooError('Cannot divide by zero'),
+              )
             }
 
             return a / b
@@ -152,7 +158,9 @@ describe('Exception', () => {
             .layer()
             .with(tag, function* (_a, b) {
               if (b === 0) {
-                yield* $Exception.raise(new FooError('Cannot divide by zero'))
+                return yield* $Exception.raise(
+                  new FooError('Cannot divide by zero'),
+                )
               }
 
               return yield* random()
