@@ -40,11 +40,12 @@ export class Runtime<R> {
 
   readonly run = async <G extends AnyEffector<any, any, R>>(
     effector: OrLazy<G>,
+    loop = this.loop,
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
     const fiber = $Fiber.fiber(effector)
     try {
       const fibers = new Map<$FiberId.Id, Exit<any, any>>()
-      const tasks = await this.loop.attach(fiber).run({
+      const tasks = await loop.attach(fiber).run({
         onSuspended: async (task) => {
           if (task.fiber.id === fiber.id) {
             await nextTick()
@@ -54,6 +55,7 @@ export class Runtime<R> {
             ? await this.handle(
                 task.fiber.status.value as Effect<any, any, any>,
                 task.fiber as Fiber<any, any>,
+                loop,
               )
             : $Exit.success(undefined)
           if (exit === undefined) {
@@ -109,6 +111,7 @@ export class Runtime<R> {
       A,
       (R extends any ? Use<R> : never) | (E extends any ? Throw<E> : never)
     >,
+    loop: Loop<Fiber<any, any>>,
   ) => {
     if (this.effects.has(effect.id)) {
       const exit = this.effects.get(effect.id)
@@ -148,20 +151,25 @@ export class Runtime<R> {
       case 'Backdoor':
         return this.resolve(
           effect,
-          effect.handle((effector) => this.run(effector)),
+          effect.handle((effector) =>
+            this.run(
+              effector,
+              $Loop.loop() as unknown as Loop<Fiber<any, any>>,
+            ),
+          ),
           fiber,
         )
       case 'Exception':
         return $Exit.failure($Cause.fail(effect.error, fiber.id))
       case 'Fork':
         const child = $Fiber.fiber(effect.effector)
-        this.loop.detach(child)
+        loop.detach(child)
 
         return $Exit.success(child)
       case 'Interruption':
         return $Exit.failure($Cause.interrupt(fiber.id))
       case 'Join':
-        const task = this.loop.tasks.get(effect.fiber.id)
+        const task = loop.tasks.get(effect.fiber.id)
         if (task !== undefined) {
           switch (task.fiber.status[$Type.tag]) {
             case 'Interrupted':
@@ -183,7 +191,10 @@ export class Runtime<R> {
           fiber,
         )
       case 'Sandbox':
-        const exit = await this.run(effect.try)
+        const exit = await this.run(
+          effect.try,
+          $Loop.loop() as unknown as Loop<Fiber<any, any>>,
+        )
         if ($Exit.isSuccess(exit) || !$Cause.isFail(exit.cause)) {
           return exit
         }
@@ -237,7 +248,7 @@ export class Runtime<R> {
     }
 
     if ($Generator.is(value)) {
-      return this.run(value)
+      return this.run(value, $Loop.loop() as unknown as Loop<Fiber<any, any>>)
     }
 
     return $Exit.success(value)
