@@ -61,7 +61,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
             { name: null, friendNames: [] },
             { name: 'Gendry', friendNames: [] },
           ),
-          fx.layer().with(tagAskName, () => 'Arya Stark'),
+          fx.context().with(fx.layer(tagAskName, () => 'Arya Stark')),
         ),
       ).resolves.toStrictEqual([
         { name: null, friendNames: ['Gendry'] },
@@ -90,13 +90,15 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
             { name: 'Gendry', friendNames: [] },
           ),
           fx
-            .layer()
+            .context()
             .with(
-              tagAskName,
-              () =>
-                new Promise((resolve) =>
-                  setTimeout(() => resolve('Arya Stark')),
-                ),
+              fx.layer(
+                tagAskName,
+                () =>
+                  new Promise((resolve) =>
+                    setTimeout(() => resolve('Arya Stark')),
+                  ),
+              ),
             ),
         ),
       ).resolves.toStrictEqual([
@@ -129,24 +131,30 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
       await fx.runPromise(
         enumerateFiles('/dev'),
         fx
-          .layer()
-          .with(tagOpenDirectory, (dirName) => {
-            dirs.push(dirName)
+          .context()
+          .with(
+            fx.layer(tagOpenDirectory, (dirName) => {
+              dirs.push(dirName)
 
-            return {
-              dirs: dirName === '/dev' ? ['/dev/fd'] : [],
-              files:
-                dirName === '/dev'
-                  ? ['/dev/stderr', '/dev/stdin', '/dev/stdout']
-                  : ['/dev/fd/0', '/dev/fd/1', '/dev/fd/2'],
-            }
-          })
-          .with(tagLog, (message) => {
-            _log.push(message)
-          })
-          .with(tagHandleFile, (fileName) => {
-            files.push(fileName)
-          }),
+              return {
+                dirs: dirName === '/dev' ? ['/dev/fd'] : [],
+                files:
+                  dirName === '/dev'
+                    ? ['/dev/stderr', '/dev/stdin', '/dev/stdout']
+                    : ['/dev/fd/0', '/dev/fd/1', '/dev/fd/2'],
+              }
+            }),
+          )
+          .with(
+            fx.layer(tagLog, (message) => {
+              _log.push(message)
+            }),
+          )
+          .with(
+            fx.layer(tagHandleFile, (fileName) => {
+              files.push(fileName)
+            }),
+          ),
       )
 
       expect(_log).toStrictEqual([
@@ -190,25 +198,31 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
       await fx.runPromise(
         enumerateFiles('/dev'),
         fx
-          .layer()
-          .with(tagOpenDirectory, (dirName) => {
-            dirs.push(dirName)
+          .context()
+          .with(
+            fx.layer(tagOpenDirectory, (dirName) => {
+              dirs.push(dirName)
 
-            return {
-              dirs: dirName === '/dev' ? ['/dev/fd'] : [],
-              files:
-                dirName === '/dev'
-                  ? ['/dev/stderr', '/dev/stdin', '/dev/stdout']
-                  : ['/dev/fd/0', '/dev/fd/1', '/dev/fd/2'],
-            }
-          })
-          .with(tagLog, (message) => {
-            _log.push(message)
-          })
-          .with(tagHandleFile, function* (fileName) {
-            yield* log(`Handling ${fileName}`)
-            files.push(fileName)
-          }),
+              return {
+                dirs: dirName === '/dev' ? ['/dev/fd'] : [],
+                files:
+                  dirName === '/dev'
+                    ? ['/dev/stderr', '/dev/stdin', '/dev/stdout']
+                    : ['/dev/fd/0', '/dev/fd/1', '/dev/fd/2'],
+              }
+            }),
+          )
+          .with(
+            fx.layer(tagLog, (message) => {
+              _log.push(message)
+            }),
+          )
+          .with(
+            fx.layer(tagHandleFile, function* (fileName) {
+              yield* log(`Handling ${fileName}`)
+              files.push(fileName)
+            }),
+          ),
       )
 
       expect(_log).toStrictEqual([

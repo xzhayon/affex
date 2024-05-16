@@ -5,19 +5,19 @@ import * as $Result from './Result'
 import { Result, Resulted } from './Result'
 import { Struct } from './Struct'
 
-export type Handler<R> = R extends Function
-  ? FunctionHandler<R>
-  : R extends Struct
-  ? StructHandler<R>
+export type Handler<A> = A extends Function
+  ? FunctionHandler<A>
+  : A extends Struct
+  ? StructHandler<A>
   : never
 
-type FunctionHandler<R extends Function> = (
-  ...args: Parameters<R>
-) => ReturnHandler<Awaited<Generated<ReturnType<R>>>>
+type FunctionHandler<A extends Function> = (
+  ...args: Parameters<A>
+) => ReturnHandler<Awaited<Generated<ReturnType<A>>>>
 
-type StructHandler<R extends Struct> = {
-  [K in keyof R as R[K] extends Function ? K : never]: R[K] extends Function
-    ? FunctionHandler<R[K]>
+type StructHandler<A extends Struct> = {
+  [K in keyof A as A[K] extends Function ? K : never]: A[K] extends Function
+    ? FunctionHandler<A[K]>
     : never
 }
 

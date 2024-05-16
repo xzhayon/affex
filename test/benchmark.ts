@@ -1,6 +1,7 @@
 import { Effect } from 'effect'
 import * as effection from 'effection'
 import { Bench } from 'tinybench'
+import * as $Context from '../src/Context'
 import { Effector } from '../src/Effector'
 import * as $Fiber from '../src/Fiber'
 import * as $Layer from '../src/Layer'
@@ -22,8 +23,8 @@ async function sleep() {
 
   const tag = $Tag.tag<Sleep>()
   const affexSleep = $Proxy.function(tag)
-  const layer = $Layer.layer().with(tag, _sleep)
-  const runtime = $Runtime.runtime(layer)
+  const context = $Context.context().with($Layer.layer(tag, _sleep))
+  const runtime = $Runtime.runtime(context)
 
   async function vanillaSeq(n: number, ms: number) {
     for (let i = 0; i < n; i++) {
@@ -129,7 +130,7 @@ async function sleep() {
 }
 
 async function fibonacci() {
-  const runtime = $Runtime.runtime($Layer.layer())
+  const runtime = $Runtime.runtime($Context.context())
 
   function vanillaSeq(n: number): number {
     switch (n) {

@@ -5,7 +5,7 @@ import { tag } from '../../application/query/GetStarshipByNameQuery'
 export function InMemoryGetStarshipByNameQuery(
   storage: ReadonlyArray<StarshipDto> = [],
 ) {
-  return fx.layer().with(tag, function* (name) {
+  return fx.layer(tag, function* (name) {
     const starship = storage.find((starship) =>
       new RegExp(name, 'i').test(starship.name),
     )

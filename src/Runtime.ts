@@ -1,5 +1,6 @@
 import * as $Boh from './Boh'
 import * as $Cause from './Cause'
+import { Context } from './Context'
 import {
   AnyEffector,
   ContextOf,
@@ -12,7 +13,6 @@ import * as $Exit from './Exit'
 import { Exit } from './Exit'
 import * as $Function from './Function'
 import * as $Generator from './Generator'
-import { Layer } from './Layer'
 import * as $Promise from './Promise'
 import { trace } from './Trace'
 import * as $Type from './Type'
@@ -34,9 +34,9 @@ export class Runtime<R> {
   private fibers = new Map<$FiberId.Id, Exit<any, any>>()
   private readonly _effects = new Map<$EffectId.Id, $FiberId.Id>()
 
-  static readonly create = <R>(layer: Layer<never, R>) => new Runtime<R>(layer)
+  static readonly create = <R>(context: Context<R>) => new Runtime<R>(context)
 
-  private constructor(private readonly layer: Layer<never, R>) {
+  private constructor(private readonly context: Context<R>) {
     $FiberId.Id.reset()
     $EffectId.Id.reset()
   }
@@ -172,7 +172,7 @@ export class Runtime<R> {
         return $Boh.waiting(effect.fiber.id)
       case 'Proxy': {
         const child = this.resolve(
-          effect.handle(this.layer.handler(effect.tag)),
+          effect.handle(this.context.handler(effect.tag)),
         )
         loop.attach(child)
 
@@ -242,16 +242,16 @@ export const runtime = Runtime.create
 
 export function runExit<G extends AnyEffector<any, any, any>>(
   effector: OrLazy<G>,
-  layer: Layer<never, ContextOf<G>>,
+  context: Context<ContextOf<G>>,
 ) {
-  return runtime(layer).run(effector)
+  return runtime(context).run(effector)
 }
 
 export async function runPromise<G extends AnyEffector<any, any, any>>(
   effector: OrLazy<G>,
-  layer: Layer<never, ContextOf<G>>,
+  context: Context<ContextOf<G>>,
 ) {
-  const exit = await runExit(effector, layer)
+  const exit = await runExit(effector, context)
   if ($Exit.isFailure(exit)) {
     throw $Cause.isInterrupt(exit.cause)
       ? new Error(`Fiber "${exit.cause.fiberId}" was interrupted`)

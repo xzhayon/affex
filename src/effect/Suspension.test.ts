@@ -1,3 +1,4 @@
+import * as $Context from '../Context'
 import * as $Layer from '../Layer'
 import * as $Runtime from '../Runtime'
 import * as $Tag from '../Tag'
@@ -12,7 +13,7 @@ describe('Suspension', () => {
         yield* $Suspension.suspend()
 
         return 42
-      }, $Layer.layer()),
+      }, $Context.context()),
     ).resolves.toStrictEqual(42)
   })
 
@@ -28,11 +29,13 @@ describe('Suspension', () => {
     await expect(
       $Runtime.runPromise(
         random,
-        $Layer.layer().with(tag, function* () {
-          yield* $Suspension.suspend()
+        $Context.context().with(
+          $Layer.layer(tag, function* () {
+            yield* $Suspension.suspend()
 
-          return 42
-        }),
+            return 42
+          }),
+        ),
       ),
     ).resolves.toStrictEqual(42)
   })

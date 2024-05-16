@@ -37,11 +37,11 @@ function* main() {
 
 // Create layer with effect handler.
 function ConsoleLog() {
-  return fx.layer().with(tag, (message) => console.log(message))
+  return fx.layer(tag, (message) => console.log(message))
 }
 
-// Run program with provided layer.
-fx.runPromise(main, ConsoleLog())
+// Run program with provided context.
+fx.runPromise(main, fx.context().with(ConsoleLog()))
 ```
 
 ## License

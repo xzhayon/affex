@@ -4,7 +4,7 @@ import { tag } from '../../application/persistence/CharacterRepository'
 import { id } from '../../domain/valueObject/Id'
 
 export function MockCharacterRepository() {
-  return fx.layer().with(tag, {
+  return fx.layer(tag, {
     *findOneById(_id) {
       return {
         _id,

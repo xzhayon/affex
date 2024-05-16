@@ -15,7 +15,7 @@ interface CharacterStorage {
 }
 
 export function InMemoryCharacterRepository(storage: CharacterStorage = {}) {
-  return fx.layer().with(tag, {
+  return fx.layer(tag, {
     *findOneById(id) {
       const character = storage.byId?.[id]
       character === undefined

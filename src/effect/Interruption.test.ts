@@ -1,4 +1,5 @@
 import * as $Cause from '../Cause'
+import * as $Context from '../Context'
 import * as $Exit from '../Exit'
 import * as $Layer from '../Layer'
 import * as $Runtime from '../Runtime'
@@ -18,7 +19,7 @@ describe('Interruption', () => {
 
   test('interrupting root fiber', async () => {
     await expect(
-      $Runtime.runExit($Interruption.interrupt(), $Layer.layer()),
+      $Runtime.runExit($Interruption.interrupt(), $Context.context()),
     ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
   })
 
@@ -26,9 +27,11 @@ describe('Interruption', () => {
     await expect(
       $Runtime.runExit(
         random,
-        $Layer.layer().with(tag, function* () {
-          return yield* $Interruption.interrupt()
-        }),
+        $Context.context().with(
+          $Layer.layer(tag, function* () {
+            return yield* $Interruption.interrupt()
+          }),
+        ),
       ),
     ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
   })
@@ -45,9 +48,11 @@ describe('Interruption', () => {
             a++
           }
         },
-        $Layer.layer().with(tag, function* () {
-          return yield* $Interruption.interrupt()
-        }),
+        $Context.context().with(
+          $Layer.layer(tag, function* () {
+            return yield* $Interruption.interrupt()
+          }),
+        ),
       ),
     ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
     expect(a).toStrictEqual(0)
@@ -65,9 +70,11 @@ describe('Interruption', () => {
             a++
           }
         },
-        $Layer.layer().with(tag, function* () {
-          return yield* $Interruption.interrupt()
-        }),
+        $Context.context().with(
+          $Layer.layer(tag, function* () {
+            return yield* $Interruption.interrupt()
+          }),
+        ),
       ),
     ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
     expect(a).toStrictEqual(1)

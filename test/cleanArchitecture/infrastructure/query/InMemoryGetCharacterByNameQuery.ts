@@ -5,7 +5,7 @@ import { tag } from '../../application/query/GetCharacterByNameQuery'
 export function InMemoryGetCharacterByNameQuery(
   storage: ReadonlyArray<CharacterDto> = [],
 ) {
-  return fx.layer().with(tag, function* (name) {
+  return fx.layer(tag, function* (name) {
     const character = storage.find((character) =>
       new RegExp(name, 'i').test(character.name),
     )

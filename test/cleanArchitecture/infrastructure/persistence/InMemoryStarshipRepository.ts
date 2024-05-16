@@ -15,7 +15,7 @@ interface StarshipStorage {
 }
 
 export function InMemoryStarshipRepository(storage: StarshipStorage = {}) {
-  return fx.layer().with(tag, {
+  return fx.layer(tag, {
     *findManyById(ids) {
       const starships = ids
         .map((id) => storage.byId?.[id])

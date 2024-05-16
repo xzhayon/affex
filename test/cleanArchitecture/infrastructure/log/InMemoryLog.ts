@@ -21,7 +21,7 @@ export function InMemoryLog(
     readonly context?: Readonly<Record<string, unknown>>
   }[] = [],
 ) {
-  return fx.layer().with(tag, {
+  return fx.layer(tag, {
     debug: _log('debug', log),
     info: _log('info', log),
     notice: _log('notice', log),

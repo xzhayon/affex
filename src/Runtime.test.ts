@@ -1,4 +1,6 @@
 import * as $Cause from './Cause'
+import * as $Context from './Context'
+import { Context } from './Context'
 import * as $Exit from './Exit'
 import * as $Layer from './Layer'
 import { Result } from './Result'
@@ -19,7 +21,7 @@ describe('Runtime', () => {
           yield 1337
 
           return 42 + 1337
-        }, $Layer.layer()),
+        }, $Context.context()),
       ).resolves.toStrictEqual($Exit.success(42 + 1337))
     })
 
@@ -36,12 +38,12 @@ describe('Runtime', () => {
 
         await expect(
           // @ts-expect-error
-          $Runtime.runExit(add(42, 1337), $Layer.layer()),
+          $Runtime.runExit(add(42, 1337), $Context.context()),
         ).resolves.toMatchObject(
           $Exit.failure(
             $Cause.die(
               new Error(
-                `Cannot find handler for effect${
+                `Cannot find layer for effect${
                   description ? ` "${description}"` : ''
                 }`,
               ),
@@ -56,7 +58,7 @@ describe('Runtime', () => {
       await expect(
         $Runtime.runExit(function* () {
           throw new Error('foo')
-        }, $Layer.layer()),
+        }, $Context.context()),
       ).resolves.toMatchObject(
         $Exit.failure($Cause.die(new Error('foo'), {} as any)),
       )
@@ -74,13 +76,15 @@ describe('Runtime', () => {
       await expect(
         $Runtime.runExit(
           divide(42, 0),
-          $Layer.layer().with(tag, (a, b) => {
-            if (b === 0) {
-              throw new Error('Cannot divide by zero')
-            }
+          $Context.context().with(
+            $Layer.layer(tag, (a, b) => {
+              if (b === 0) {
+                throw new Error('Cannot divide by zero')
+              }
 
-            return a / b
-          }),
+              return a / b
+            }),
+          ),
         ),
       ).resolves.toMatchObject(
         $Exit.failure(
@@ -97,7 +101,7 @@ describe('Runtime', () => {
           } catch {
             throw new Error('bar')
           }
-        }, $Layer.layer()),
+        }, $Context.context()),
       ).resolves.toMatchObject(
         $Exit.failure($Cause.die(new Error('bar'), {} as any)),
       )
@@ -111,7 +115,7 @@ describe('Runtime', () => {
           } catch {
             throw new Error('bar')
           }
-        }, $Layer.layer()),
+        }, $Context.context()),
       ).resolves.toMatchObject(
         $Exit.failure($Cause.die(new Error('bar'), {} as any)),
       )
@@ -127,7 +131,7 @@ describe('Runtime', () => {
           } catch {
             return 'bar'
           }
-        }, $Layer.layer()),
+        }, $Context.context()),
       ).resolves.toStrictEqual($Exit.success('bar'))
     })
 
@@ -141,7 +145,7 @@ describe('Runtime', () => {
           } catch (error) {
             throw error
           }
-        }, $Layer.layer()),
+        }, $Context.context()),
       ).resolves.toMatchObject(
         $Exit.failure($Cause.die(new Error('foo'), {} as any)),
       )
@@ -157,7 +161,7 @@ describe('Runtime', () => {
           } catch (error) {
             throw error
           }
-        }, $Layer.layer()),
+        }, $Context.context()),
       ).resolves.toMatchObject(
         $Exit.failure($Cause.fail(new Error('foo'), {} as any)),
       )
@@ -192,17 +196,23 @@ describe('Runtime', () => {
         function* () {
           return yield* foo()
         },
-        $Layer
-          .layer()
-          .with(tagFoo, function* () {
-            return yield* bar()
-          })
-          .with(tagBar, function* () {
-            return yield* qux()
-          })
-          .with(tagQux, () => {
-            throw new Error()
-          }),
+        $Context
+          .context()
+          .with(
+            $Layer.layer(tagFoo, function* () {
+              return yield* bar()
+            }),
+          )
+          .with(
+            $Layer.layer(tagBar, function* () {
+              return yield* qux()
+            }),
+          )
+          .with(
+            $Layer.layer(tagQux, () => {
+              throw new Error()
+            }),
+          ) as Context<unknown>,
       )
 
       // @ts-ignore
@@ -240,17 +250,23 @@ describe('Runtime', () => {
         function* () {
           return yield* foo()
         },
-        $Layer
-          .layer()
-          .with(tagFoo, function* () {
-            return yield* bar()
-          })
-          .with(tagBar, function* () {
-            return yield* qux()
-          })
-          .with(tagQux, function* () {
-            return yield* $Exception.raise(new Error())
-          }),
+        $Context
+          .context()
+          .with(
+            $Layer.layer(tagFoo, function* () {
+              return yield* bar()
+            }),
+          )
+          .with(
+            $Layer.layer(tagBar, function* () {
+              return yield* qux()
+            }),
+          )
+          .with(
+            $Layer.layer(tagQux, function* () {
+              return yield* $Exception.raise(new Error())
+            }),
+          ),
       )
 
       // @ts-ignore
@@ -288,17 +304,23 @@ describe('Runtime', () => {
         function* () {
           return yield* foo()
         },
-        $Layer
-          .layer()
-          .with(tagFoo, function* () {
-            return yield* bar()
-          })
-          .with(tagBar, function* () {
-            return yield* qux()
-          })
-          .with(tagQux, function* () {
-            return yield* $Interruption.interrupt()
-          }),
+        $Context
+          .context()
+          .with(
+            $Layer.layer(tagFoo, function* () {
+              return yield* bar()
+            }),
+          )
+          .with(
+            $Layer.layer(tagBar, function* () {
+              return yield* qux()
+            }),
+          )
+          .with(
+            $Layer.layer(tagQux, function* () {
+              return yield* $Interruption.interrupt()
+            }),
+          ),
       )
 
       // @ts-ignore

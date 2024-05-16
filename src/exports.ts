@@ -2,6 +2,7 @@ import { die, fail } from './Cause'
 import { failure, success } from './Exit'
 
 export { is as isCause, isDie, isFail } from './Cause'
+export { context } from './Context'
 export {
   AnyEffector,
   AsyncEffector,

@@ -14,7 +14,7 @@ export class Loop<F extends Fiber<any, any>> {
   readonly tasks = new Map<Id, F extends any ? Task<F> : never>()
   private readonly queue = $Queue.queue<F extends any ? Task<F> : never>()
 
-  static readonly create = () => new Loop<never>()
+  static readonly empty = () => new Loop<never>()
 
   private constructor() {}
 
@@ -103,4 +103,4 @@ export class Loop<F extends Fiber<any, any>> {
   }
 }
 
-export const loop = Loop.create
+export const loop = Loop.empty
