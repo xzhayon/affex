@@ -161,7 +161,7 @@ export class Runtime<R> {
       case 'Exception':
         return $Boh.done($Exit.failure($Cause.fail(effect.error, fiber.id)))
       case 'Fork': {
-        const child = this.resolve(effect.effector as any)
+        const child = this.resolve(effect.effector)
         loop.detach(child)
 
         return $Boh.done($Exit.success(child))
@@ -197,8 +197,8 @@ export class Runtime<R> {
     }
   }
 
-  private readonly resolve = <A, E>(
-    value: A | Promise<A> | OrLazy<AnyEffector<A, E, R>>,
+  private readonly resolve = <A, E, _R extends R>(
+    value: A | Promise<A> | OrLazy<AnyEffector<A, E, _R>>,
   ) => {
     if ($Function.is(value) || $Generator.is(value)) {
       return $Fiber.fiber(value)
