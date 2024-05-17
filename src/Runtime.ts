@@ -31,7 +31,7 @@ const _trace = trace('Runtime')
 
 export class Runtime<R> {
   private readonly loop = $Loop.loop() as unknown as Loop<Fiber<any, any>>
-  private fibers = new Map<$FiberId.Id, Exit<any, any>>()
+  private readonly fibers = new Map<$FiberId.Id, Exit<any, any>>()
   private readonly _effects = new Map<$EffectId.Id, $FiberId.Id>()
 
   static readonly create = <R>(context: Context<R>) => new Runtime<R>(context)
