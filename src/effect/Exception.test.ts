@@ -35,12 +35,14 @@ describe('Exception', () => {
       await expect(
         $Runtime.runExit(
           random,
-          // @ts-expect-error
-          $Context.context().with(tagRandom, function* () {
-            return yield* $Exception.raise(
-              new Error('Cannot return random number'),
-            )
-          }),
+          $Context.context().with(
+            // @ts-expect-error
+            $Layer.layer(tagRandom, function* () {
+              return yield* $Exception.raise(
+                new Error('Cannot return random number'),
+              )
+            }),
+          ),
         ),
       ).resolves.toMatchObject(
         $Exit.failure(
@@ -53,14 +55,18 @@ describe('Exception', () => {
       await expect(
         $Runtime.runExit(
           divide(42, 0),
-          // @ts-expect-error
-          $Context.context().with(tag, function* (a, b) {
-            if (b === 0) {
-              return yield* $Exception.raise(new Error('Cannot divide by zero'))
-            }
+          $Context.context().with(
+            // @ts-expect-error
+            $Layer.layer(tag, function* (a, b) {
+              if (b === 0) {
+                return yield* $Exception.raise(
+                  new Error('Cannot divide by zero'),
+                )
+              }
 
-            return a / b
-          }),
+              return a / b
+            }),
+          ),
         ),
       ).resolves.toMatchObject(
         $Exit.failure(
@@ -100,16 +106,18 @@ describe('Exception', () => {
       await expect(
         $Runtime.runExit(
           divide(42, 0),
-          // @ts-expect-error
-          $Context.context().with(tag, function* (a, b) {
-            if (b === 0) {
-              return yield* $Exception.raise(
-                new BarError('Cannot divide by zero'),
-              )
-            }
+          $Context.context().with(
+            // @ts-expect-error
+            $Layer.layer(tag, function* (a, b) {
+              if (b === 0) {
+                return yield* $Exception.raise(
+                  new BarError('Cannot divide by zero'),
+                )
+              }
 
-            return a / b
-          }),
+              return a / b
+            }),
+          ),
         ),
       ).resolves.toMatchObject(
         $Exit.failure(
