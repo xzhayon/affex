@@ -166,6 +166,33 @@ describe('Runtime', () => {
       )
     })
 
+    test('catching error from handler', async () => {
+      interface Foo {
+        readonly [uri]?: unique symbol
+        (): string
+      }
+
+      const tag = $Tag.tag<Foo>()
+      const foo = $Proxy.function(tag)
+
+      await expect(
+        $Runtime.runExit(
+          function* () {
+            try {
+              return yield* foo()
+            } catch {
+              return 'bar'
+            }
+          },
+          $Context.context().with(
+            $Layer.layer(tag, () => {
+              throw new Error()
+            }),
+          ),
+        ),
+      ).resolves.toStrictEqual($Exit.success('bar'))
+    })
+
     test('recording fiber ID in Die cause', async () => {
       interface Foo {
         readonly [uri]?: unique symbol

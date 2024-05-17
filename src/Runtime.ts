@@ -110,11 +110,24 @@ export class Runtime<R> {
     >,
     loop: Loop<Fiber<any, any>>,
   ) => {
-    const fiberId = this._effects.get(effect.id)
-    if (fiberId !== undefined) {
-      const exit = this.exit(fiberId, loop)
-      if (exit === undefined) {
-        _trace('Await effect', fiber.id, {
+    try {
+      const fiberId = this._effects.get(effect.id)
+      if (fiberId !== undefined) {
+        const exit = this.exit(fiberId, loop)
+        if (exit === undefined) {
+          _trace('Await effect', fiber.id, {
+            effectType: effect[$Type.tag],
+            effectDescription:
+              effect[$Type.tag] === 'Proxy'
+                ? effect.tag.key.description
+                : undefined,
+            effectId: effect.id,
+          })
+
+          return $Boh.waiting(fiberId)
+        }
+
+        _trace('Resolve effect', fiber.id, {
           effectType: effect[$Type.tag],
           effectDescription:
             effect[$Type.tag] === 'Proxy'
@@ -123,10 +136,10 @@ export class Runtime<R> {
           effectId: effect.id,
         })
 
-        return $Boh.waiting(fiberId)
+        return $Boh.done(exit)
       }
 
-      _trace('Resolve effect', fiber.id, {
+      _trace('Handle effect', fiber.id, {
         effectType: effect[$Type.tag],
         effectDescription:
           effect[$Type.tag] === 'Proxy'
@@ -134,66 +147,59 @@ export class Runtime<R> {
             : undefined,
         effectId: effect.id,
       })
-
-      return $Boh.done(exit)
-    }
-
-    _trace('Handle effect', fiber.id, {
-      effectType: effect[$Type.tag],
-      effectDescription:
-        effect[$Type.tag] === 'Proxy' ? effect.tag.key.description : undefined,
-      effectId: effect.id,
-    })
-    switch (effect[$Type.tag]) {
-      case 'Backdoor': {
-        const child = this.resolve(
-          effect.handle((effector) =>
-            this.run(
-              effector,
-              $Loop.loop() as unknown as Loop<Fiber<any, any>>,
+      switch (effect[$Type.tag]) {
+        case 'Backdoor': {
+          const child = this.resolve(
+            effect.handle((effector) =>
+              this.run(
+                effector,
+                $Loop.loop() as unknown as Loop<Fiber<any, any>>,
+              ),
             ),
-          ),
-        )
-        loop.attach(child)
+          )
+          loop.attach(child)
 
-        return $Boh.waiting(child.id)
-      }
-      case 'Exception':
-        return $Boh.done($Exit.failure($Cause.fail(effect.error, fiber.id)))
-      case 'Fork': {
-        const child = this.resolve(effect.effector)
-        loop.detach(child)
-
-        return $Boh.done($Exit.success(child))
-      }
-      case 'Interruption':
-        return $Boh.done($Exit.failure($Cause.interrupt(fiber.id)))
-      case 'Join':
-        return $Boh.waiting(effect.fiber.id)
-      case 'Proxy': {
-        const child = this.resolve(
-          effect.handle(this.context.handler(effect.tag)),
-        )
-        loop.attach(child)
-
-        return $Boh.waiting(child.id)
-      }
-      case 'Sandbox': {
-        const exit = await this.run(
-          effect.try,
-          $Loop.loop() as unknown as Loop<Fiber<any, any>>,
-        )
-        if ($Exit.isSuccess(exit) || !$Cause.isFail(exit.cause)) {
-          return $Boh.done(exit)
+          return $Boh.waiting(child.id)
         }
+        case 'Exception':
+          return $Boh.done($Exit.failure($Cause.fail(effect.error, fiber.id)))
+        case 'Fork': {
+          const child = this.resolve(effect.effector)
+          loop.detach(child)
 
-        const child = this.resolve(effect.catch(exit.cause.error))
-        loop.attach(child)
+          return $Boh.done($Exit.success(child))
+        }
+        case 'Interruption':
+          return $Boh.done($Exit.failure($Cause.interrupt(fiber.id)))
+        case 'Join':
+          return $Boh.waiting(effect.fiber.id)
+        case 'Proxy': {
+          const child = this.resolve(
+            effect.handle(this.context.handler(effect.tag)),
+          )
+          loop.attach(child)
 
-        return $Boh.waiting(child.id)
+          return $Boh.waiting(child.id)
+        }
+        case 'Sandbox': {
+          const exit = await this.run(
+            effect.try,
+            $Loop.loop() as unknown as Loop<Fiber<any, any>>,
+          )
+          if ($Exit.isSuccess(exit) || !$Cause.isFail(exit.cause)) {
+            return $Boh.done(exit)
+          }
+
+          const child = this.resolve(effect.catch(exit.cause.error))
+          loop.attach(child)
+
+          return $Boh.waiting(child.id)
+        }
+        case 'Suspension':
+          return $Boh.done($Exit.success(undefined))
       }
-      case 'Suspension':
-        return $Boh.done($Exit.success(undefined))
+    } catch (error) {
+      return $Boh.done($Exit.failure($Cause.die(error, fiber.id)))
     }
   }
 
