@@ -1,6 +1,5 @@
 import * as $Cause from './Cause'
 import * as $Context from './Context'
-import { Context } from './Context'
 import * as $Exit from './Exit'
 import * as $Layer from './Layer'
 import { Result } from './Result'
@@ -212,7 +211,7 @@ describe('Runtime', () => {
             $Layer.layer(tagQux, () => {
               throw new Error()
             }),
-          ) as Context<unknown>,
+          ),
       )
 
       // @ts-ignore

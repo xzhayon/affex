@@ -5,7 +5,7 @@ import { Contravariant, Covariant } from './Type'
 
 const A = Symbol()
 const R = Symbol()
-export class Context<A, R = never> {
+export class Context<in A, out R = never> {
   readonly [A]!: Contravariant<A>;
   readonly [R]!: Covariant<R>
   private layers = new Map<Tag<any>, Layer<any, any>>()
@@ -14,7 +14,7 @@ export class Context<A, R = never> {
 
   private constructor() {}
 
-  readonly do = function (this: Context<A>) {
+  readonly do = function (this: Context<any>): Context<A> {
     return this
   }
 

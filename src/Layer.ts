@@ -5,13 +5,11 @@ import { Handler } from './Handler'
 import { Struct } from './Struct'
 import { Tag } from './Tag'
 import * as $Type from './Type'
-import { Contravariant, Covariant } from './Type'
+import { Covariant } from './Type'
 
-declare const A: unique symbol
 declare const R: unique symbol
-export interface Layer<A, R = never> {
+export interface Layer<in out A, out R = never> {
   readonly [$Type.uri]?: unique symbol
-  readonly [A]?: Contravariant<A>
   readonly [R]?: Covariant<R>
   readonly tag: Tag<A>
   readonly handler: Handler<A>
