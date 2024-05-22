@@ -1,4 +1,3 @@
-import * as $Boh from './Boh'
 import * as $Cause from './Cause'
 import { Context } from './Context'
 import {
@@ -14,7 +13,7 @@ import { Exit } from './Exit'
 import * as $Function from './Function'
 import * as $Generator from './Generator'
 import * as $Promise from './Promise'
-import { trace } from './Trace'
+import * as $Queue from './Queue'
 import * as $Type from './Type'
 import { OrLazy } from './Type'
 import * as $Effect from './effect/Effect'
@@ -23,83 +22,134 @@ import * as $EffectId from './effect/Id'
 import * as $Fiber from './fiber/Fiber'
 import { Fiber } from './fiber/Fiber'
 import * as $FiberId from './fiber/Id'
-import * as $Loop from './fiber/Loop'
-import { Loop } from './fiber/Loop'
 import * as $Status from './fiber/Status'
 
-const _trace = trace('Runtime')
-
 export class Runtime<R> {
-  private readonly loop = $Loop.loop() as unknown as Loop<Fiber<any, any>>
-  private readonly fibers = new Map<$FiberId.Id, Exit<any, any>>()
-  private readonly _effects = new Map<$EffectId.Id, $FiberId.Id>()
+  private readonly queue = $Queue.queue<Fiber<any, any>>()
+  private readonly fiberIds = new Map<$EffectId.Id, $FiberId.Id>()
+  private readonly exits = new Map<$FiberId.Id, Exit<any, any>>()
+  private readonly multiPass = new Set<$EffectId.Id>()
 
   static readonly create = <R>(context: Context<R>) => new Runtime<R>(context)
 
-  private constructor(private readonly context: Context<R>) {
-    $FiberId.Id.reset()
-    $EffectId.Id.reset()
-  }
+  private constructor(private readonly context: Context<R>) {}
 
   readonly run = async <G extends AnyEffector<any, any, R>>(
     effector: OrLazy<G>,
-    loop = this.loop,
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
-    const fiber = $Fiber.fiber(effector)
+    const root = $Fiber.fiber(effector)
     try {
-      await loop.attach(fiber).run({
-        onSuspended: async (task) => {
-          if (task.fiber.id === fiber.id) {
-            await nextTick()
-          }
+      this.enqueue(root)
+      for (const fiber of this.queue) {
+        switch (fiber.status[$Type.tag]) {
+          case 'Ready':
+            await fiber.start()
+          case 'Started':
+          case 'Running':
+            this.enqueue(fiber)
 
-          if (!$Effect.is(task.fiber.status.value)) {
-            await task.fiber.resume()
-
-            return
-          }
-
-          const boh = await this.handle(
-            task.fiber.status.value as Effect<any, any, any>,
-            task.fiber as Fiber<any, any>,
-            loop,
-          )
-          if ($Boh.isWaiting(boh)) {
-            this._effects.set(task.fiber.status.value.id, boh.id)
-
-            return
-          }
-
-          if ($Exit.isFailure(boh.exit)) {
-            if ($Cause.isInterrupt(boh.exit.cause)) {
-              this.fibers.set(task.fiber.id, boh.exit)
-              await task.fiber.interrupt()
-
-              return
+            break
+          case 'Suspended':
+            if (fiber.id === root.id) {
+              await nextTick()
             }
 
-            const status = await task.fiber.throw(boh.exit.cause.error)
-            if (
-              $Status.isFailed(status) &&
-              status.error === boh.exit.cause.error
-            ) {
-              this.fibers.set(task.fiber.id, boh.exit)
-            }
-          } else {
-            await task.fiber.resume(boh.exit.value)
-          }
-        },
-      })
+            if (!$Effect.is(fiber.status.value)) {
+              await fiber.resume()
+              this.enqueue(fiber)
 
-      const exit = this.exit(fiber.id, loop)
+              break
+            }
+
+            const exit = await this.handle(
+              fiber.status.value as Effect<any, any, any>,
+              fiber,
+            )
+            if (exit === undefined) {
+              this.enqueue(fiber)
+
+              break
+            }
+
+            if ($Exit.isFailure(exit)) {
+              if ($Cause.isInterrupt(exit.cause)) {
+                this.exits.set(fiber.id, exit)
+                await fiber.interrupt()
+                this.enqueue(fiber)
+
+                break
+              }
+
+              const status = await fiber.throw(exit.cause.error)
+              if (
+                $Status.isFailed(status) &&
+                status.error === exit.cause.error
+              ) {
+                this.exits.set(fiber.id, exit)
+              }
+            } else {
+              await fiber.resume(exit.value)
+            }
+
+            this.enqueue(fiber)
+
+            break
+          case 'Interrupted':
+            if (!this.exits.has(fiber.id)) {
+              this.exits.set(
+                fiber.id,
+                $Exit.failure($Cause.interrupt(fiber.id)),
+              )
+            }
+
+            if (fiber.id === root.id) {
+              await this.halt()
+            }
+
+            break
+          case 'Failed':
+            if (!this.exits.has(fiber.id)) {
+              this.exits.set(
+                fiber.id,
+                $Exit.failure($Cause.die(fiber.status.error, fiber.id)),
+              )
+            }
+
+            if (fiber.id === root.id) {
+              await this.halt()
+            }
+
+            break
+          case 'Terminated':
+            if (!this.exits.has(fiber.id)) {
+              this.exits.set(fiber.id, $Exit.success(fiber.status.value))
+            }
+
+            if (fiber.id === root.id) {
+              await this.halt()
+            }
+
+            break
+        }
+      }
+
+      const exit = this.exits.get(root.id)
       if (exit === undefined) {
-        throw new Error(`Cannot resolve effector in fiber "${fiber.id}"`)
+        throw new Error(`Cannot resolve effector in fiber "${root.id}"`)
       }
 
       return exit
     } catch (error) {
-      return $Exit.failure($Cause.die(error, fiber.id))
+      return $Exit.failure($Cause.die(error, root.id))
     }
+  }
+
+  readonly halt = async () => {
+    await Promise.all(this.queue.toArray().map((fiber) => fiber.interrupt()))
+  }
+
+  private readonly enqueue = (fiber: Fiber<any, any>) => {
+    this.queue.enqueue(fiber)
   }
 
   private readonly handle = async <A, E>(
@@ -108,98 +158,85 @@ export class Runtime<R> {
       A,
       (R extends any ? Use<R> : never) | (E extends any ? Throw<E> : never)
     >,
-    loop: Loop<Fiber<any, any>>,
   ) => {
     try {
-      const fiberId = this._effects.get(effect.id)
+      const fiberId = this.fiberIds.get(effect.id)
       if (fiberId !== undefined) {
-        const exit = this.exit(fiberId, loop)
+        const exit = this.exits.get(fiberId)
         if (exit === undefined) {
-          _trace('Await effect', fiber.id, {
-            effectType: effect[$Type.tag],
-            effectDescription:
-              effect[$Type.tag] === 'Proxy'
-                ? effect.tag.key.description
-                : undefined,
-            effectId: effect.id,
-          })
-
-          return $Boh.waiting(fiberId)
+          return undefined
         }
 
-        _trace('Resolve effect', fiber.id, {
-          effectType: effect[$Type.tag],
-          effectDescription:
-            effect[$Type.tag] === 'Proxy'
-              ? effect.tag.key.description
-              : undefined,
-          effectId: effect.id,
-        })
+        if (effect[$Type.tag] !== 'Sandbox' || !this.multiPass.has(effect.id)) {
+          this.fiberIds.delete(effect.id)
 
-        return $Boh.done(exit)
+          return exit
+        }
       }
 
-      _trace('Handle effect', fiber.id, {
-        effectType: effect[$Type.tag],
-        effectDescription:
-          effect[$Type.tag] === 'Proxy'
-            ? effect.tag.key.description
-            : undefined,
-        effectId: effect.id,
-      })
       switch (effect[$Type.tag]) {
         case 'Backdoor': {
           const child = this.resolve(
-            effect.handle((effector) =>
-              this.run(
-                effector,
-                $Loop.loop() as unknown as Loop<Fiber<any, any>>,
-              ),
-            ),
+            effect.handle((effector) => runExit(effector, this.context)),
           )
-          loop.attach(child)
+          this.enqueue(child)
+          this.fiberIds.set(effect.id, child.id)
 
-          return $Boh.waiting(child.id)
+          return undefined
         }
         case 'Exception':
-          return $Boh.done($Exit.failure($Cause.fail(effect.error, fiber.id)))
+          return $Exit.failure($Cause.fail(effect.error, fiber.id))
         case 'Fork': {
           const child = this.resolve(effect.effector)
-          loop.detach(child)
+          this.enqueue(child)
 
-          return $Boh.done($Exit.success(child))
+          return $Exit.success(child)
         }
         case 'Interruption':
-          return $Boh.done($Exit.failure($Cause.interrupt(fiber.id)))
+          return $Exit.failure($Cause.interrupt(fiber.id))
         case 'Join':
-          return $Boh.waiting(effect.fiber.id)
+          this.fiberIds.set(effect.id, effect.fiber.id)
+
+          return undefined
         case 'Proxy': {
           const child = this.resolve(
             effect.handle(this.context.handler(effect.tag)),
           )
-          loop.attach(child)
+          this.enqueue(child)
+          this.fiberIds.set(effect.id, child.id)
 
-          return $Boh.waiting(child.id)
+          return undefined
         }
-        case 'Sandbox': {
-          const exit = await this.run(
-            effect.try,
-            $Loop.loop() as unknown as Loop<Fiber<any, any>>,
-          )
-          if ($Exit.isSuccess(exit) || !$Cause.isFail(exit.cause)) {
-            return $Boh.done(exit)
+        case 'Sandbox':
+          if (fiberId === undefined) {
+            const child = this.resolve(effect.try)
+            this.enqueue(child)
+            this.fiberIds.set(effect.id, child.id)
+            this.multiPass.add(effect.id)
+          } else {
+            const exit = this.exits.get(fiberId)
+            if (exit === undefined) {
+              return undefined
+            }
+
+            this.multiPass.delete(effect.id)
+            if (!$Exit.isFailure(exit) || !$Cause.isFail(exit.cause)) {
+              this.fiberIds.delete(effect.id)
+
+              return exit
+            }
+
+            const child = this.resolve(effect.catch(exit.cause.error))
+            this.enqueue(child)
+            this.fiberIds.set(effect.id, child.id)
           }
 
-          const child = this.resolve(effect.catch(exit.cause.error))
-          loop.attach(child)
-
-          return $Boh.waiting(child.id)
-        }
+          return undefined
         case 'Suspension':
-          return $Boh.done($Exit.success(undefined))
+          return $Exit.success(undefined)
       }
     } catch (error) {
-      return $Boh.done($Exit.failure($Cause.die(error, fiber.id)))
+      return $Exit.failure($Cause.die(error, fiber.id))
     }
   }
 
@@ -215,32 +252,6 @@ export class Runtime<R> {
     }
 
     return $Fiber.fromValue(value)
-  }
-
-  private readonly exit = (
-    fiberId: $FiberId.Id,
-    loop: Loop<Fiber<any, any>>,
-  ) => {
-    const exit = this.fibers.get(fiberId)
-    if (exit !== undefined) {
-      return exit
-    }
-
-    const task = loop.tasks.get(fiberId)
-    if (task === undefined) {
-      return undefined
-    }
-
-    switch (task.fiber.status[$Type.tag]) {
-      case 'Interrupted':
-        return $Exit.failure($Cause.interrupt(task.fiber.id))
-      case 'Failed':
-        return $Exit.failure($Cause.die(task.fiber.status.error, task.fiber.id))
-      case 'Terminated':
-        return $Exit.success(task.fiber.status.value)
-    }
-
-    return undefined
   }
 }
 

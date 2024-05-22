@@ -10,8 +10,13 @@ import * as $Backdoor from './effect/Backdoor'
 import * as $Exception from './effect/Exception'
 import * as $Interruption from './effect/Interruption'
 import * as $Proxy from './effect/Proxy'
+import * as $FiberId from './fiber/Id'
 
 describe('Runtime', () => {
+  beforeEach(() => {
+    $FiberId.Id.reset()
+  })
+
   describe('runExit', () => {
     test('running effector with no effects', async () => {
       await expect(
