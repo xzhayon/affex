@@ -11,6 +11,7 @@ export {
   OutputOf,
 } from './Effector'
 export { is as isExit, isFailure, isSuccess } from './Exit'
+export { all, any, race } from './Fiber'
 export {
   AnyGenerator,
   NextOf,
@@ -21,7 +22,6 @@ export {
   traverse,
   traverseAsync,
 } from './Generator'
-export { all, any, race } from './Promise'
 export { Result } from './Result'
 export { tag } from './Tag'
 export { uri } from './Type'
