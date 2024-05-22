@@ -43,14 +43,6 @@ export function all<G extends AnyEffector<any, any, any>>(
   })
 }
 
-export function settled<G extends AnyEffector<any, any, any>>(
-  effectors: ReadonlyArray<OrLazy<G>>,
-) {
-  return $Backdoor.exploit<ContextOf<G>>()((run) =>
-    Promise.all(effectors.map(run)),
-  )
-}
-
 export function any<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
 ) {
