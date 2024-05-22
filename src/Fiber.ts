@@ -17,8 +17,8 @@ export function* all<G extends AnyEffector<any, any, any>>(
   const values = []
   let done = 0
   for (let i = 0; done < fibers.length; i++) {
-    const _i = i % fibers.length
-    const fiber = fibers[_i]
+    const index = i % fibers.length
+    const fiber = fibers[index]
     if (fiber === undefined) {
       continue
     }
@@ -28,8 +28,8 @@ export function* all<G extends AnyEffector<any, any, any>>(
       case 'Failed':
         return yield* $Join.join(fiber)
       case 'Terminated':
-        delete fibers[_i]
-        values[_i] = fiber.status.value
+        delete fibers[index]
+        values[index] = fiber.status.value
         done++
 
         break
@@ -54,8 +54,8 @@ export function* any<G extends AnyEffector<any, any, any>>(
   const errors = []
   let done = 0
   for (let i = 0; done < fibers.length; i++) {
-    const _i = i % fibers.length
-    const fiber = fibers[_i]
+    const index = i % fibers.length
+    const fiber = fibers[index]
     if (fiber === undefined) {
       continue
     }
@@ -64,8 +64,8 @@ export function* any<G extends AnyEffector<any, any, any>>(
       case 'Interrupted':
         return yield* $Join.join(fiber) as any
       case 'Failed':
-        delete fibers[_i]
-        errors[_i] = fiber.status.error
+        delete fibers[index]
+        errors[index] = fiber.status.error
         done++
 
         break
