@@ -8,6 +8,7 @@ import {
   Throw,
   Use,
 } from './Effector'
+import * as $Engine from './Engine'
 import * as $Exit from './Exit'
 import { Exit } from './Exit'
 import * as $Function from './Function'
@@ -51,7 +52,7 @@ export class Runtime<R> {
             break
           case 'Suspended':
             if (fiber.id === root.id) {
-              await nextTick()
+              await $Engine.skipTick()
             }
 
             if (!$Effect.is(fiber.status.value)) {
@@ -276,10 +277,4 @@ export async function runPromise<G extends AnyEffector<any, any, any>>(
   }
 
   return exit.value
-}
-
-function nextTick() {
-  return new Promise<void>((resolve) =>
-    setImmediate !== undefined ? setImmediate(resolve) : setTimeout(resolve, 0),
-  )
 }
