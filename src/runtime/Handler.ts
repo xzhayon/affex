@@ -1,9 +1,9 @@
-import { AnyEffector } from './Effector'
-import { Function } from './Function'
-import { Generated } from './Generator'
-import * as $Result from './Result'
-import { Result, Resulted } from './Result'
-import { Struct } from './Struct'
+import { AnyEffector } from '../Effector'
+import { Function } from '../Function'
+import { Generated } from '../Generator'
+import * as $Result from '../Result'
+import { Result, Resulted } from '../Result'
+import { Struct } from '../Struct'
 
 export type Handler<A> = A extends Function
   ? FunctionHandler<A>

@@ -1,15 +1,15 @@
 import { Effect } from 'effect'
 import * as effection from 'effection'
 import { Bench } from 'tinybench'
-import * as $Context from '../src/Context'
 import { Effector } from '../src/Effector'
 import * as $Fiber from '../src/Fiber'
-import * as $Layer from '../src/Layer'
 import * as $Promise from '../src/Promise'
-import * as $Runtime from '../src/Runtime'
 import * as $Tag from '../src/Tag'
 import { uri } from '../src/Type'
 import * as $Proxy from '../src/effect/Proxy'
+import * as $Context from '../src/runtime/Context'
+import * as $Layer from '../src/runtime/Layer'
+import * as $Runtime from '../src/runtime/Runtime'
 
 async function sleep() {
   function _sleep(ms: number) {

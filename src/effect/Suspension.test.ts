@@ -1,8 +1,8 @@
-import * as $Context from '../Context'
-import * as $Layer from '../Layer'
-import * as $Runtime from '../Runtime'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
+import * as $Context from '../runtime/Context'
+import * as $Layer from '../runtime/Layer'
+import * as $Runtime from '../runtime/Runtime'
 import * as $Proxy from './Proxy'
 import * as $Suspension from './Suspension'
 

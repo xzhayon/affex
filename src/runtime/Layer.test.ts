@@ -1,6 +1,6 @@
+import * as $Tag from '../Tag'
+import { uri } from '../Type'
 import * as $Layer from './Layer'
-import * as $Tag from './Tag'
-import { uri } from './Type'
 
 describe('Layer', () => {
   interface Foo {

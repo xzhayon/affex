@@ -3,10 +3,10 @@ import * as $Struct from '../Struct'
 import * as $Type from '../Type'
 import { Variant } from '../Type'
 import { Backdoor } from './Backdoor'
+import * as $EffectId from './EffectId'
+import { EffectId } from './EffectId'
 import { Exception } from './Exception'
 import { Fork } from './Fork'
-import * as $Id from './Id'
-import { Id } from './Id'
 import { Interruption } from './Interruption'
 import { Join } from './Join'
 import { Proxy } from './Proxy'
@@ -24,12 +24,12 @@ export type Effect<A, E = never, R = never> =
   | Suspension
 
 export interface _Effect<T extends string> extends Variant<typeof uri, T> {
-  readonly id: Id
+  readonly id: EffectId
 }
 
 const uri = Symbol('Effect')
 export function _effect<T extends string>(tag: T) {
-  return { ...$Type.variant(uri)(tag), id: $Id.id() }
+  return { ...$Type.variant(uri)(tag), id: $EffectId.id() }
 }
 
 export function is(u: unknown): u is Effect<unknown, unknown, unknown> {

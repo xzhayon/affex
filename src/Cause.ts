@@ -1,7 +1,7 @@
 import * as $Struct from './Struct'
 import * as $Type from './Type'
 import { Variant } from './Type'
-import { Id } from './fiber/Id'
+import { FiberId } from './fiber/FiberId'
 
 export type Cause<E> = Fail<E> | Die | Interrupt
 
@@ -9,30 +9,30 @@ type _Cause<T extends string> = Variant<typeof uri, T>
 
 export interface Fail<E> extends _Cause<'Fail'> {
   readonly error: E
-  readonly fiberId: Id
+  readonly fiberId: FiberId
 }
 
 export interface Die extends _Cause<'Die'> {
   readonly error: unknown
-  readonly fiberId: Id
+  readonly fiberId: FiberId
 }
 
 export interface Interrupt extends _Cause<'Interrupt'> {
-  readonly fiberId: Id
+  readonly fiberId: FiberId
 }
 
 const uri = Symbol('Cause')
 const _cause = $Type.variant(uri)
 
-export function fail<E>(error: E, fiberId: Id): Cause<E> {
+export function fail<E>(error: E, fiberId: FiberId): Cause<E> {
   return { ..._cause('Fail'), error, fiberId }
 }
 
-export function die(error: unknown, fiberId: Id): Cause<never> {
+export function die(error: unknown, fiberId: FiberId): Cause<never> {
   return { ..._cause('Die'), error, fiberId }
 }
 
-export function interrupt(fiberId: Id): Cause<never> {
+export function interrupt(fiberId: FiberId): Cause<never> {
   return { ..._cause('Interrupt'), fiberId }
 }
 

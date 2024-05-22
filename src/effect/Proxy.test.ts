@@ -1,10 +1,10 @@
-import * as $Context from '../Context'
 import { AnyEffector } from '../Effector'
 import { AnyGenerator, YieldOf } from '../Generator'
-import * as $Layer from '../Layer'
-import * as $Runtime from '../Runtime'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
+import * as $Context from '../runtime/Context'
+import * as $Layer from '../runtime/Layer'
+import * as $Runtime from '../runtime/Runtime'
 import * as $Proxy from './Proxy'
 
 describe('Proxy', () => {

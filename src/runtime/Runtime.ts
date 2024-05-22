@@ -1,5 +1,4 @@
-import * as $Cause from './Cause'
-import { Context } from './Context'
+import * as $Cause from '../Cause'
 import {
   AnyEffector,
   ContextOf,
@@ -7,28 +6,29 @@ import {
   OutputOf,
   Throw,
   Use,
-} from './Effector'
+} from '../Effector'
+import * as $Exit from '../Exit'
+import { Exit } from '../Exit'
+import * as $Function from '../Function'
+import * as $Generator from '../Generator'
+import * as $Promise from '../Promise'
+import * as $Type from '../Type'
+import { OrLazy } from '../Type'
+import * as $Effect from '../effect/Effect'
+import { Effect } from '../effect/Effect'
+import { EffectId } from '../effect/EffectId'
+import * as $Fiber from '../fiber/Fiber'
+import { Fiber } from '../fiber/Fiber'
+import { FiberId } from '../fiber/FiberId'
+import * as $Status from '../fiber/Status'
+import { Context } from './Context'
 import * as $Engine from './Engine'
-import * as $Exit from './Exit'
-import { Exit } from './Exit'
-import * as $Function from './Function'
-import * as $Generator from './Generator'
-import * as $Promise from './Promise'
-import * as $Type from './Type'
-import { OrLazy } from './Type'
-import * as $Effect from './effect/Effect'
-import { Effect } from './effect/Effect'
-import * as $EffectId from './effect/Id'
-import * as $Fiber from './fiber/Fiber'
-import { Fiber } from './fiber/Fiber'
-import * as $FiberId from './fiber/Id'
-import * as $Status from './fiber/Status'
 
 export class Runtime<R> {
   private readonly queue: Fiber<any, any>[] = []
-  private readonly fiberIds = new Map<$EffectId.Id, $FiberId.Id>()
-  private readonly exits = new Map<$FiberId.Id, Exit<any, any>>()
-  private readonly multiPass = new Set<$EffectId.Id>()
+  private readonly fiberIds = new Map<EffectId, FiberId>()
+  private readonly exits = new Map<FiberId, Exit<any, any>>()
+  private readonly multiPass = new Set<EffectId>()
 
   static readonly create = <R>(context: Context<R>) => new Runtime<R>(context)
 

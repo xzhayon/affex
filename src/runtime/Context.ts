@@ -1,7 +1,7 @@
+import { Tag } from '../Tag'
+import { Contravariant, Covariant } from '../Type'
 import { Handler } from './Handler'
 import { Layer } from './Layer'
-import { Tag } from './Tag'
-import { Contravariant, Covariant } from './Type'
 
 const A = Symbol()
 const R = Symbol()

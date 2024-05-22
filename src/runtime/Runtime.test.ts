@@ -1,20 +1,20 @@
-import * as $Cause from './Cause'
+import * as $Cause from '../Cause'
+import * as $Exit from '../Exit'
+import { Result } from '../Result'
+import * as $Tag from '../Tag'
+import { uri } from '../Type'
+import * as $Backdoor from '../effect/Backdoor'
+import * as $Exception from '../effect/Exception'
+import * as $Interruption from '../effect/Interruption'
+import * as $Proxy from '../effect/Proxy'
+import * as $FiberId from '../fiber/FiberId'
 import * as $Context from './Context'
-import * as $Exit from './Exit'
 import * as $Layer from './Layer'
-import { Result } from './Result'
 import * as $Runtime from './Runtime'
-import * as $Tag from './Tag'
-import { uri } from './Type'
-import * as $Backdoor from './effect/Backdoor'
-import * as $Exception from './effect/Exception'
-import * as $Interruption from './effect/Interruption'
-import * as $Proxy from './effect/Proxy'
-import * as $FiberId from './fiber/Id'
 
 describe('Runtime', () => {
   beforeEach(() => {
-    $FiberId.Id.reset()
+    $FiberId.reset()
   })
 
   describe('runExit', () => {

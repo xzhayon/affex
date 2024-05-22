@@ -2,7 +2,6 @@ import { die, fail } from './Cause'
 import { failure, success } from './Exit'
 
 export { is as isCause, isDie, isFail } from './Cause'
-export { context } from './Context'
 export {
   AnyEffector,
   AsyncEffector,
@@ -22,10 +21,8 @@ export {
   traverse,
   traverseAsync,
 } from './Generator'
-export { layer } from './Layer'
 export { all, any, race, settled } from './Promise'
 export { Result } from './Result'
-export { runExit, runPromise } from './Runtime'
 export { tag } from './Tag'
 export { uri } from './Type'
 export { exploit } from './effect/Backdoor'
@@ -36,5 +33,8 @@ export { join } from './effect/Join'
 export { function, functionA, struct, structA } from './effect/Proxy'
 export { tryCatch } from './effect/Sandbox'
 export { suspend } from './effect/Suspension'
+export { context } from './runtime/Context'
+export { layer } from './runtime/Layer'
+export { runExit, runPromise } from './runtime/Runtime'
 export const Cause = { die, fail }
 export const Exit = { failure, success }

@@ -1,10 +1,10 @@
 import * as $Cause from '../Cause'
-import * as $Context from '../Context'
 import * as $Exit from '../Exit'
-import * as $Layer from '../Layer'
-import * as $Runtime from '../Runtime'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
+import * as $Context from '../runtime/Context'
+import * as $Layer from '../runtime/Layer'
+import * as $Runtime from '../runtime/Runtime'
 import * as $Interruption from './Interruption'
 import * as $Proxy from './Proxy'
 

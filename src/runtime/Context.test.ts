@@ -1,8 +1,8 @@
+import * as $Tag from '../Tag'
+import { uri } from '../Type'
+import * as $Proxy from '../effect/Proxy'
 import * as $Context from './Context'
 import * as $Layer from './Layer'
-import * as $Tag from './Tag'
-import { uri } from './Type'
-import * as $Proxy from './effect/Proxy'
 
 describe('Context', () => {
   interface Foo {

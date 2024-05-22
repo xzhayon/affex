@@ -1,14 +1,14 @@
 import * as $Cause from './Cause'
-import * as $Context from './Context'
-import * as $Layer from './Layer'
 import * as $Exit from './Exit'
 import * as $Promise from './Promise'
 import { Result } from './Result'
-import * as $Runtime from './Runtime'
 import * as $Tag from './Tag'
 import { uri } from './Type'
 import * as $Exception from './effect/Exception'
 import * as $Proxy from './effect/Proxy'
+import * as $Context from './runtime/Context'
+import * as $Layer from './runtime/Layer'
+import * as $Runtime from './runtime/Runtime'
 
 describe('Promise', () => {
   interface Sleep {
@@ -21,29 +21,36 @@ describe('Promise', () => {
   const dieContext = $Context
     .context()
     .with(
-     $Layer.layer( tag,
-      (ds) =>
-        new Promise((resolve, reject) =>
+      $Layer.layer(
+        tag,
+        (ds) =>
+          new Promise((resolve, reject) =>
+            setTimeout(
+              () => (ds % 2 === 0 ? resolve(ds) : reject(ds)),
+              ds * 100,
+            ),
+          ),
+      ),
+    )
+  const failContext = $Context.context().with(
+    $Layer.layer(tag, async function* (ds) {
+      try {
+        return await new Promise((resolve, reject) =>
           setTimeout(() => (ds % 2 === 0 ? resolve(ds) : reject(ds)), ds * 100),
-        ),
-    ))
-  const failContext = $Context.context().with($Layer.layer(tag, async function* (ds) {
-    try {
-      return await new Promise((resolve, reject) =>
-        setTimeout(() => (ds % 2 === 0 ? resolve(ds) : reject(ds)), ds * 100),
-      )
-    } catch {
-      return yield* $Exception.raise(ds)
-    }
-  }))
+        )
+      } catch {
+        return yield* $Exception.raise(ds)
+      }
+    }),
+  )
 
   test.each([
     [[0, 2], true, [0, 2]],
     [[1, 2], false, 1],
   ])('all', async (input, success, output) => {
-    await expect($Runtime.runPromise($Promise.all(input.map(sleep)), dieContext))[
-      success ? 'resolves' : 'rejects'
-    ].toStrictEqual(output)
+    await expect(
+      $Runtime.runPromise($Promise.all(input.map(sleep)), dieContext),
+    )[success ? 'resolves' : 'rejects'].toStrictEqual(output)
     if (!success) {
       await expect(
         $Runtime.runExit($Promise.all(input.map(sleep)), failContext),
@@ -68,7 +75,9 @@ describe('Promise', () => {
     const f = $Promise.any(input.map(sleep))
 
     await (success
-      ? expect($Runtime.runPromise(f, dieContext)).resolves.toStrictEqual(output)
+      ? expect($Runtime.runPromise(f, dieContext)).resolves.toStrictEqual(
+          output,
+        )
       : expect($Runtime.runExit(f, failContext)).resolves.toMatchObject(
           $Exit.failure(
             $Cause.die(

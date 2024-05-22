@@ -2,14 +2,14 @@ import * as $Function from '../Function'
 import { AnyGenerator, ReturnOf, YieldOf } from '../Generator'
 import * as $Type from '../Type'
 import { OrLazy } from '../Type'
-import * as $Id from './Id'
+import * as $FiberId from './FiberId'
 import * as $Result from './Result'
 import { Result } from './Result'
 import * as $Status from './Status'
 import { Status } from './Status'
 
 export class Fiber<out T, out S> {
-  readonly id = $Id.id()
+  readonly id = $FiberId.id()
   private _status: Status<T, S> = $Status.ready()
   private _generator!: AnyGenerator<S, T>
 
