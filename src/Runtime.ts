@@ -14,7 +14,6 @@ import { Exit } from './Exit'
 import * as $Function from './Function'
 import * as $Generator from './Generator'
 import * as $Promise from './Promise'
-import * as $Queue from './Queue'
 import * as $Type from './Type'
 import { OrLazy } from './Type'
 import * as $Effect from './effect/Effect'
@@ -26,7 +25,7 @@ import * as $FiberId from './fiber/Id'
 import * as $Status from './fiber/Status'
 
 export class Runtime<R> {
-  private readonly queue = $Queue.queue<Fiber<any, any>>()
+  private readonly queue: Fiber<any, any>[] = []
   private readonly fiberIds = new Map<$EffectId.Id, $FiberId.Id>()
   private readonly exits = new Map<$FiberId.Id, Exit<any, any>>()
   private readonly multiPass = new Set<$EffectId.Id>()
@@ -40,14 +39,19 @@ export class Runtime<R> {
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
     const root = $Fiber.fiber(effector)
     try {
-      this.enqueue(root)
-      for (const fiber of this.queue) {
+      this.queue.push(root)
+      while (true) {
+        const fiber = this.queue.shift()
+        if (fiber === undefined) {
+          break
+        }
+
         switch (fiber.status[$Type.tag]) {
           case 'Ready':
             await fiber.start()
           case 'Started':
           case 'Running':
-            this.enqueue(fiber)
+            this.queue.push(fiber)
 
             break
           case 'Suspended':
@@ -57,7 +61,7 @@ export class Runtime<R> {
 
             if (!$Effect.is(fiber.status.value)) {
               await fiber.resume()
-              this.enqueue(fiber)
+              this.queue.push(fiber)
 
               break
             }
@@ -67,7 +71,7 @@ export class Runtime<R> {
               fiber,
             )
             if (exit === undefined) {
-              this.enqueue(fiber)
+              this.queue.push(fiber)
 
               break
             }
@@ -76,7 +80,7 @@ export class Runtime<R> {
               if ($Cause.isInterrupt(exit.cause)) {
                 this.exits.set(fiber.id, exit)
                 await fiber.interrupt()
-                this.enqueue(fiber)
+                this.queue.push(fiber)
 
                 break
               }
@@ -92,7 +96,7 @@ export class Runtime<R> {
               await fiber.resume(exit.value)
             }
 
-            this.enqueue(fiber)
+            this.queue.push(fiber)
 
             break
           case 'Interrupted':
@@ -145,13 +149,8 @@ export class Runtime<R> {
     }
   }
 
-  readonly halt = async () => {
-    await Promise.all(this.queue.toArray().map((fiber) => fiber.interrupt()))
-  }
-
-  private readonly enqueue = (fiber: Fiber<any, any>) => {
-    this.queue.enqueue(fiber)
-  }
+  readonly halt = () =>
+    Promise.all(this.queue.map((fiber) => fiber.interrupt())).then(() => {})
 
   private readonly handle = async <A, E>(
     effect: Effect<A, E, R>,
@@ -180,7 +179,7 @@ export class Runtime<R> {
           const child = this.resolve(
             effect.handle((effector) => runExit(effector, this.context)),
           )
-          this.enqueue(child)
+          this.queue.push(child)
           this.fiberIds.set(effect.id, child.id)
 
           return undefined
@@ -189,7 +188,7 @@ export class Runtime<R> {
           return $Exit.failure($Cause.fail(effect.error, fiber.id))
         case 'Fork': {
           const child = this.resolve(effect.effector)
-          this.enqueue(child)
+          this.queue.push(child)
 
           return $Exit.success(child)
         }
@@ -203,7 +202,7 @@ export class Runtime<R> {
           const child = this.resolve(
             effect.handle(this.context.handler(effect.tag)),
           )
-          this.enqueue(child)
+          this.queue.push(child)
           this.fiberIds.set(effect.id, child.id)
 
           return undefined
@@ -211,7 +210,7 @@ export class Runtime<R> {
         case 'Sandbox':
           if (fiberId === undefined) {
             const child = this.resolve(effect.try)
-            this.enqueue(child)
+            this.queue.push(child)
             this.fiberIds.set(effect.id, child.id)
             this.multiPass.add(effect.id)
           } else {
@@ -228,7 +227,7 @@ export class Runtime<R> {
             }
 
             const child = this.resolve(effect.catch(exit.cause.error))
-            this.enqueue(child)
+            this.queue.push(child)
             this.fiberIds.set(effect.id, child.id)
           }
 
