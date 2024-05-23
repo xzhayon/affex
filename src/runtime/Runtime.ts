@@ -143,9 +143,6 @@ export class Runtime<R> {
     }
   }
 
-  readonly halt = () =>
-    Promise.all(this.queue.map((fiber) => fiber.interrupt())).then(() => {})
-
   private readonly handleEffect = async <A, E>(
     effect: Effect<A, E, R>,
     currentFiber: Fiber<
