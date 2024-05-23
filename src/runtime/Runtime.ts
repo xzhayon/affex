@@ -68,7 +68,7 @@ export class Runtime<R> {
               break
             }
 
-            const exit = await this.handleEffect(
+            const exit = this.handleEffect(
               currentFiber.status.value as Effect<any, any, any>,
               currentFiber,
             )
@@ -143,7 +143,7 @@ export class Runtime<R> {
     }
   }
 
-  private readonly handleEffect = async <A, E>(
+  private readonly handleEffect = <A, E>(
     effect: Effect<A, E, R>,
     currentFiber: Fiber<
       A,
