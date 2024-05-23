@@ -5,6 +5,7 @@ import { Result } from './Result'
 import * as $Tag from './Tag'
 import { uri } from './Type'
 import * as $Exception from './effect/Exception'
+import * as $Interruption from './effect/Interruption'
 import * as $Proxy from './effect/Proxy'
 import * as $Context from './runtime/Context'
 import * as $Layer from './runtime/Layer'
@@ -43,6 +44,17 @@ describe('Promise', () => {
       }
     }),
   )
+  const interruptContext = $Context.context().with(
+    $Layer.layer(tag, async function* (ds) {
+      try {
+        return await new Promise((resolve, reject) =>
+          setTimeout(() => (ds % 2 === 0 ? resolve(ds) : reject(ds)), ds * 100),
+        )
+      } catch {
+        return yield* $Interruption.interrupt()
+      }
+    }),
+  )
 
   test.each([
     [[0, 2], true, [0, 2]],
@@ -55,6 +67,9 @@ describe('Promise', () => {
       await expect(
         $Runtime.runExit($Promise.all(input.map(sleep)), failContext),
       ).resolves.toMatchObject($Exit.failure($Cause.fail(output, {} as any)))
+      await expect(
+        $Runtime.runExit($Promise.all(input.map(sleep)), interruptContext),
+      ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
     }
   })
 
@@ -63,20 +78,35 @@ describe('Promise', () => {
     [[1, 2], true, 2],
     [[1, 3], false, [1, 3]],
   ])('any', async (input, success, output) => {
-    const f = $Promise.any(input.map(sleep))
+    const f = () => $Promise.any(input.map(sleep))
 
-    await (success
-      ? expect($Runtime.runPromise(f, dieContext)).resolves.toStrictEqual(
-          output,
-        )
-      : expect($Runtime.runExit(f, failContext)).resolves.toMatchObject(
-          $Exit.failure(
-            $Cause.die(
-              new AggregateError([1, 3], 'All promises were rejected'),
-              {} as any,
-            ),
+    if (success) {
+      await expect($Runtime.runPromise(f, dieContext)).resolves.toStrictEqual(
+        output,
+      )
+    } else {
+      await expect($Runtime.runExit(f, failContext)).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.die(
+            new AggregateError([1, 3], 'All promises were rejected'),
+            {} as any,
           ),
-        ))
+        ),
+      )
+      await expect(
+        $Runtime.runExit(f, interruptContext),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.die(
+            new AggregateError(
+              [new Error(), new Error()],
+              'All promises were rejected',
+            ),
+            {} as any,
+          ),
+        ),
+      )
+    }
   })
 
   test.each([
@@ -91,6 +121,9 @@ describe('Promise', () => {
       await expect(
         $Runtime.runExit($Promise.race(input.map(sleep)), failContext),
       ).resolves.toMatchObject($Exit.failure($Cause.fail(output, {} as any)))
+      await expect(
+        $Runtime.runExit($Promise.race(input.map(sleep)), interruptContext),
+      ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
     }
   })
 })
