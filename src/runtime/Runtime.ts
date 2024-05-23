@@ -25,6 +25,7 @@ import { Context } from './Context'
 import * as $Engine from './Engine'
 
 export class Runtime<R> {
+  private rootFiber!: Fiber<any, any>
   private readonly queue: Fiber<any, any>[] = []
   private readonly fiberByEffect = new Map<EffectId, FiberId>()
   private readonly scopeByFiber = new Map<FiberId, Fiber<any, any>[]>()
@@ -38,9 +39,9 @@ export class Runtime<R> {
   readonly run = async <G extends AnyEffector<any, any, R>>(
     effector: OrLazy<G>,
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
-    const rootFiber = $Fiber.fiber(effector)
+    this.rootFiber = $Fiber.fiber(effector)
     try {
-      this.queue.push(rootFiber)
+      this.queue.push(this.rootFiber)
       while (true) {
         const currentFiber = this.queue.shift()
         if (currentFiber === undefined) {
@@ -56,7 +57,7 @@ export class Runtime<R> {
 
             break
           case 'Suspended':
-            if (currentFiber.id === rootFiber.id) {
+            if (currentFiber.id === this.rootFiber.id) {
               await $Engine.skipTick()
             }
 
@@ -129,14 +130,16 @@ export class Runtime<R> {
         }
       }
 
-      const exit = this.exitByFiber.get(rootFiber.id)
+      const exit = this.exitByFiber.get(this.rootFiber.id)
       if (exit === undefined) {
-        throw new Error(`Cannot resolve effector in fiber "${rootFiber.id}"`)
+        throw new Error(
+          `Cannot resolve effector in fiber "${this.rootFiber.id}"`,
+        )
       }
 
       return exit
     } catch (error) {
-      return $Exit.failure($Cause.die(error, rootFiber.id))
+      return $Exit.failure($Cause.die(error, this.rootFiber.id))
     }
   }
 
@@ -182,13 +185,17 @@ export class Runtime<R> {
           return $Exit.failure($Cause.fail(effect.error, currentFiber.id))
         case 'Fork': {
           const effectFiber = this.makeEffectFiber(effect.effector)
-          this.enqueueScopedFiber(currentFiber.id, effectFiber)
+          this.enqueueScopedFiber(
+            effect.global ? this.rootFiber.id : currentFiber.id,
+            effectFiber,
+          )
 
           return $Exit.success(effectFiber)
         }
         case 'Interruption':
           return $Exit.failure($Cause.interrupt(currentFiber.id))
         case 'Join':
+          this.scopeFiber(currentFiber.id, effect.fiber)
           this.fiberByEffect.set(effect.id, effect.fiber.id)
 
           return undefined

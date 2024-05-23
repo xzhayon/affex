@@ -27,18 +27,28 @@ export interface Fork<A, R> extends _Effect<'Fork'> {
         : never
       : never
   >
+  readonly global: boolean
 }
 
 function _fork<G extends AnyEffector<any, any, any>>(
   effector: () => G,
+  global: boolean,
 ): Effect<Fiber<ReturnOf<G>, YieldOf<G>>, never, ContextOf<G>> {
-  return { ..._effect('Fork'), effector }
+  return { ..._effect('Fork'), effector, global }
 }
 
 export function fork<G extends AnyEffector<any, any, any>>(
   effector: OrLazy<G>,
 ) {
   return $Effect.perform(
-    _fork($Function.is(effector) ? effector : () => effector),
+    _fork($Function.is(effector) ? effector : () => effector, false),
+  )
+}
+
+export function daemonize<G extends AnyEffector<any, any, any>>(
+  effector: OrLazy<G>,
+) {
+  return $Effect.perform(
+    _fork($Function.is(effector) ? effector : () => effector, true),
   )
 }
