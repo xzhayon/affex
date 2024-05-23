@@ -136,7 +136,6 @@ describe('Fiber', () => {
     if (method !== 'any') {
       test('closing scope on failure', async () => {
         const as: number[] = []
-
         await $Runtime.runExit(function* () {
           try {
             yield* $Fiber[method]([
@@ -162,7 +161,6 @@ describe('Fiber', () => {
     if (method === 'any' || method === 'race') {
       test('closing scope on success', async () => {
         const as: number[] = []
-
         await $Runtime.runExit(function* () {
           yield* $Fiber[method]([
             function* () {
