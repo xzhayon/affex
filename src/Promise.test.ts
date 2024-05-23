@@ -5,6 +5,7 @@ import { Result } from './Result'
 import * as $Tag from './Tag'
 import { uri } from './Type'
 import * as $Exception from './effect/Exception'
+import * as $Fork from './effect/Fork'
 import * as $Interruption from './effect/Interruption'
 import * as $Proxy from './effect/Proxy'
 import * as $Context from './runtime/Context'
@@ -19,6 +20,14 @@ describe('Promise', () => {
 
   const tag = $Tag.tag<Sleep>()
   const sleep = $Proxy.function(tag)
+  const context = $Context
+    .context()
+    .with(
+      $Layer.layer(
+        tag,
+        (ds) => new Promise((resolve) => setTimeout(resolve, ds * 100)),
+      ),
+    )
   const dieContext = $Context
     .context()
     .with(
@@ -125,5 +134,31 @@ describe('Promise', () => {
         $Runtime.runExit($Promise.race(input.map(sleep)), interruptContext),
       ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
     }
+  })
+
+  describe.each(['all', 'race'] as const)('%s', (method) => {
+    test.failing('closing scope', async () => {
+      const as: number[] = []
+
+      await $Runtime.runPromise(function* () {
+        yield* $Fork.fork(
+          $Promise[method]([
+            function* () {
+              yield* sleep(0)
+
+              throw new Error('foo')
+            },
+            function* () {
+              yield* sleep(1)
+              as.push(1)
+
+              return 1
+            },
+          ]),
+        )
+        yield* sleep(2)
+      }, context)
+      expect(as).toHaveLength(0)
+    })
   })
 })

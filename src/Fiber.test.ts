@@ -19,6 +19,14 @@ describe('Fiber', () => {
 
   const tag = $Tag.tag<Sleep>()
   const sleep = $Proxy.function(tag)
+  const context = $Context
+    .context()
+    .with(
+      $Layer.layer(
+        tag,
+        (ds) => new Promise((resolve) => setTimeout(resolve, ds * 100)),
+      ),
+    )
   const dieContext = $Context
     .context()
     .with(
@@ -121,6 +129,58 @@ describe('Fiber', () => {
       await expect(
         $Runtime.runExit($Fiber.race(input.map(sleep)), interruptContext),
       ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
+    }
+  })
+
+  describe.each(['all', 'any', 'race'] as const)('%s', (method) => {
+    if (method !== 'any') {
+      test('closing scope on failure', async () => {
+        const as: number[] = []
+
+        await $Runtime.runExit(function* () {
+          try {
+            yield* $Fiber[method]([
+              function* () {
+                yield* sleep(0)
+
+                throw new Error('foo')
+              },
+              function* () {
+                yield* sleep(1)
+                as.push(1)
+
+                return 1
+              },
+            ])
+          } catch {}
+          yield* sleep(2)
+        }, context)
+        expect(as).toHaveLength(0)
+      })
+    }
+
+    if (method === 'any' || method === 'race') {
+      test('closing scope on success', async () => {
+        const as: number[] = []
+
+        await $Runtime.runExit(function* () {
+          yield* $Fiber[method]([
+            function* () {
+              yield* sleep(0)
+
+              return 0
+            },
+            function* () {
+              yield* sleep(1)
+              as.push(1)
+
+              return 1
+            },
+          ])
+          yield* sleep(2)
+        }, context)
+        expect(as).toHaveLength(0)
+      })
     }
   })
 })
