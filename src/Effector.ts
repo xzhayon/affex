@@ -2,19 +2,21 @@ import { AnyGenerator, ReturnOf, YieldOf } from './Generator'
 import * as $Type from './Type'
 import { And, Covariant, Invariant, IsAny } from './Type'
 
-export type Effector<A, E, R> = Generator<
+export type Effector<A, E = never, R = never> = Generator<
   And<IsAny<R>, IsAny<E>> extends true
     ? any
     : (R extends any ? Use<R> : never) | (E extends any ? Throw<E> : never),
   A
 >
-export type AsyncEffector<A, E, R> = AsyncGenerator<
+export type AsyncEffector<A, E = never, R = never> = AsyncGenerator<
   And<IsAny<R>, IsAny<E>> extends true
     ? any
     : (R extends any ? Use<R> : never) | (E extends any ? Throw<E> : never),
   A
 >
-export type AnyEffector<A, E, R> = Effector<A, E, R> | AsyncEffector<A, E, R>
+export type AnyEffector<A, E = never, R = never> =
+  | Effector<A, E, R>
+  | AsyncEffector<A, E, R>
 
 declare const E: unique symbol
 export interface Throw<E> {
@@ -36,7 +38,7 @@ export type ErrorOf<G extends AnyGenerator> = YieldOf<G> extends infer Y
       : never
     : never
   : never
-export type RequirementOf<G extends AnyGenerator> = YieldOf<G> extends infer Y
+export type ContextOf<G extends AnyGenerator> = YieldOf<G> extends infer Y
   ? IsAny<Y> extends false
     ? Y extends Use<infer R>
       ? R

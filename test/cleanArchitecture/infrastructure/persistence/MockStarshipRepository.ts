@@ -4,7 +4,7 @@ import { tag } from '../../application/persistence/StarshipRepository'
 import { id } from '../../domain/valueObject/Id'
 
 export function MockStarshipRepository() {
-  return fx.layer().with(tag, {
+  return fx.layer(tag, {
     *findManyById(ids) {
       return yield* fx.all(
         ids.map(function* (_id) {

@@ -3,5 +3,5 @@ import crypto from 'crypto'
 import { tag } from '../../domain/valueObject/Id'
 
 export function CryptoUuid() {
-  return fx.layer().with(tag, crypto.randomUUID)
+  return fx.layer(tag, crypto.randomUUID)
 }

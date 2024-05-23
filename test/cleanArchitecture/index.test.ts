@@ -22,24 +22,24 @@ describe('Clean architecture', () => {
     starshipStorage = {}
   })
 
-  const layer = fx.layer().with(CryptoUuid()).with(InMemoryLog(log))
+  const context = fx.context().with(CryptoUuid()).with(InMemoryLog(log))
 
   test('running use case with mocks', async () => {
-    const mockLayer = fx
-      .layer()
+    const mockContext = fx
+      .context()
       .with(MockCharacterRepository())
       .with(MockGetCharacterByNameQuery())
       .with(MockGetStarshipByNameQuery())
       .with(MockStarshipRepository())
 
     await expect(
-      fx.runPromise(flyStarship('luke', 'x-wing'), layer.with(mockLayer)),
+      fx.runPromise(flyStarship('luke', 'x-wing'), context.merge(mockContext)),
     ).rejects.toThrow(/Character "[^"]+" cannot fly starship "[^"]+"/)
   })
 
   test('running use case with in-memory storage', async () => {
-    const inMemoryLayer = fx
-      .layer()
+    const inMemoryContext = fx
+      .context()
       .with(InMemoryCharacterRepository(characterStorage))
       .with(
         InMemoryGetCharacterByNameQuery([
@@ -61,7 +61,10 @@ describe('Clean architecture', () => {
       .with(InMemoryStarshipRepository(starshipStorage))
 
     await expect(
-      fx.runPromise(flyStarship('luke', 'x-wing'), layer.with(inMemoryLayer)),
+      fx.runPromise(
+        flyStarship('luke', 'x-wing'),
+        context.merge(inMemoryContext),
+      ),
     ).resolves.toMatchObject({
       character: { searchTerms: ['luke'] },
       starship: { searchTerms: ['x-wing'] },

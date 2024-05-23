@@ -1,9 +1,10 @@
 import { AnyEffector } from '../Effector'
 import { AnyGenerator, YieldOf } from '../Generator'
-import * as $Layer from '../Layer'
-import * as $Runtime from '../Runtime'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
+import * as $Context from '../runtime/Context'
+import * as $Layer from '../runtime/Layer'
+import * as $Runtime from '../runtime/Runtime'
 import * as $Proxy from './Proxy'
 
 describe('Proxy', () => {
@@ -29,14 +30,16 @@ describe('Proxy', () => {
     await expect(
       $Runtime.runPromise(
         log.trace('foo'),
-        $Layer
-          .layer()
-          .with(tagLog, {
-            *trace(message) {
-              return `${yield* clock.now()}\t${message}`
-            },
-          })
-          .with(tagClock, { now: () => date }),
+        $Context
+          .context()
+          .with(
+            $Layer.layer(tagLog, {
+              *trace(message) {
+                return `${yield* clock.now()}\t${message}`
+              },
+            }),
+          )
+          .with($Layer.layer(tagClock, { now: () => date })),
       ),
     ).resolves.toStrictEqual(`${date}\tfoo`)
   })
@@ -85,14 +88,16 @@ describe('Proxy', () => {
     await expect(
       $Runtime.runPromise(
         cache.get('foo', numberDecoder, crypto.number),
-        $Layer
-          .layer()
-          .with(tagCrypto, { number: () => 42 })
-          .with(tagCache, {
-            get: async function* (_key, _decoder, onMiss) {
-              return yield* onMiss()
-            },
-          }),
+        $Context
+          .context()
+          .with($Layer.layer(tagCrypto, { number: () => 42 }))
+          .with(
+            $Layer.layer(tagCache, {
+              get: async function* (_key, _decoder, onMiss) {
+                return yield* onMiss()
+              },
+            }),
+          ),
       ),
     ).resolves.toStrictEqual(42)
   })
@@ -117,7 +122,10 @@ describe('Proxy', () => {
       const add = $Proxy.function(tag)
 
       await expect(
-        $Runtime.runPromise(add(42, 1337), $Layer.layer().with(tag, handler)),
+        $Runtime.runPromise(
+          add(42, 1337),
+          $Context.context().with($Layer.layer(tag, handler)),
+        ),
       ).resolves.toStrictEqual(42 + 1337)
     })
   })
@@ -142,7 +150,10 @@ describe('Proxy', () => {
       const identity = <A>(a: A) => $Proxy.functionA(tag)((r) => r(a))
 
       await expect(
-        $Runtime.runPromise(identity(42), $Layer.layer().with(tag, handler)),
+        $Runtime.runPromise(
+          identity(42),
+          $Context.context().with($Layer.layer(tag, handler)),
+        ),
       ).resolves.toStrictEqual(42)
     })
   })
@@ -173,7 +184,7 @@ describe('Proxy', () => {
       await expect(
         $Runtime.runPromise(
           calculator.add(42, 1337),
-          $Layer.layer().with(tag, handler),
+          $Context.context().with($Layer.layer(tag, handler)),
         ),
       ).resolves.toStrictEqual(42 + 1337)
     })
@@ -204,7 +215,10 @@ describe('Proxy', () => {
       const log = { trace: <A>(a: A) => trace((r) => r(a)) }
 
       await expect(
-        $Runtime.runPromise(log.trace(42), $Layer.layer().with(tag, handler)),
+        $Runtime.runPromise(
+          log.trace(42),
+          $Context.context().with($Layer.layer(tag, handler)),
+        ),
       ).resolves.toStrictEqual(42)
     })
   })

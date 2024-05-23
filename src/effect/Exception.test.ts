@@ -1,10 +1,11 @@
 import * as $Cause from '../Cause'
 import * as $Exit from '../Exit'
-import * as $Layer from '../Layer'
 import { Result } from '../Result'
-import * as $Runtime from '../Runtime'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
+import * as $Context from '../runtime/Context'
+import * as $Layer from '../runtime/Layer'
+import * as $Runtime from '../runtime/Runtime'
 import * as $Exception from './Exception'
 import * as $Proxy from './Proxy'
 
@@ -34,15 +35,19 @@ describe('Exception', () => {
       await expect(
         $Runtime.runExit(
           random,
-          // @ts-expect-error
-          $Layer.layer().with(tagRandom, function* () {
-            return yield* $Exception.raise(
-              new Error('Cannot return random number'),
-            )
-          }),
+          $Context.context().with(
+            // @ts-expect-error
+            $Layer.layer(tagRandom, function* () {
+              return yield* $Exception.raise(
+                new Error('Cannot return random number'),
+              )
+            }),
+          ),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new Error('Cannot return random number'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new Error('Cannot return random number'), {} as any),
+        ),
       )
     })
 
@@ -50,17 +55,23 @@ describe('Exception', () => {
       await expect(
         $Runtime.runExit(
           divide(42, 0),
-          // @ts-expect-error
-          $Layer.layer().with(tag, function* (a, b) {
-            if (b === 0) {
-              yield* $Exception.raise(new Error('Cannot divide by zero'))
-            }
+          $Context.context().with(
+            // @ts-expect-error
+            $Layer.layer(tag, function* (a, b) {
+              if (b === 0) {
+                return yield* $Exception.raise(
+                  new Error('Cannot divide by zero'),
+                )
+              }
 
-            return a / b
-          }),
+              return a / b
+            }),
+          ),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new Error('Cannot divide by zero'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new Error('Cannot divide by zero'), {} as any),
+        ),
       )
     })
 
@@ -68,16 +79,22 @@ describe('Exception', () => {
       await expect(
         $Runtime.runExit(
           divide(42, 0),
-          $Layer.layer().with(tag, function* (a, b) {
-            if (b === 0) {
-              yield* $Exception.raise(new FooError('Cannot divide by zero'))
-            }
+          $Context.context().with(
+            $Layer.layer(tag, function* (a, b) {
+              if (b === 0) {
+                return yield* $Exception.raise(
+                  new FooError('Cannot divide by zero'),
+                )
+              }
 
-            return a / b
-          }),
+              return a / b
+            }),
+          ),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new FooError('Cannot divide by zero'), {} as any),
+        ),
       )
     })
 
@@ -89,17 +106,23 @@ describe('Exception', () => {
       await expect(
         $Runtime.runExit(
           divide(42, 0),
-          // @ts-expect-error
-          $Layer.layer().with(tag, function* (a, b) {
-            if (b === 0) {
-              yield* $Exception.raise(new BarError('Cannot divide by zero'))
-            }
+          $Context.context().with(
+            // @ts-expect-error
+            $Layer.layer(tag, function* (a, b) {
+              if (b === 0) {
+                return yield* $Exception.raise(
+                  new BarError('Cannot divide by zero'),
+                )
+              }
 
-            return a / b
-          }),
+              return a / b
+            }),
+          ),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new BarError('Cannot divide by zero'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new BarError('Cannot divide by zero'), {} as any),
+        ),
       )
     })
 
@@ -113,16 +136,22 @@ describe('Exception', () => {
               throw error
             }
           },
-          $Layer.layer().with(tag, function* (a, b) {
-            if (b === 0) {
-              yield* $Exception.raise(new FooError('Cannot divide by zero'))
-            }
+          $Context.context().with(
+            $Layer.layer(tag, function* (a, b) {
+              if (b === 0) {
+                return yield* $Exception.raise(
+                  new FooError('Cannot divide by zero'),
+                )
+              }
 
-            return a / b
-          }),
+              return a / b
+            }),
+          ),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new FooError('Cannot divide by zero'), {} as any),
+        ),
       )
     })
 
@@ -138,19 +167,25 @@ describe('Exception', () => {
       await expect(
         $Runtime.runExit(
           divide(42, 0),
-          $Layer
-            .layer()
-            .with(tag, function* (_a, b) {
-              if (b === 0) {
-                yield* $Exception.raise(new FooError('Cannot divide by zero'))
-              }
+          $Context
+            .context()
+            .with(
+              $Layer.layer(tag, function* (_a, b) {
+                if (b === 0) {
+                  return yield* $Exception.raise(
+                    new FooError('Cannot divide by zero'),
+                  )
+                }
 
-              return yield* random()
-            })
-            .with(tagRandom, () => Math.random()),
+                return yield* random()
+              }),
+            )
+            .with($Layer.layer(tagRandom, () => Math.random())),
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new FooError('Cannot divide by zero'), {} as any),
+        ),
       )
     })
 
@@ -169,15 +204,19 @@ describe('Exception', () => {
       await expect(
         $Runtime.runExit(
           fooBar,
-          $Layer.layer().with(tagFooBar, function* () {
-            if (false) {
-              return yield* $Exception.raise(new FooError())
-            }
+          $Context.context().with(
+            $Layer.layer(tagFooBar, function* () {
+              if (false) {
+                return yield* $Exception.raise(new FooError())
+              }
 
-            return yield* $Exception.raise(new BarError())
-          }),
+              return yield* $Exception.raise(new BarError())
+            }),
+          ),
         ),
-      ).resolves.toStrictEqual($Exit.failure($Cause.fail(new BarError())))
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.fail(new BarError(), {} as any)),
+      )
     })
   })
 
@@ -189,7 +228,7 @@ describe('Exception', () => {
             () => 42,
             (cause) => new Error('bar', { cause }),
           ),
-          $Layer.layer(),
+          $Context.context(),
         ),
       ).resolves.toStrictEqual(42)
     })
@@ -203,11 +242,11 @@ describe('Exception', () => {
             },
             (cause) => new Error('bar', { cause }),
           ),
-          $Layer.layer(),
+          $Context.context(),
         ),
-      ).resolves.toStrictEqual(
+      ).resolves.toMatchObject(
         $Exit.failure(
-          $Cause.fail(new Error('bar', { cause: new Error('foo') })),
+          $Cause.fail(new Error('bar', { cause: new Error('foo') }), {} as any),
         ),
       )
     })
@@ -221,7 +260,7 @@ describe('Exception', () => {
             async () => 42,
             (cause) => new Error('bar', { cause }),
           ),
-          $Layer.layer(),
+          $Context.context(),
         ),
       ).resolves.toStrictEqual(42)
     })
@@ -233,11 +272,11 @@ describe('Exception', () => {
             () => Promise.reject(new Error('foo')),
             (cause) => new Error('bar', { cause }),
           ),
-          $Layer.layer(),
+          $Context.context(),
         ),
-      ).resolves.toStrictEqual(
+      ).resolves.toMatchObject(
         $Exit.failure(
-          $Cause.fail(new Error('bar', { cause: new Error('foo') })),
+          $Cause.fail(new Error('bar', { cause: new Error('foo') }), {} as any),
         ),
       )
     })

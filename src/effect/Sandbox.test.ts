@@ -1,10 +1,11 @@
 import * as $Cause from '../Cause'
 import * as $Exit from '../Exit'
-import * as $Layer from '../Layer'
 import { Result } from '../Result'
-import * as $Runtime from '../Runtime'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
+import * as $Context from '../runtime/Context'
+import * as $Layer from '../runtime/Layer'
+import * as $Runtime from '../runtime/Runtime'
 import * as $Exception from './Exception'
 import * as $Proxy from './Proxy'
 import * as $Sandbox from './Sandbox'
@@ -17,13 +18,15 @@ describe('Sandbox', () => {
 
   const tag = $Tag.tag<Divide>()
   const divide = $Proxy.function(tag)
-  const layer = $Layer.layer().with(tag, function* (a, b) {
-    if (b === 0) {
-      yield* $Exception.raise(new Error('Cannot divide by zero'))
-    }
+  const context = $Context.context().with(
+    $Layer.layer(tag, function* (a, b) {
+      if (b === 0) {
+        return yield* $Exception.raise(new Error('Cannot divide by zero'))
+      }
 
-    return a / b
-  })
+      return a / b
+    }),
+  )
 
   describe('tryCatch', () => {
     test('forwarding error', async () => {
@@ -32,10 +35,12 @@ describe('Sandbox', () => {
           $Sandbox.tryCatch(divide(42, 0), (error) => {
             throw error
           }),
-          layer,
+          context,
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.die(new Error('Cannot divide by zero'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.die(new Error('Cannot divide by zero'), {} as any),
+        ),
       )
     })
 
@@ -45,10 +50,12 @@ describe('Sandbox', () => {
           $Sandbox.tryCatch(divide(42, 0), () => {
             throw new Error('Cannot recover from exception')
           }),
-          layer,
+          context,
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.die(new Error('Cannot recover from exception'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.die(new Error('Cannot recover from exception'), {} as any),
+        ),
       )
     })
 
@@ -58,10 +65,12 @@ describe('Sandbox', () => {
           $Sandbox.tryCatch(divide(42, 0), () =>
             $Exception.raise(new Error('Cannot recover from exception')),
           ),
-          layer,
+          context,
         ),
-      ).resolves.toStrictEqual(
-        $Exit.failure($Cause.fail(new Error('Cannot recover from exception'))),
+      ).resolves.toMatchObject(
+        $Exit.failure(
+          $Cause.fail(new Error('Cannot recover from exception'), {} as any),
+        ),
       )
     })
 
@@ -69,7 +78,7 @@ describe('Sandbox', () => {
       await expect(
         $Runtime.runPromise(
           $Sandbox.tryCatch(divide(42, 0), () => NaN),
-          layer,
+          context,
         ),
       ).resolves.toStrictEqual(NaN)
     })
@@ -86,7 +95,7 @@ describe('Sandbox', () => {
       await expect(
         $Runtime.runPromise(
           $Sandbox.tryCatch(divide(42, 0), random),
-          layer.with(tagRandom, () => 42),
+          context.with($Layer.layer(tagRandom, () => 42)),
         ),
       ).resolves.toStrictEqual(42)
     })
@@ -117,8 +126,10 @@ describe('Sandbox', () => {
               }
             },
           )).length
-        }, $Layer.layer()),
-      ).resolves.toStrictEqual($Exit.failure($Cause.die(new BarError())))
+        }, $Context.context()),
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.die(new BarError(), {} as any)),
+      )
     })
 
     test('handling multiple errors', async () => {
@@ -149,7 +160,7 @@ describe('Sandbox', () => {
               }
             },
           ),
-          $Layer.layer(),
+          $Context.context(),
         ),
       ).resolves.toStrictEqual('bar')
     })
@@ -163,9 +174,11 @@ describe('Sandbox', () => {
             },
             () => 'bar',
           ),
-          $Layer.layer(),
+          $Context.context(),
         ),
-      ).resolves.toStrictEqual($Exit.failure($Cause.die(new Error('foo'))))
+      ).resolves.toMatchObject(
+        $Exit.failure($Cause.die(new Error('foo'), {} as any)),
+      )
     })
   })
 })

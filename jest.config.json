@@ -1,6 +1,6 @@
 {
     "collectCoverageFrom": [
-        "<rootDir>/src/**.ts"
+        "<rootDir>/src/**/**.ts"
     ],
     "moduleNameMapper": {
         "affex": "<rootDir>/src"
