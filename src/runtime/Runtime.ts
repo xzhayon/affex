@@ -170,18 +170,22 @@ export class Runtime<R> {
 
       switch (effect[$Type.tag]) {
         case 'Backdoor': {
-          const effectFiber = this.makeEffectFiber(
+          const valueOrFiber = this.resolveEffect(
             effect.handle((effector) => runExit(effector, this.context)),
           )
-          this.enqueueScopedFiber(currentFiber.id, effectFiber)
-          this.fiberByEffect.set(effect.id, effectFiber.id)
+          if (!$Fiber.is(valueOrFiber)) {
+            return $Exit.success(valueOrFiber)
+          }
+
+          this.enqueueScopedFiber(currentFiber.id, valueOrFiber)
+          this.fiberByEffect.set(effect.id, valueOrFiber.id)
 
           return undefined
         }
         case 'Exception':
           return $Exit.failure($Cause.fail(effect.error, currentFiber.id))
         case 'Fork': {
-          const effectFiber = this.makeEffectFiber(effect.effector)
+          const effectFiber = this.resolveEffect(effect.effector)
           this.enqueueScopedFiber(
             effect.global ? this.rootFiber.id : currentFiber.id,
             effectFiber,
@@ -197,19 +201,27 @@ export class Runtime<R> {
 
           return undefined
         case 'Proxy': {
-          const effectFiber = this.makeEffectFiber(
+          const valueOrFiber = this.resolveEffect(
             effect.handle(this.context.handler(effect.tag)),
           )
-          this.enqueueScopedFiber(currentFiber.id, effectFiber)
-          this.fiberByEffect.set(effect.id, effectFiber.id)
+          if (!$Fiber.is(valueOrFiber)) {
+            return $Exit.success(valueOrFiber)
+          }
+
+          this.enqueueScopedFiber(currentFiber.id, valueOrFiber)
+          this.fiberByEffect.set(effect.id, valueOrFiber.id)
 
           return undefined
         }
         case 'Sandbox':
           if (fiberId === undefined) {
-            const effectFiber = this.makeEffectFiber(effect.try)
-            this.enqueueScopedFiber(currentFiber.id, effectFiber)
-            this.fiberByEffect.set(effect.id, effectFiber.id)
+            const valueOrFiber = this.resolveEffect(effect.try)
+            if (!$Fiber.is(valueOrFiber)) {
+              return $Exit.success(valueOrFiber)
+            }
+
+            this.enqueueScopedFiber(currentFiber.id, valueOrFiber)
+            this.fiberByEffect.set(effect.id, valueOrFiber.id)
             this.multiPassEffects.add(effect.id)
           } else {
             const exit = this.exitByFiber.get(fiberId)
@@ -224,18 +236,26 @@ export class Runtime<R> {
               return exit
             }
 
-            const effectFiber = this.makeEffectFiber(
+            const valueOrFiber = this.resolveEffect(
               effect.catch(exit.cause.error),
             )
-            this.enqueueScopedFiber(currentFiber.id, effectFiber)
-            this.fiberByEffect.set(effect.id, effectFiber.id)
+            if (!$Fiber.is(valueOrFiber)) {
+              return $Exit.success(valueOrFiber)
+            }
+
+            this.enqueueScopedFiber(currentFiber.id, valueOrFiber)
+            this.fiberByEffect.set(effect.id, valueOrFiber.id)
           }
 
           return undefined
         case 'Scope': {
-          const effectFiber = this.makeEffectFiber(effect.effector)
-          this.enqueueScopedFiber(currentFiber.id, effectFiber)
-          this.fiberByEffect.set(effect.id, effectFiber.id)
+          const valueOrFiber = this.resolveEffect(effect.effector)
+          if (!$Fiber.is(valueOrFiber)) {
+            return $Exit.success(valueOrFiber)
+          }
+
+          this.enqueueScopedFiber(currentFiber.id, valueOrFiber)
+          this.fiberByEffect.set(effect.id, valueOrFiber.id)
 
           return undefined
         }
@@ -247,7 +267,7 @@ export class Runtime<R> {
     }
   }
 
-  private readonly makeEffectFiber = <A, E, _R extends R>(
+  private readonly resolveEffect = <A, E, _R extends R>(
     value: A | Promise<A> | OrLazy<AnyEffector<A, E, _R>>,
   ) => {
     if ($Function.is(value) || $Generator.is(value)) {
@@ -258,7 +278,7 @@ export class Runtime<R> {
       return $Fiber.fromPromise(value)
     }
 
-    return $Fiber.fromValue(value)
+    return value
   }
 
   private readonly scopeFiber = (scopeId: FiberId, fiber: Fiber<any, any>) => {
