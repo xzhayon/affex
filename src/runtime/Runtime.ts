@@ -271,7 +271,7 @@ export async function runPromise<G extends AnyEffector<any, any, any>>(
   const exit = await runExit(effector, context)
   if ($Exit.isFailure(exit)) {
     throw $Cause.isInterrupt(exit.cause)
-      ? new Error(`Fiber "${exit.cause.fiberId}" was interrupted`)
+      ? new Error(`Fiber "${exit.cause.fiberId}" interrupted`)
       : exit.cause.error
   }
 
