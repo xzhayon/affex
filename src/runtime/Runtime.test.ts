@@ -360,4 +360,14 @@ describe('Runtime', () => {
       expect(`${exit.cause.fiberId}`).toStrictEqual('3')
     })
   })
+
+  describe('runPromise', () => {
+    test('interrupting fiber', async () => {
+      await expect(
+        $Runtime.runPromise(function* () {
+          return yield* $Interruption.interrupt()
+        }, $Context.context()),
+      ).rejects.toThrow(/Fiber "[^"]+" interrupted/)
+    })
+  })
 })
