@@ -13,7 +13,7 @@ export class Fiber<out T, out S> {
   private _status: Status<T, S> = $Status.ready()
   private _generator!: AnyGenerator<S, T>
 
-  static readonly create = <G extends AnyGenerator<any, any>>(
+  static readonly make = <G extends AnyGenerator<any, any>>(
     generator: OrLazy<G>,
   ) =>
     new Fiber<ReturnOf<G>, YieldOf<G>>(
@@ -109,7 +109,7 @@ export type SOf<F extends Fiber<any, any>> = F extends Fiber<any, infer S>
   ? S
   : never
 
-export const fiber = Fiber.create
+export const fiber = Fiber.make
 
 export function fromValue<A>(a: OrLazy<A>) {
   return fiber(function* () {

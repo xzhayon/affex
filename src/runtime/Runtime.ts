@@ -32,7 +32,7 @@ export class Runtime<R> {
   private readonly exitByFiber = new Map<FiberId, Exit<any, any>>()
   private readonly multiPassEffects = new Set<EffectId>()
 
-  static readonly create = <R>(context: Context<R>) => new Runtime<R>(context)
+  static readonly make = <R>(context: Context<R>) => new Runtime<R>(context)
 
   private constructor(private readonly context: Context<R>) {}
 
@@ -299,7 +299,7 @@ export class Runtime<R> {
   }
 }
 
-export const runtime = Runtime.create
+export const runtime = Runtime.make
 
 export function runExit<G extends AnyEffector<any, any, any>>(
   effector: OrLazy<G>,

@@ -2,7 +2,7 @@ export class EffectId {
   private static counter = 0
   private readonly id: number
 
-  static readonly create = () => new EffectId()
+  static readonly make = () => new EffectId()
 
   static readonly reset = () => {
     EffectId.counter = 0
@@ -15,6 +15,6 @@ export class EffectId {
   readonly toString = () => String(this.id)
 }
 
-export const id = EffectId.create
+export const id = EffectId.make
 
 export const reset = EffectId.reset
