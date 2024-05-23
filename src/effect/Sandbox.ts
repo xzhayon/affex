@@ -12,7 +12,7 @@ export interface Sandbox<A, E, R> extends _Effect<'Sandbox'> {
   ) => A | Promise<A> | AnyEffector<A, E, R>
 }
 
-export function sandbox<
+function sandbox<
   G extends AnyEffector<any, any, any>,
   F extends (error: ErrorOf<G>) => any,
 >(

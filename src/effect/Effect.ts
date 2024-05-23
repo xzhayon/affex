@@ -11,6 +11,7 @@ import { Interruption } from './Interruption'
 import { Join } from './Join'
 import { Proxy } from './Proxy'
 import { Sandbox } from './Sandbox'
+import { Scope } from './Scope'
 import { Suspension } from './Suspension'
 
 export type Effect<A, E = never, R = never> =
@@ -21,6 +22,7 @@ export type Effect<A, E = never, R = never> =
   | Join<A, E, R>
   | Proxy<A, E, R>
   | Sandbox<A, E, R>
+  | Scope<A, E, R>
   | Suspension
 
 export interface _Effect<T extends string> extends Variant<typeof uri, T> {
