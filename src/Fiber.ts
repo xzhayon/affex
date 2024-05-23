@@ -62,7 +62,11 @@ export function* any<G extends AnyEffector<any, any, any>>(
 
     switch (fiber.status[$Type.tag]) {
       case 'Interrupted':
-        return yield* $Join.join(fiber) as any
+        delete fibers[index]
+        errors[index] = new Error(`Fiber "${fiber.id}" interrupted`)
+        done++
+
+        break
       case 'Failed':
         delete fibers[index]
         errors[index] = fiber.status.error

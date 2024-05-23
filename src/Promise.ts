@@ -5,6 +5,7 @@ import * as $Type from './Type'
 import { OrLazy } from './Type'
 import * as $Backdoor from './effect/Backdoor'
 import * as $Exception from './effect/Exception'
+import * as $Interruption from './effect/Interruption'
 
 export function is(u: unknown): u is Promise<unknown> {
   return u instanceof Promise
@@ -28,16 +29,16 @@ export function all<G extends AnyEffector<any, any, any>>(
       )
     } catch (exit) {
       if (!$Exit.is(exit) || !$Exit.isFailure(exit)) {
-        throw new Error('Cannot find Promise failure')
+        throw new Error('Cannot find Promise failure', { cause: exit })
       }
 
       switch (exit.cause[$Type.tag]) {
         case 'Die':
           throw exit.cause.error
-        case 'Interrupt':
-          throw new Error(`Child fiber "${exit.cause.fiberId}" was interrupted`)
         case 'Fail':
           return yield* $Exception.raise(exit.cause.error as ErrorOf<G>)
+        case 'Interrupt':
+          return yield* $Interruption.interrupt()
       }
     }
   })
@@ -61,7 +62,7 @@ export function any<G extends AnyEffector<any, any, any>>(
       )
     } catch (error) {
       if (!$Error.is(error)) {
-        throw new Error('Cannot find Promise error')
+        throw new Error('Cannot find Promise error', { cause: error })
       }
 
       if (!$Error.isAggregate(error)) {
@@ -71,18 +72,15 @@ export function any<G extends AnyEffector<any, any, any>>(
       throw new AggregateError(
         error.errors.map((exit) => {
           if (!$Exit.is(exit) || !$Exit.isFailure(exit)) {
-            throw new Error('Cannot find Promise failure')
+            return new Error('Cannot find Promise failure', { cause: exit })
           }
 
           switch (exit.cause[$Type.tag]) {
             case 'Die':
-              return exit.cause.error
-            case 'Interrupt':
-              throw new Error(
-                `Child fiber "${exit.cause.fiberId}" was interrupted`,
-              )
             case 'Fail':
               return exit.cause.error
+            case 'Interrupt':
+              return new Error(`Fiber "${exit.cause.fiberId}" interrupted`)
           }
         }),
         error.message,
@@ -109,16 +107,16 @@ export function race<G extends AnyEffector<any, any, any>>(
       )
     } catch (exit) {
       if (!$Exit.is(exit) || !$Exit.isFailure(exit)) {
-        throw new Error('Cannot find Promise failure')
+        throw new Error('Cannot find Promise failure', { cause: exit })
       }
 
       switch (exit.cause[$Type.tag]) {
         case 'Die':
           throw exit.cause.error
-        case 'Interrupt':
-          throw new Error(`Child fiber "${exit.cause.fiberId}" was interrupted`)
         case 'Fail':
           return yield* $Exception.raise(exit.cause.error as ErrorOf<G>)
+        case 'Interrupt':
+          return yield* $Interruption.interrupt()
       }
     }
   })
