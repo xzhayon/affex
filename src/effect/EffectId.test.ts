@@ -14,4 +14,16 @@ describe('EffectId', () => {
   test('comparing different identifiers', () => {
     expect($EffectId.id()).not.toStrictEqual($EffectId.id())
   })
+
+  describe('reset', () => {
+    test('resetting counter', () => {
+      $EffectId.reset()
+      const a = $EffectId.id()
+      $EffectId.reset()
+      const b = $EffectId.id()
+
+      expect(a).not.toStrictEqual(b)
+      expect(a.toString()).toStrictEqual(b.toString())
+    })
+  })
 })

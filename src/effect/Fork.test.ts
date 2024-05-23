@@ -1,5 +1,6 @@
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
+import { Fiber } from '../fiber/Fiber'
 import * as $Context from '../runtime/Context'
 import * as $Layer from '../runtime/Layer'
 import * as $Runtime from '../runtime/Runtime'
@@ -57,6 +58,15 @@ describe('Fork', () => {
       }, context)
 
       expect(a).toStrictEqual(1)
+    })
+
+    test('daemonizing non-lazy effector', async () => {
+      await expect(
+        $Runtime.runPromise(
+          $Fork.daemonize((function* () {})()),
+          $Context.context(),
+        ),
+      ).resolves.toBeInstanceOf(Fiber)
     })
   })
 })

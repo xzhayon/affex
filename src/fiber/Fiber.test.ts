@@ -18,6 +18,16 @@ describe('Fiber', () => {
       await expect(fiber.start()).resolves.toStrictEqual($Status.suspended(0))
     })
 
+    test('failing starting fiber', async () => {
+      const fiber = $Fiber.fiber(() => {
+        throw new Error('foo')
+      })
+
+      await expect(fiber.start()).resolves.toStrictEqual(
+        $Status.failed(new Error('foo')),
+      )
+    })
+
     test('failing starting suspended fiber', async () => {
       const fiber = $Fiber.fiber(f)
       await fiber.start()
@@ -181,6 +191,20 @@ describe('Fiber', () => {
 
       await expect(fiber.interrupt()).resolves.toStrictEqual(
         $Status.terminated(4),
+      )
+    })
+  })
+
+  describe('fromPromise', () => {
+    test('creating fiber from lazy promise', async () => {
+      const fiber = $Fiber.fromPromise(
+        () => new Promise((resolve) => setTimeout(() => resolve(42), 0)),
+      )
+      await fiber.start()
+      await new Promise((resolve) => setTimeout(resolve, 0))
+
+      await expect(fiber.resume()).resolves.toStrictEqual(
+        $Status.terminated(42),
       )
     })
   })

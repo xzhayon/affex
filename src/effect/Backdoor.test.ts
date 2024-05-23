@@ -11,6 +11,15 @@ import * as $Proxy from './Proxy'
 
 describe('Backdoor', () => {
   describe('exploit', () => {
+    test('returning value', async () => {
+      await expect(
+        $Runtime.runPromise(
+          $Backdoor.exploit()(() => 42),
+          $Context.context(),
+        ),
+      ).resolves.toStrictEqual(42)
+    })
+
     test('forking normal function', async () => {
       await expect(
         $Runtime.runPromise(
