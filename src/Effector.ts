@@ -5,13 +5,19 @@ import { And, Covariant, Invariant, IsAny } from './Type'
 export type Effector<A, E = never, R = never> = Generator<
   And<IsAny<R>, IsAny<E>> extends true
     ? any
-    : (R extends any ? Use<R> : never) | (E extends any ? Throw<E> : never),
+    :
+        | (R extends any ? Use<R> : never)
+        | (E extends any ? Throw<E> : never)
+        | void,
   A
 >
 export type AsyncEffector<A, E = never, R = never> = AsyncGenerator<
   And<IsAny<R>, IsAny<E>> extends true
     ? any
-    : (R extends any ? Use<R> : never) | (E extends any ? Throw<E> : never),
+    :
+        | (R extends any ? Use<R> : never)
+        | (E extends any ? Throw<E> : never)
+        | void,
   A
 >
 export type AnyEffector<A, E = never, R = never> =
