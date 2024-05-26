@@ -1,10 +1,10 @@
-import { AnyEffector, Effector, Throw, Use } from './Effector'
-import * as $Generator from './Generator'
-import { ReturnOf, YieldOf } from './Generator'
-import * as $Type from './Type'
-import { OrLazy } from './Type'
-import * as $Fork from './effect/Fork'
-import * as $Join from './effect/Join'
+import { AnyEffector, Effector, Throw, Use } from '../Effector'
+import * as $Generator from '../Generator'
+import { ReturnOf, YieldOf } from '../Generator'
+import * as $Type from '../Type'
+import { OrLazy } from '../Type'
+import * as $Fork from '../effect/Fork'
+import * as $Join from '../effect/Join'
 
 export function* all<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,

@@ -11,7 +11,6 @@ export {
   OutputOf,
 } from './Effector'
 export { is as isExit, isFailure, isSuccess } from './Exit'
-export { all, any, race } from './Fiber'
 export {
   AnyGenerator,
   NextOf,
@@ -25,6 +24,7 @@ export {
 export { Result } from './Result'
 export { tag } from './Tag'
 export { uri } from './Type'
+export { all, any, race } from './concurrency/Concurrency'
 export { wrapAsync as async, raise, wrap as sync } from './effect/Exception'
 export { daemonize, fork } from './effect/Fork'
 export { interrupt } from './effect/Interruption'
