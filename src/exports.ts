@@ -1,7 +1,7 @@
-import { die, fail } from './Cause'
+import { die, fail, interrupt } from './Cause'
 import { failure, success } from './Exit'
 
-export { is as isCause, isDie, isFail } from './Cause'
+export { is as isCause, isDie, isFail, isInterrupt } from './Cause'
 export {
   AnyEffector,
   AsyncEffector,
@@ -36,5 +36,5 @@ export { suspend } from './effect/Suspension'
 export { context } from './runtime/Context'
 export { layer } from './runtime/Layer'
 export { runExit, runPromise } from './runtime/Runtime'
-export const Cause = { die, fail }
+export const Cause = { die, fail, interrupt }
 export const Exit = { failure, success }
