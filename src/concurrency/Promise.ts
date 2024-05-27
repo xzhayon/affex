@@ -10,10 +10,6 @@ import { ConcurrencyError } from '../error/ConcurrencyError'
 import * as $Error from '../error/Error'
 import { InterruptError } from '../error/InterruptError'
 
-export function is(u: unknown): u is Promise<unknown> {
-  return u instanceof Promise
-}
-
 export function all<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
 ) {
