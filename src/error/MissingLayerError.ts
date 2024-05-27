@@ -5,7 +5,7 @@ export class MissingLayerError extends Error {
   readonly [MissingLayerErrorUri]!: typeof MissingLayerErrorUri
   readonly name: string = 'MissingLayerError'
 
-  constructor(tag: Tag<any>) {
+  constructor(readonly tag: Tag<any>) {
     super(
       `Cannot find layer for effect${
         tag.key.description ? ` "${tag.key.description}"` : ''

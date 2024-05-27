@@ -5,7 +5,11 @@ export class InterruptError extends Error {
   readonly [InterruptErrorUri]!: typeof InterruptErrorUri
   readonly name: string = 'InterruptError'
 
-  constructor(fiberId: FiberId) {
+  constructor(readonly fiberId: FiberId) {
     super(`Fiber "${fiberId}" interrupted`)
   }
+}
+
+export function is(u: unknown): u is InterruptError {
+  return u instanceof InterruptError
 }

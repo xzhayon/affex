@@ -17,6 +17,7 @@ import { OrLazy } from '../Type'
 import * as $Effect from '../effect/Effect'
 import { Effect } from '../effect/Effect'
 import { EffectId } from '../effect/EffectId'
+import * as $InterruptError from '../error/InterruptError'
 import { InterruptError } from '../error/InterruptError'
 import * as $Fiber from '../fiber/Fiber'
 import { Fiber } from '../fiber/Fiber'
@@ -84,17 +85,11 @@ export class Runtime<R> {
                 break
               case 'Failure':
                 this.saveFiberExit(currentFiber.id, exit)
-                switch (exit.cause[$Type.tag]) {
-                  case 'Die':
-                  case 'Fail':
-                    await currentFiber.throw(exit.cause.error)
-
-                    break
-                  case 'Interrupt':
-                    await currentFiber.interrupt()
-
-                    break
-                }
+                await currentFiber.throw(
+                  $Cause.isInterrupt(exit.cause)
+                    ? new InterruptError(exit.cause.fiberId)
+                    : exit.cause.error,
+                )
 
                 break
             }
@@ -304,7 +299,11 @@ export class Runtime<R> {
     }
 
     const savedExit = this.exitByFiber.get(fiberId)
-    if (savedExit === undefined || $Exit.isSuccess(savedExit)) {
+    if (
+      savedExit === undefined ||
+      $Exit.isSuccess(savedExit) ||
+      (!$Cause.isDie(exit.cause) && !$Cause.isFail(exit.cause))
+    ) {
       this.exitByFiber.set(fiberId, exit)
 
       return
@@ -313,16 +312,16 @@ export class Runtime<R> {
     switch (savedExit.cause[$Type.tag]) {
       case 'Die':
       case 'Fail':
-        if (
-          (!$Cause.isDie(exit.cause) && !$Cause.isFail(exit.cause)) ||
-          exit.cause.error !== savedExit.cause.error
-        ) {
+        if (exit.cause.error !== savedExit.cause.error) {
           this.exitByFiber.set(fiberId, exit)
         }
 
         break
       case 'Interrupt':
-        if (!$Cause.isInterrupt(exit.cause)) {
+        if (
+          !$InterruptError.is(exit.cause.error) ||
+          exit.cause.error.fiberId !== savedExit.cause.fiberId
+        ) {
           this.exitByFiber.set(fiberId, exit)
         }
 
