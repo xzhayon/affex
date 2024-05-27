@@ -7,6 +7,7 @@ import * as $Backdoor from '../effect/Backdoor'
 import * as $Exception from '../effect/Exception'
 import * as $Interruption from '../effect/Interruption'
 import * as $Proxy from '../effect/Proxy'
+import * as $Scope from '../effect/Scope'
 import { InterruptError } from '../error/InterruptError'
 import { MissingLayerError } from '../error/MissingLayerError'
 import * as $FiberId from '../fiber/FiberId'
@@ -351,6 +352,22 @@ describe('Runtime', () => {
       expect($Cause.isInterrupt(exit.cause)).toStrictEqual(true)
       // @ts-ignore
       expect(`${exit.cause.fiberId}`).toStrictEqual('3')
+    })
+
+    test('interrupting fiber after caught interrupt', async () => {
+      const exit = await $Runtime.runExit(function* () {
+        try {
+          yield* $Scope.scope(function* () {
+            return yield* $Interruption.interrupt()
+          })
+        } catch {
+          return yield* $Interruption.interrupt()
+        }
+      }, $Context.context())
+
+      expect(exit).toMatchObject($Exit.failure($Cause.interrupt({} as any)))
+      // @ts-ignore
+      expect(`${exit.cause.fiberId}`).toStrictEqual('0')
     })
   })
 
