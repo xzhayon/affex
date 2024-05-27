@@ -72,21 +72,23 @@ export function any<G extends AnyEffector<any, any, any>>(
         throw error
       }
 
-      throw new ConcurrencyError(
-        error.errors.map((exit) => {
-          if (!$Exit.is(exit) || !$Exit.isFailure(exit)) {
-            return new Error('Cannot find Promise failure', { cause: exit })
-          }
+      return yield* $Exception.raise(
+        new ConcurrencyError(
+          error.errors.map((exit) => {
+            if (!$Exit.is(exit) || !$Exit.isFailure(exit)) {
+              return new Error('Cannot find Promise failure', { cause: exit })
+            }
 
-          switch (exit.cause[$Type.tag]) {
-            case 'Die':
-            case 'Fail':
-              return exit.cause.error
-            case 'Interrupt':
-              return new InterruptError(exit.cause.fiberId)
-          }
-        }),
-        error.message,
+            switch (exit.cause[$Type.tag]) {
+              case 'Die':
+              case 'Fail':
+                return exit.cause.error
+              case 'Interrupt':
+                return new InterruptError(exit.cause.fiberId)
+            }
+          }),
+          error.message,
+        ),
       )
     }
   })

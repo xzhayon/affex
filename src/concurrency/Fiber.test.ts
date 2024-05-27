@@ -6,6 +6,7 @@ import { uri } from '../Type'
 import * as $Exception from '../effect/Exception'
 import * as $Interruption from '../effect/Interruption'
 import * as $Proxy from '../effect/Proxy'
+import { ConcurrencyError } from '../error/ConcurrencyError'
 import * as $Context from '../runtime/Context'
 import * as $Layer from '../runtime/Layer'
 import * as $Runtime from '../runtime/Runtime'
@@ -95,8 +96,8 @@ describe('Fiber', () => {
     } else {
       await expect($Runtime.runExit(f, failContext)).resolves.toMatchObject(
         $Exit.failure(
-          $Cause.die(
-            new AggregateError([1, 3], 'All fibers failed'),
+          $Cause.fail(
+            new ConcurrencyError([1, 3], 'All fibers failed'),
             {} as any,
           ),
         ),
@@ -105,8 +106,11 @@ describe('Fiber', () => {
         $Runtime.runExit(f, interruptContext),
       ).resolves.toMatchObject(
         $Exit.failure(
-          $Cause.die(
-            new AggregateError([new Error(), new Error()], 'All fibers failed'),
+          $Cause.fail(
+            new ConcurrencyError(
+              [new Error(), new Error()],
+              'All fibers failed',
+            ),
             {} as any,
           ),
         ),

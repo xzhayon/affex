@@ -3,6 +3,7 @@ import * as $Generator from '../Generator'
 import { ReturnOf, YieldOf } from '../Generator'
 import * as $Type from '../Type'
 import { OrLazy } from '../Type'
+import * as $Exception from '../effect/Exception'
 import * as $Fork from '../effect/Fork'
 import * as $Join from '../effect/Join'
 import { ConcurrencyError } from '../error/ConcurrencyError'
@@ -55,7 +56,7 @@ export function* any<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
 ): Effector<
   ReturnOf<G>,
-  never,
+  ConcurrencyError,
   YieldOf<G> extends infer Y ? (Y extends Use<infer R> ? R : never) : never
 > {
   const fibers = yield* $Generator.traverse(effectors, $Fork.fork)
@@ -91,7 +92,9 @@ export function* any<G extends AnyEffector<any, any, any>>(
       }
     }
 
-    throw new ConcurrencyError(errors, 'All fibers failed')
+    return yield* $Exception.raise(
+      new ConcurrencyError(errors, 'All fibers failed'),
+    )
   } finally {
     yield* $Generator.fromPromise(
       Promise.all(fibers.map((fiber) => fiber.interrupt())),
