@@ -17,6 +17,7 @@ import { OrLazy } from '../Type'
 import * as $Effect from '../effect/Effect'
 import { Effect } from '../effect/Effect'
 import { EffectId } from '../effect/EffectId'
+import { InterruptError } from '../error/InterruptError'
 import * as $Fiber from '../fiber/Fiber'
 import { Fiber } from '../fiber/Fiber'
 import { FiberId } from '../fiber/FiberId'
@@ -356,7 +357,7 @@ export async function runPromise<G extends AnyEffector<any, any, any>>(
   const exit = await runExit(effector, context)
   if ($Exit.isFailure(exit)) {
     throw $Cause.isInterrupt(exit.cause)
-      ? new Error(`Fiber "${exit.cause.fiberId}" interrupted`)
+      ? new InterruptError(exit.cause.fiberId)
       : exit.cause.error
   }
 

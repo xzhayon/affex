@@ -5,6 +5,8 @@ import * as $Type from '../Type'
 import { OrLazy } from '../Type'
 import * as $Fork from '../effect/Fork'
 import * as $Join from '../effect/Join'
+import { ConcurrencyError } from '../error/ConcurrencyError'
+import { InterruptError } from '../error/InterruptError'
 
 export function* all<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
@@ -70,7 +72,7 @@ export function* any<G extends AnyEffector<any, any, any>>(
       switch (fiber.status[$Type.tag]) {
         case 'Interrupted':
           delete fibers[index]
-          errors[index] = new Error(`Fiber "${fiber.id}" interrupted`)
+          errors[index] = new InterruptError(fiber.id)
           done++
 
           break
@@ -89,7 +91,7 @@ export function* any<G extends AnyEffector<any, any, any>>(
       }
     }
 
-    throw new AggregateError(errors, 'All fibers failed')
+    throw new ConcurrencyError(errors, 'All fibers failed')
   } finally {
     yield* $Generator.fromPromise(
       Promise.all(fibers.map((fiber) => fiber.interrupt())),

@@ -1,11 +1,14 @@
 import { AnyEffector, ContextOf, ErrorOf } from '../Effector'
-import * as $Error from '../Error'
 import * as $Exit from '../Exit'
 import * as $Type from '../Type'
 import { OrLazy } from '../Type'
 import * as $Backdoor from '../effect/Backdoor'
 import * as $Exception from '../effect/Exception'
 import * as $Interruption from '../effect/Interruption'
+import * as $AggregateError from '../error/AggregateError'
+import { ConcurrencyError } from '../error/ConcurrencyError'
+import * as $Error from '../error/Error'
+import { InterruptError } from '../error/InterruptError'
 
 export function is(u: unknown): u is Promise<unknown> {
   return u instanceof Promise
@@ -65,11 +68,11 @@ export function any<G extends AnyEffector<any, any, any>>(
         throw new Error('Cannot find Promise error', { cause: error })
       }
 
-      if (!$Error.isAggregate(error)) {
+      if (!$AggregateError.is(error)) {
         throw error
       }
 
-      throw new AggregateError(
+      throw new ConcurrencyError(
         error.errors.map((exit) => {
           if (!$Exit.is(exit) || !$Exit.isFailure(exit)) {
             return new Error('Cannot find Promise failure', { cause: exit })
@@ -80,7 +83,7 @@ export function any<G extends AnyEffector<any, any, any>>(
             case 'Fail':
               return exit.cause.error
             case 'Interrupt':
-              return new Error(`Fiber "${exit.cause.fiberId}" interrupted`)
+              return new InterruptError(exit.cause.fiberId)
           }
         }),
         error.message,

@@ -1,5 +1,6 @@
 import { Tag } from '../Tag'
 import { Contravariant, Covariant } from '../Type'
+import { MissingLayerError } from '../error/MissingLayerError'
 import { Handler } from './Handler'
 import { Layer } from './Layer'
 
@@ -39,11 +40,7 @@ export class Context<in A, out R = never> {
   readonly handler = <_A extends A>(tag: Tag<_A>): Handler<_A> => {
     const layer = this.layers.get(tag)
     if (layer === undefined) {
-      throw new Error(
-        `Cannot find layer for effect${
-          tag.key.description ? ` "${tag.key.description}"` : ''
-        }`,
-      )
+      throw new MissingLayerError(tag)
     }
 
     return layer.handler as any
