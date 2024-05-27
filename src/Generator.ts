@@ -1,5 +1,6 @@
 import * as $Function from './Function'
 import * as $Struct from './Struct'
+import { OrLazy } from './Type'
 
 export type AnyGenerator<Y = unknown, R = any, N = unknown> =
   | Generator<Y, R, N>
@@ -24,19 +25,25 @@ export type NextOf<G extends AnyGenerator> = G extends AnyGenerator<
 
 export type Generated<A> = A extends AnyGenerator ? ReturnOf<A> : A
 
-export function is(u: unknown): u is AnyGenerator {
-  return (
-    $Struct.is(u) &&
-    $Struct.has(u, 'next') &&
-    $Function.is(u.next) &&
-    $Struct.has(u, 'return') &&
-    $Function.is(u.return) &&
-    $Struct.has(u, 'throw') &&
-    $Function.is(u.throw) &&
-    (($Struct.has(u, Symbol.iterator) && $Function.is(u[Symbol.iterator])) ||
-      ($Struct.has(u, Symbol.asyncIterator) &&
-        $Function.is(u[Symbol.asyncIterator])))
-  )
+export function* fromPromise<A>(promise: OrLazy<Promise<A>>) {
+  const _promise = $Function.is(promise) ? promise() : promise
+  let result: { value: A } | { error: unknown } | undefined
+  _promise
+    .then((value) => {
+      result = { value }
+    })
+    .catch((error: unknown) => {
+      result = { error }
+    })
+  while (result === undefined) {
+    yield undefined as void
+  }
+
+  if ('error' in result) {
+    throw result.error
+  }
+
+  return result.value
 }
 
 export function* sequence<G extends Generator>(
@@ -73,4 +80,19 @@ export function traverseAsync<A, G extends AnyGenerator>(
   f: (a: A) => G,
 ) {
   return sequenceAsync(as.map(f))
+}
+
+export function is(u: unknown): u is AnyGenerator {
+  return (
+    $Struct.is(u) &&
+    $Struct.has(u, 'next') &&
+    $Function.is(u.next) &&
+    $Struct.has(u, 'return') &&
+    $Function.is(u.return) &&
+    $Struct.has(u, 'throw') &&
+    $Function.is(u.throw) &&
+    (($Struct.has(u, Symbol.iterator) && $Function.is(u[Symbol.iterator])) ||
+      ($Struct.has(u, Symbol.asyncIterator) &&
+        $Function.is(u[Symbol.asyncIterator])))
+  )
 }

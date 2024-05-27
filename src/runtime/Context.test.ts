@@ -1,6 +1,7 @@
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
 import * as $Proxy from '../effect/Proxy'
+import { MissingLayerError } from '../error/MissingLayerError'
 import * as $Context from './Context'
 import * as $Layer from './Layer'
 
@@ -56,6 +57,15 @@ describe('Context', () => {
     test('adding layer', () => {
       expect($Context.context().with(layerFoo).handler(tagFoo)).toStrictEqual(
         layerFoo.handler,
+      )
+    })
+  })
+
+  describe('handler', () => {
+    test('failing on missing layer', () => {
+      // @ts-expect-error
+      expect(() => $Context.context().handler(tagFoo)).toThrow(
+        new MissingLayerError(tagFoo),
       )
     })
   })

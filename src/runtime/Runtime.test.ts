@@ -7,6 +7,9 @@ import * as $Backdoor from '../effect/Backdoor'
 import * as $Exception from '../effect/Exception'
 import * as $Interruption from '../effect/Interruption'
 import * as $Proxy from '../effect/Proxy'
+import * as $Scope from '../effect/Scope'
+import { InterruptError } from '../error/InterruptError'
+import { MissingLayerError } from '../error/MissingLayerError'
 import * as $FiberId from '../fiber/FiberId'
 import * as $Context from './Context'
 import * as $Layer from './Layer'
@@ -44,16 +47,7 @@ describe('Runtime', () => {
           // @ts-expect-error
           $Runtime.runExit(add(42, 1337), $Context.context()),
         ).resolves.toMatchObject(
-          $Exit.failure(
-            $Cause.die(
-              new Error(
-                `Cannot find layer for effect${
-                  description ? ` "${description}"` : ''
-                }`,
-              ),
-              {} as any,
-            ),
-          ),
+          $Exit.failure($Cause.die(new MissingLayerError(tag), {} as any)),
         )
       },
     )
@@ -359,6 +353,22 @@ describe('Runtime', () => {
       // @ts-ignore
       expect(`${exit.cause.fiberId}`).toStrictEqual('3')
     })
+
+    test('interrupting fiber after caught interrupt', async () => {
+      const exit = await $Runtime.runExit(function* () {
+        try {
+          yield* $Scope.scope(function* () {
+            return yield* $Interruption.interrupt()
+          })
+        } catch {
+          return yield* $Interruption.interrupt()
+        }
+      }, $Context.context())
+
+      expect(exit).toMatchObject($Exit.failure($Cause.interrupt({} as any)))
+      // @ts-ignore
+      expect(`${exit.cause.fiberId}`).toStrictEqual('0')
+    })
   })
 
   describe('runPromise', () => {
@@ -367,7 +377,7 @@ describe('Runtime', () => {
         $Runtime.runPromise(function* () {
           return yield* $Interruption.interrupt()
         }, $Context.context()),
-      ).rejects.toThrow(/Fiber "[^"]+" interrupted/)
+      ).rejects.toThrow(InterruptError)
     })
   })
 })

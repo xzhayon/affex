@@ -17,10 +17,11 @@ import { OrLazy } from '../Type'
 import * as $Effect from '../effect/Effect'
 import { Effect } from '../effect/Effect'
 import { EffectId } from '../effect/EffectId'
+import * as $InterruptError from '../error/InterruptError'
+import { InterruptError } from '../error/InterruptError'
 import * as $Fiber from '../fiber/Fiber'
 import { Fiber } from '../fiber/Fiber'
 import { FiberId } from '../fiber/FiberId'
-import * as $Status from '../fiber/Status'
 import { Context } from './Context'
 import * as $Engine from './Engine'
 
@@ -72,33 +73,26 @@ export class Runtime<R> {
               currentFiber.status.value as Effect<any, any, any>,
               currentFiber,
             )
+            this.queue.push(currentFiber)
             if (exit === undefined) {
-              this.queue.push(currentFiber)
-
               break
             }
 
-            if ($Exit.isFailure(exit)) {
-              if ($Cause.isInterrupt(exit.cause)) {
-                this.saveFiberExit(currentFiber.id, exit)
-                await currentFiber.interrupt()
-                this.queue.push(currentFiber)
+            switch (exit[$Type.tag]) {
+              case 'Success':
+                await currentFiber.resume(exit.value)
 
                 break
-              }
-
-              const status = await currentFiber.throw(exit.cause.error)
-              if (
-                $Status.isFailed(status) &&
-                status.error === exit.cause.error
-              ) {
+              case 'Failure':
                 this.saveFiberExit(currentFiber.id, exit)
-              }
-            } else {
-              await currentFiber.resume(exit.value)
-            }
+                await currentFiber.throw(
+                  $Cause.isInterrupt(exit.cause)
+                    ? new InterruptError(exit.cause.fiberId)
+                    : exit.cause.error,
+                )
 
-            this.queue.push(currentFiber)
+                break
+            }
 
             break
           case 'Interrupted':
@@ -298,11 +292,41 @@ export class Runtime<R> {
   }
 
   private readonly saveFiberExit = (fiberId: FiberId, exit: Exit<any, any>) => {
-    if (this.exitByFiber.has(fiberId)) {
+    if ($Exit.isSuccess(exit)) {
+      this.exitByFiber.set(fiberId, exit)
+
       return
     }
 
-    this.exitByFiber.set(fiberId, exit)
+    const savedExit = this.exitByFiber.get(fiberId)
+    if (
+      savedExit === undefined ||
+      $Exit.isSuccess(savedExit) ||
+      (!$Cause.isDie(exit.cause) && !$Cause.isFail(exit.cause))
+    ) {
+      this.exitByFiber.set(fiberId, exit)
+
+      return
+    }
+
+    switch (savedExit.cause[$Type.tag]) {
+      case 'Die':
+      case 'Fail':
+        if (exit.cause.error !== savedExit.cause.error) {
+          this.exitByFiber.set(fiberId, exit)
+        }
+
+        break
+      case 'Interrupt':
+        if (
+          !$InterruptError.is(exit.cause.error) ||
+          exit.cause.error.fiberId !== savedExit.cause.fiberId
+        ) {
+          this.exitByFiber.set(fiberId, exit)
+        }
+
+        break
+    }
   }
 
   private readonly closeScope = (scopeId: FiberId) => {
@@ -332,7 +356,7 @@ export async function runPromise<G extends AnyEffector<any, any, any>>(
   const exit = await runExit(effector, context)
   if ($Exit.isFailure(exit)) {
     throw $Cause.isInterrupt(exit.cause)
-      ? new Error(`Fiber "${exit.cause.fiberId}" interrupted`)
+      ? new InterruptError(exit.cause.fiberId)
       : exit.cause.error
   }
 

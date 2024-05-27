@@ -1,10 +1,9 @@
 import * as $Function from '../Function'
+import * as $Generator from '../Generator'
 import { AnyGenerator, ReturnOf, YieldOf } from '../Generator'
 import * as $Type from '../Type'
 import { OrLazy } from '../Type'
 import * as $FiberId from './FiberId'
-import * as $Result from './Result'
-import { Result } from './Result'
 import * as $Status from './Status'
 import { Status } from './Status'
 
@@ -112,26 +111,7 @@ export type SOf<F extends Fiber<any, any>> = F extends Fiber<any, infer S>
 export const fiber = Fiber.make
 
 export function fromPromise<A>(promise: OrLazy<Promise<A>>) {
-  return fiber(function* () {
-    const _promise = $Function.is(promise) ? promise() : promise
-    let result: Result<A, unknown> | undefined
-    _promise
-      .then((value) => {
-        result = $Result.success(value)
-      })
-      .catch((error) => {
-        result = $Result.failure(error)
-      })
-    while (result === undefined) {
-      yield
-    }
-
-    if ($Result.isFailure(result)) {
-      throw result.error
-    }
-
-    return result.value
-  })
+  return fiber($Generator.fromPromise(promise))
 }
 
 export function is(u: unknown): u is Fiber<unknown, unknown> {

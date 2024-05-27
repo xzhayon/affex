@@ -62,33 +62,3 @@ export function failed(error: unknown): Status<never, never> {
 export function terminated<T>(value: T): Status<T, never> {
   return { ..._status('Terminated'), value }
 }
-
-export function isReady(status: Status<any, any>): status is Ready {
-  return status[$Type.tag] === 'Ready'
-}
-
-export function isStarted(status: Status<any, any>): status is Started {
-  return status[$Type.tag] === 'Started'
-}
-
-export function isRunning(status: Status<any, any>): status is Running {
-  return status[$Type.tag] === 'Running'
-}
-
-export function isSuspended<S>(status: Status<any, S>): status is Suspended<S> {
-  return status[$Type.tag] === 'Suspended'
-}
-
-export function isInterrupted(status: Status<any, any>): status is Interrupted {
-  return status[$Type.tag] === 'Interrupted'
-}
-
-export function isFailed(status: Status<any, any>): status is Failed {
-  return status[$Type.tag] === 'Failed'
-}
-
-export function isTerminated<T>(
-  status: Status<T, any>,
-): status is Terminated<T> {
-  return status[$Type.tag] === 'Terminated'
-}

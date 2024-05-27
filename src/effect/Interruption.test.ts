@@ -36,16 +36,14 @@ describe('Interruption', () => {
     ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
   })
 
-  test('ignoring `catch` on interrupt', async () => {
-    let a = 0
-
+  test('catching an interrupt', async () => {
     await expect(
       $Runtime.runExit(
         function* () {
           try {
             return yield* random()
           } catch {
-            a++
+            return 42
           }
         },
         $Context.context().with(
@@ -54,8 +52,7 @@ describe('Interruption', () => {
           }),
         ),
       ),
-    ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
-    expect(a).toStrictEqual(0)
+    ).resolves.toMatchObject($Exit.success(42))
   })
 
   test('running `finally` on interrupt', async () => {
