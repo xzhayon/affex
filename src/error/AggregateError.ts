@@ -1,3 +1,3 @@
-export function is(error: Error): error is AggregateError {
-  return error instanceof AggregateError
+export function is(u: unknown): u is AggregateError {
+  return u instanceof AggregateError
 }
