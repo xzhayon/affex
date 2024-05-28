@@ -8,16 +8,11 @@ import * as $Interruption from '../effect/Interruption'
 import * as $Proxy from '../effect/Proxy'
 import { InterruptError } from '../error/InterruptError'
 import { MissingLayerError } from '../error/MissingLayerError'
-import * as $FiberId from '../fiber/FiberId'
 import * as $Context from './Context'
 import * as $Layer from './Layer'
 import * as $Runtime from './Runtime'
 
 describe('Runtime', () => {
-  beforeEach(() => {
-    $FiberId.reset()
-  })
-
   describe('runExit', () => {
     test('running effector with no effects', async () => {
       await expect(

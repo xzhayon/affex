@@ -1,20 +1,7 @@
-export class EffectId {
-  private static counter = 0
-  private readonly id: number
+export type EffectId = number
 
-  static readonly make = () => new EffectId()
+let counter = 0
 
-  static readonly reset = () => {
-    EffectId.counter = 0
-  }
-
-  private constructor() {
-    this.id = EffectId.counter++
-  }
-
-  readonly toString = () => String(this.id)
+export function id(): EffectId {
+  return counter++
 }
-
-export const id = EffectId.make
-
-export const reset = EffectId.reset
