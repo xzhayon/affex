@@ -75,10 +75,10 @@ describe('Fiber', () => {
     if (!success) {
       await expect(
         $Runtime.runExit($Fiber.all(input.map(sleep)), failContext),
-      ).resolves.toMatchObject($Exit.failure($Cause.fail(output, {} as any)))
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(output)))
       await expect(
         $Runtime.runExit($Fiber.all(input.map(sleep)), interruptContext),
-      ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
+      ).resolves.toMatchObject($Exit.failure($Cause.interrupt()))
     }
   })
 
@@ -96,10 +96,7 @@ describe('Fiber', () => {
     } else {
       await expect($Runtime.runExit(f, failContext)).resolves.toMatchObject(
         $Exit.failure(
-          $Cause.fail(
-            new ConcurrencyError([1, 3], 'All fibers failed'),
-            {} as any,
-          ),
+          $Cause.fail(new ConcurrencyError([1, 3], 'All fibers failed')),
         ),
       )
       await expect(
@@ -111,7 +108,6 @@ describe('Fiber', () => {
               [new Error(), new Error()],
               'All fibers failed',
             ),
-            {} as any,
           ),
         ),
       )
@@ -129,10 +125,10 @@ describe('Fiber', () => {
     if (!success) {
       await expect(
         $Runtime.runExit($Fiber.race(input.map(sleep)), failContext),
-      ).resolves.toMatchObject($Exit.failure($Cause.fail(output, {} as any)))
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(output)))
       await expect(
         $Runtime.runExit($Fiber.race(input.map(sleep)), interruptContext),
-      ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
+      ).resolves.toMatchObject($Exit.failure($Cause.interrupt()))
     }
   })
 

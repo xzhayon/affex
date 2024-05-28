@@ -1,13 +1,11 @@
 import * as $Cause from '../Cause'
 import * as $Exit from '../Exit'
-import { Result } from '../Result'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
 import * as $Backdoor from '../effect/Backdoor'
 import * as $Exception from '../effect/Exception'
 import * as $Interruption from '../effect/Interruption'
 import * as $Proxy from '../effect/Proxy'
-import * as $Scope from '../effect/Scope'
 import { InterruptError } from '../error/InterruptError'
 import { MissingLayerError } from '../error/MissingLayerError'
 import * as $FiberId from '../fiber/FiberId'
@@ -47,7 +45,7 @@ describe('Runtime', () => {
           // @ts-expect-error
           $Runtime.runExit(add(42, 1337), $Context.context()),
         ).resolves.toMatchObject(
-          $Exit.failure($Cause.die(new MissingLayerError(tag), {} as any)),
+          $Exit.failure($Cause.die(new MissingLayerError(tag))),
         )
       },
     )
@@ -57,9 +55,7 @@ describe('Runtime', () => {
         $Runtime.runExit(function* () {
           throw new Error('foo')
         }, $Context.context()),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.die(new Error('foo'), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('foo'))))
     })
 
     test('throwing error from effect handler', async () => {
@@ -85,9 +81,7 @@ describe('Runtime', () => {
           ),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.die(new Error('Cannot divide by zero'), {} as any),
-        ),
+        $Exit.failure($Cause.die(new Error('Cannot divide by zero'))),
       )
     })
 
@@ -100,9 +94,7 @@ describe('Runtime', () => {
             throw new Error('bar')
           }
         }, $Context.context()),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.die(new Error('bar'), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('bar'))))
     })
 
     test('throwing error after catching exception in nested fiber', async () => {
@@ -114,9 +106,7 @@ describe('Runtime', () => {
             throw new Error('bar')
           }
         }, $Context.context()),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.die(new Error('bar'), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('bar'))))
     })
 
     test('catching error from nested generator', async () => {
@@ -144,9 +134,7 @@ describe('Runtime', () => {
             throw error
           }
         }, $Context.context()),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.die(new Error('foo'), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('foo'))))
     })
 
     test('rethrowing exception from nested effector', async () => {
@@ -160,9 +148,7 @@ describe('Runtime', () => {
             throw error
           }
         }, $Context.context()),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.fail(new Error('foo'), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(new Error('foo'))))
     })
 
     test('catching error from handler', async () => {
@@ -190,184 +176,6 @@ describe('Runtime', () => {
           ),
         ),
       ).resolves.toStrictEqual($Exit.success('bar'))
-    })
-
-    test('recording fiber ID in Die cause', async () => {
-      interface Foo {
-        readonly [uri]?: unique symbol
-        (): string
-      }
-
-      interface Bar {
-        readonly [uri]?: unique symbol
-        (): string
-      }
-
-      interface Qux {
-        readonly [uri]?: unique symbol
-        (): string
-      }
-
-      const tagFoo = $Tag.tag<Foo>()
-      const foo = $Proxy.function(tagFoo)
-
-      const tagBar = $Tag.tag<Bar>()
-      const bar = $Proxy.function(tagBar)
-
-      const tagQux = $Tag.tag<Qux>()
-      const qux = $Proxy.function(tagQux)
-
-      const exit = await $Runtime.runExit(
-        function* () {
-          return yield* foo()
-        },
-        $Context
-          .context()
-          .with(
-            $Layer.layer(tagFoo, function* () {
-              return yield* bar()
-            }),
-          )
-          .with(
-            $Layer.layer(tagBar, function* () {
-              return yield* qux()
-            }),
-          )
-          .with(
-            $Layer.layer(tagQux, () => {
-              throw new Error()
-            }),
-          ),
-      )
-
-      // @ts-ignore
-      expect($Cause.isDie(exit.cause)).toStrictEqual(true)
-      // @ts-ignore
-      expect(`${exit.cause.fiberId}`).toStrictEqual('2')
-    })
-
-    test('recording fiber ID in Fail cause', async () => {
-      interface Foo {
-        readonly [uri]?: unique symbol
-        (): Result<string, Error>
-      }
-
-      interface Bar {
-        readonly [uri]?: unique symbol
-        (): Result<string, Error>
-      }
-
-      interface Qux {
-        readonly [uri]?: unique symbol
-        (): Result<string, Error>
-      }
-
-      const tagFoo = $Tag.tag<Foo>()
-      const foo = $Proxy.function(tagFoo)
-
-      const tagBar = $Tag.tag<Bar>()
-      const bar = $Proxy.function(tagBar)
-
-      const tagQux = $Tag.tag<Qux>()
-      const qux = $Proxy.function(tagQux)
-
-      const exit = await $Runtime.runExit(
-        function* () {
-          return yield* foo()
-        },
-        $Context
-          .context()
-          .with(
-            $Layer.layer(tagFoo, function* () {
-              return yield* bar()
-            }),
-          )
-          .with(
-            $Layer.layer(tagBar, function* () {
-              return yield* qux()
-            }),
-          )
-          .with(
-            $Layer.layer(tagQux, function* () {
-              return yield* $Exception.raise(new Error())
-            }),
-          ),
-      )
-
-      // @ts-ignore
-      expect($Cause.isFail(exit.cause)).toStrictEqual(true)
-      // @ts-ignore
-      expect(`${exit.cause.fiberId}`).toStrictEqual('3')
-    })
-
-    test('recording fiber ID in Interrupt cause', async () => {
-      interface Foo {
-        readonly [uri]?: unique symbol
-        (): string
-      }
-
-      interface Bar {
-        readonly [uri]?: unique symbol
-        (): string
-      }
-
-      interface Qux {
-        readonly [uri]?: unique symbol
-        (): string
-      }
-
-      const tagFoo = $Tag.tag<Foo>()
-      const foo = $Proxy.function(tagFoo)
-
-      const tagBar = $Tag.tag<Bar>()
-      const bar = $Proxy.function(tagBar)
-
-      const tagQux = $Tag.tag<Qux>()
-      const qux = $Proxy.function(tagQux)
-
-      const exit = await $Runtime.runExit(
-        function* () {
-          return yield* foo()
-        },
-        $Context
-          .context()
-          .with(
-            $Layer.layer(tagFoo, function* () {
-              return yield* bar()
-            }),
-          )
-          .with(
-            $Layer.layer(tagBar, function* () {
-              return yield* qux()
-            }),
-          )
-          .with(
-            $Layer.layer(tagQux, function* () {
-              return yield* $Interruption.interrupt()
-            }),
-          ),
-      )
-
-      // @ts-ignore
-      expect($Cause.isInterrupt(exit.cause)).toStrictEqual(true)
-      // @ts-ignore
-      expect(`${exit.cause.fiberId}`).toStrictEqual('3')
-    })
-
-    test('interrupting fiber after caught interrupt', async () => {
-      const exit = await $Runtime.runExit(function* () {
-        try {
-          yield* $Scope.scope(function* () {
-            return yield* $Interruption.interrupt()
-          })
-        } catch {
-          return yield* $Interruption.interrupt()
-        }
-      }, $Context.context())
-
-      expect(exit).toMatchObject($Exit.failure($Cause.interrupt({} as any)))
-      // @ts-ignore
-      expect(`${exit.cause.fiberId}`).toStrictEqual('0')
     })
   })
 

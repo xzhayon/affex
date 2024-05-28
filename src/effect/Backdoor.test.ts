@@ -49,9 +49,7 @@ describe('Backdoor', () => {
           ),
           $Context.context(),
         ),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.die(new Error('foo'), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('foo'))))
     })
 
     test('raising error', async () => {
@@ -64,9 +62,7 @@ describe('Backdoor', () => {
           ),
           $Context.context(),
         ),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.fail(new Error('foo'), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(new Error('foo'))))
     })
 
     test('forking generator function', async () => {
@@ -93,9 +89,7 @@ describe('Backdoor', () => {
           $Backdoor.exploit()(() => $Exception.raise(new Error('foo'))),
           $Context.context(),
         ),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.fail(new Error('foo'), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(new Error('foo'))))
     })
 
     test('forking function with effects', async () => {
@@ -149,9 +143,7 @@ describe('Backdoor', () => {
           $Context.context(),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.die(new Error('Cannot find layer for effect'), {} as any),
-        ),
+        $Exit.failure($Cause.die(new Error('Cannot find layer for effect'))),
       )
     })
 

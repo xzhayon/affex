@@ -73,7 +73,7 @@ export function* any<G extends AnyEffector<any, any, any>>(
       switch (fiber.status[$Type.tag]) {
         case 'Interrupted':
           delete fibers[index]
-          errors[index] = new InterruptError(fiber.id)
+          errors[index] = new InterruptError()
           done++
 
           break

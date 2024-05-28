@@ -45,9 +45,7 @@ describe('Exception', () => {
           ),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new Error('Cannot return random number'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new Error('Cannot return random number'))),
       )
     })
 
@@ -69,9 +67,7 @@ describe('Exception', () => {
           ),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new Error('Cannot divide by zero'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new Error('Cannot divide by zero'))),
       )
     })
 
@@ -92,9 +88,7 @@ describe('Exception', () => {
           ),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new FooError('Cannot divide by zero'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
       )
     })
 
@@ -120,9 +114,7 @@ describe('Exception', () => {
           ),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new BarError('Cannot divide by zero'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new BarError('Cannot divide by zero'))),
       )
     })
 
@@ -149,9 +141,7 @@ describe('Exception', () => {
           ),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new FooError('Cannot divide by zero'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
       )
     })
 
@@ -183,9 +173,7 @@ describe('Exception', () => {
             .with($Layer.layer(tagRandom, () => Math.random())),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new FooError('Cannot divide by zero'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
       )
     })
 
@@ -214,9 +202,7 @@ describe('Exception', () => {
             }),
           ),
         ),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.fail(new BarError(), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(new BarError())))
     })
   })
 
@@ -246,7 +232,7 @@ describe('Exception', () => {
         ),
       ).resolves.toMatchObject(
         $Exit.failure(
-          $Cause.fail(new Error('bar', { cause: new Error('foo') }), {} as any),
+          $Cause.fail(new Error('bar', { cause: new Error('foo') })),
         ),
       )
     })
@@ -276,7 +262,7 @@ describe('Exception', () => {
         ),
       ).resolves.toMatchObject(
         $Exit.failure(
-          $Cause.fail(new Error('bar', { cause: new Error('foo') }), {} as any),
+          $Cause.fail(new Error('bar', { cause: new Error('foo') })),
         ),
       )
     })

@@ -38,9 +38,7 @@ describe('Sandbox', () => {
           context,
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.die(new Error('Cannot divide by zero'), {} as any),
-        ),
+        $Exit.failure($Cause.die(new Error('Cannot divide by zero'))),
       )
     })
 
@@ -53,9 +51,7 @@ describe('Sandbox', () => {
           context,
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.die(new Error('Cannot recover from exception'), {} as any),
-        ),
+        $Exit.failure($Cause.die(new Error('Cannot recover from exception'))),
       )
     })
 
@@ -68,9 +64,7 @@ describe('Sandbox', () => {
           context,
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new Error('Cannot recover from exception'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new Error('Cannot recover from exception'))),
       )
     })
 
@@ -127,9 +121,7 @@ describe('Sandbox', () => {
             },
           )).length
         }, $Context.context()),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.die(new BarError(), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.die(new BarError())))
     })
 
     test('handling multiple errors', async () => {
@@ -176,9 +168,7 @@ describe('Sandbox', () => {
           ),
           $Context.context(),
         ),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.die(new Error('foo'), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('foo'))))
     })
   })
 })

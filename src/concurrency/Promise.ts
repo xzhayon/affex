@@ -80,7 +80,7 @@ export function any<G extends AnyEffector<any, any, any>>(
               case 'Fail':
                 return exit.cause.error
               case 'Interrupt':
-                return new InterruptError(exit.cause.fiberId)
+                return new InterruptError()
             }
           }),
           error.message,

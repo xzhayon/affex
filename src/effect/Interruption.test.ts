@@ -20,7 +20,7 @@ describe('Interruption', () => {
   test('interrupting root fiber', async () => {
     await expect(
       $Runtime.runExit($Interruption.interrupt(), $Context.context()),
-    ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
+    ).resolves.toMatchObject($Exit.failure($Cause.interrupt()))
   })
 
   test('interrupting child fiber', async () => {
@@ -33,7 +33,7 @@ describe('Interruption', () => {
           }),
         ),
       ),
-    ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
+    ).resolves.toMatchObject($Exit.failure($Cause.interrupt()))
   })
 
   test('catching an interrupt', async () => {
@@ -73,7 +73,7 @@ describe('Interruption', () => {
           }),
         ),
       ),
-    ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
+    ).resolves.toMatchObject($Exit.failure($Cause.interrupt()))
     expect(a).toStrictEqual(1)
   })
 })

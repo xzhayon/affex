@@ -87,7 +87,7 @@ export class Runtime<R> {
                 this.saveFiberExit(currentFiber.id, exit)
                 await currentFiber.throw(
                   $Cause.isInterrupt(exit.cause)
-                    ? new InterruptError(exit.cause.fiberId)
+                    ? new InterruptError()
                     : exit.cause.error,
                 )
 
@@ -98,7 +98,7 @@ export class Runtime<R> {
           case 'Interrupted':
             this.saveFiberExit(
               currentFiber.id,
-              $Exit.failure($Cause.interrupt(currentFiber.id)),
+              $Exit.failure($Cause.interrupt()),
             )
             await this.closeScope(currentFiber.id)
 
@@ -106,9 +106,7 @@ export class Runtime<R> {
           case 'Failed':
             this.saveFiberExit(
               currentFiber.id,
-              $Exit.failure(
-                $Cause.die(currentFiber.status.error, currentFiber.id),
-              ),
+              $Exit.failure($Cause.die(currentFiber.status.error)),
             )
             await this.closeScope(currentFiber.id)
 
@@ -133,7 +131,7 @@ export class Runtime<R> {
 
       return exit
     } catch (error) {
-      return $Exit.failure($Cause.die(error, this.rootFiber.id))
+      return $Exit.failure($Cause.die(error))
     }
   }
 
@@ -177,7 +175,7 @@ export class Runtime<R> {
           return undefined
         }
         case 'Exception':
-          return $Exit.failure($Cause.fail(effect.error, currentFiber.id))
+          return $Exit.failure($Cause.fail(effect.error))
         case 'Fork': {
           const effectFiber = this.resolveEffect(effect.effector)
           this.enqueueScopedFiber(
@@ -188,7 +186,7 @@ export class Runtime<R> {
           return $Exit.success(effectFiber)
         }
         case 'Interruption':
-          return $Exit.failure($Cause.interrupt(currentFiber.id))
+          return $Exit.failure($Cause.interrupt())
         case 'Join':
           this.scopeFiber(currentFiber.id, effect.fiber)
           this.fiberByEffect.set(effect.id, effect.fiber.id)
@@ -257,7 +255,7 @@ export class Runtime<R> {
           return $Exit.success(undefined)
       }
     } catch (error) {
-      return $Exit.failure($Cause.die(error, currentFiber.id))
+      return $Exit.failure($Cause.die(error))
     }
   }
 
@@ -318,10 +316,7 @@ export class Runtime<R> {
 
         break
       case 'Interrupt':
-        if (
-          !$InterruptError.is(exit.cause.error) ||
-          exit.cause.error.fiberId !== savedExit.cause.fiberId
-        ) {
+        if (!$InterruptError.is(exit.cause.error)) {
           this.exitByFiber.set(fiberId, exit)
         }
 
@@ -356,7 +351,7 @@ export async function runPromise<G extends AnyEffector<any, any, any>>(
   const exit = await runExit(effector, context)
   if ($Exit.isFailure(exit)) {
     throw $Cause.isInterrupt(exit.cause)
-      ? new InterruptError(exit.cause.fiberId)
+      ? new InterruptError()
       : exit.cause.error
   }
 
