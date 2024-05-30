@@ -1,7 +1,7 @@
+import { Throw, Use } from '../Effector'
 import { Exit } from '../Exit'
 import * as $Type from '../Type'
 import { Variant } from '../Type'
-import { Effect } from '../effect/Effect'
 
 export type Status<A, E, R> =
   | Ready
@@ -19,7 +19,7 @@ export type Started = _Status<'Started'>
 export type Running = _Status<'Running'>
 
 export interface Suspended<E, R> extends _Status<'Suspended'> {
-  readonly effect: Effect<unknown, E, R> | void
+  readonly effect: Throw<E> | Use<R> | void
 }
 
 export interface Terminated<A, E> extends _Status<'Terminated'> {
@@ -42,7 +42,7 @@ export function running(): Status<never, never, never> {
 }
 
 export function suspended<E, R>(
-  effect?: Effect<unknown, E, R> | void,
+  effect?: Throw<E> | Use<R> | void,
 ): Status<never, E, R> {
   return { ..._status('Suspended'), effect }
 }

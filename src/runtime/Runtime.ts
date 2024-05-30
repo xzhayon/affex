@@ -1,5 +1,5 @@
 import * as $Cause from '../Cause'
-import { AnyEffector, ContextOf, ErrorOf, OutputOf } from '../Effector'
+import { AnyEffector, ErrorOf, OutputOf } from '../Effector'
 import * as $Exit from '../Exit'
 import { Exit } from '../Exit'
 import * as $Function from '../Function'
@@ -70,7 +70,7 @@ export class Runtime<R> {
             }
 
             const exit = this.handleEffect(
-              currentFiber.status.effect,
+              currentFiber.status.effect._,
               currentFiber,
             )
             if (exit !== undefined) {
@@ -271,16 +271,16 @@ export class Runtime<R> {
 
 export const runtime = Runtime.make
 
-export function runExit<G extends $Generator.AnyGenerator<any, any>>(
+export function runExit<R, G extends AnyEffector<any, any, R>>(
   effector: OrLazy<G>,
-  context: Context<ContextOf<G>>,
+  context: Context<R>,
 ) {
   return runtime(context).run(effector)
 }
 
-export async function runPromise<G extends $Generator.AnyGenerator<any, any>>(
+export async function runPromise<R, G extends AnyEffector<any, any, R>>(
   effector: OrLazy<G>,
-  context: Context<ContextOf<G>>,
+  context: Context<R>,
 ) {
   const exit = await runExit(effector, context)
   if ($Exit.isFailure(exit)) {

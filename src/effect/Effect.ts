@@ -58,5 +58,5 @@ export function is(u: unknown): u is Effect<unknown, unknown, unknown> {
 }
 
 export function* perform<A, E, R>(effect: Effect<A, E, R>): Effector<A, E, R> {
-  return (yield effect) as A
+  return (yield { _: effect }) as A
 }
