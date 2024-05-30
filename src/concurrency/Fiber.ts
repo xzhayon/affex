@@ -1,6 +1,12 @@
-import { AnyEffector, Effector, Throw, Use } from '../Effector'
+import * as $Cause from '../Cause'
+import {
+  AnyEffector,
+  ContextOf,
+  Effector,
+  ErrorOf,
+  OutputOf,
+} from '../Effector'
 import * as $Generator from '../Generator'
-import { ReturnOf, YieldOf } from '../Generator'
 import * as $Type from '../Type'
 import { OrLazy } from '../Type'
 import * as $Exception from '../effect/Exception'
@@ -11,11 +17,7 @@ import { InterruptError } from '../error/InterruptError'
 
 export function* all<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
-): Effector<
-  ReturnOf<G>[],
-  YieldOf<G> extends infer Y ? (Y extends Throw<infer E> ? E : never) : never,
-  YieldOf<G> extends infer Y ? (Y extends Use<infer R> ? R : never) : never
-> {
+): Effector<OutputOf<G>[], ErrorOf<G>, ContextOf<G>> {
   const fibers = yield* $Generator.traverse(effectors, $Fork.fork)
   try {
     const values = []
@@ -28,15 +30,17 @@ export function* all<G extends AnyEffector<any, any, any>>(
       }
 
       switch (fiber.status[$Type.tag]) {
-        case 'Interrupted':
-        case 'Failed':
-          return yield* $Join.join(fiber)
         case 'Terminated':
-          delete fibers[index]
-          values[index] = fiber.status.value
-          done++
+          switch (fiber.status.exit[$Type.tag]) {
+            case 'Success':
+              delete fibers[index]
+              values[index] = fiber.status.exit.value
+              done++
 
-          break
+              break
+            case 'Failure':
+              return yield* $Join.join(fiber)
+          }
         default:
           yield
 
@@ -54,11 +58,7 @@ export function* all<G extends AnyEffector<any, any, any>>(
 
 export function* any<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
-): Effector<
-  ReturnOf<G>,
-  ConcurrencyError,
-  YieldOf<G> extends infer Y ? (Y extends Use<infer R> ? R : never) : never
-> {
+): Effector<OutputOf<G>, ConcurrencyError, ContextOf<G>> {
   const fibers = yield* $Generator.traverse(effectors, $Fork.fork)
   try {
     const errors = []
@@ -71,20 +71,19 @@ export function* any<G extends AnyEffector<any, any, any>>(
       }
 
       switch (fiber.status[$Type.tag]) {
-        case 'Interrupted':
-          delete fibers[index]
-          errors[index] = new InterruptError()
-          done++
-
-          break
-        case 'Failed':
-          delete fibers[index]
-          errors[index] = fiber.status.error
-          done++
-
-          break
         case 'Terminated':
-          return fiber.status.value
+          switch (fiber.status.exit[$Type.tag]) {
+            case 'Success':
+              return fiber.status.exit.value
+            case 'Failure':
+              delete fibers[index]
+              errors[index] = $Cause.isInterrupt(fiber.status.exit.cause)
+                ? new InterruptError()
+                : fiber.status.exit.cause.error
+              done++
+
+              break
+          }
         default:
           yield
 
@@ -104,21 +103,19 @@ export function* any<G extends AnyEffector<any, any, any>>(
 
 export function* race<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
-): Effector<
-  ReturnOf<G>,
-  YieldOf<G> extends infer Y ? (Y extends Throw<infer E> ? E : never) : never,
-  YieldOf<G> extends infer Y ? (Y extends Use<infer R> ? R : never) : never
-> {
+): Effector<OutputOf<G>, ErrorOf<G>, ContextOf<G>> {
   const fibers = yield* $Generator.traverse(effectors, $Fork.fork)
   try {
     for (let i = 0; true; i++) {
       const fiber = fibers[i % fibers.length]
       switch (fiber.status[$Type.tag]) {
-        case 'Interrupted':
-        case 'Failed':
-          return yield* $Join.join(fiber)
         case 'Terminated':
-          return fiber.status.value
+          switch (fiber.status.exit[$Type.tag]) {
+            case 'Success':
+              return fiber.status.exit.value
+            case 'Failure':
+              return yield* $Join.join(fiber)
+          }
         default:
           yield
 

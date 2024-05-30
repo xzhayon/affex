@@ -17,8 +17,7 @@ describe('Runtime', () => {
     test('running effector with no effects', async () => {
       await expect(
         $Runtime.runExit(function* () {
-          yield 42
-          yield 1337
+          yield
 
           return 42 + 1337
         }, $Context.context()),

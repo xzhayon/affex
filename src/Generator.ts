@@ -46,6 +46,10 @@ export function* fromPromise<A>(promise: OrLazy<Promise<A>>) {
   return result.value
 }
 
+export async function* fromPromiseAsync<A>(promise: OrLazy<Promise<A>>) {
+  return $Function.is(promise) ? promise() : promise
+}
+
 export function* sequence<G extends Generator>(
   generators: ReadonlyArray<G>,
 ): Generator<YieldOf<G>, ReturnOf<G>[], NextOf<G>> {

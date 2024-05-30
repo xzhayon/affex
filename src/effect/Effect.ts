@@ -1,4 +1,4 @@
-import { Effector, Throw, Use } from '../Effector'
+import { Effector } from '../Effector'
 import * as $Struct from '../Struct'
 import * as $Type from '../Type'
 import { Variant } from '../Type'
@@ -29,6 +29,25 @@ export interface _Effect<T extends string> extends Variant<typeof uri, T> {
   readonly id: EffectId
 }
 
+export type EOf<E extends Effect<any, any, any>> = E extends
+  | Exception<infer _E>
+  | Backdoor<any, infer _E, any>
+  | Join<any, infer _E, any>
+  | Proxy<any, infer _E, any>
+  | Sandbox<any, infer _E, any>
+  | Scope<any, infer _E, any>
+  ? _E
+  : never
+export type ROf<E extends Effect<any, any, any>> = E extends
+  | Backdoor<any, any, infer R>
+  | Fork<any, infer R>
+  | Join<any, any, infer R>
+  | Proxy<any, any, infer R>
+  | Sandbox<any, any, infer R>
+  | Scope<any, any, infer R>
+  ? R
+  : never
+
 const uri = Symbol('Effect')
 export function _effect<T extends string>(tag: T) {
   return { ...$Type.variant(uri)(tag), id: $EffectId.id() }
@@ -39,7 +58,5 @@ export function is(u: unknown): u is Effect<unknown, unknown, unknown> {
 }
 
 export function* perform<A, E, R>(effect: Effect<A, E, R>): Effector<A, E, R> {
-  return (yield effect as unknown as
-    | (E extends any ? Throw<E> : never)
-    | (R extends any ? Use<R> : never)) as A
+  return (yield effect) as A
 }
