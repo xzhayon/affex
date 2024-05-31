@@ -14,12 +14,12 @@ export type AnyEffector<A, E = never, R = never> =
   | Effector<A, E, R>
   | AsyncEffector<A, E, R>
 
-export interface Throw<E> {
+interface Throw<E> {
   readonly [$Type.uri]?: unique symbol
   readonly _: Effect<any, E, any>
 }
 
-export interface Use<R> {
+interface Use<R> {
   readonly [$Type.uri]?: unique symbol
   readonly _: Effect<any, any, R>
 }

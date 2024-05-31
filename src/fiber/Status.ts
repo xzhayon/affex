@@ -1,5 +1,6 @@
-import { Throw, Use } from '../Effector'
+import { AnyEffector } from '../Effector'
 import { Exit } from '../Exit'
+import { YieldOf } from '../Generator'
 import * as $Type from '../Type'
 import { Variant } from '../Type'
 
@@ -19,7 +20,7 @@ export type Started = _Status<'Started'>
 export type Running = _Status<'Running'>
 
 export interface Suspended<E, R> extends _Status<'Suspended'> {
-  readonly effect: Throw<E> | Use<R> | void
+  readonly effect: YieldOf<AnyEffector<never, E, R>>
 }
 
 export interface Terminated<A, E> extends _Status<'Terminated'> {
@@ -42,7 +43,7 @@ export function running(): Status<never, never, never> {
 }
 
 export function suspended<E, R>(
-  effect?: Throw<E> | Use<R> | void,
+  effect?: YieldOf<AnyEffector<never, E, R>>,
 ): Status<never, E, R> {
   return { ..._status('Suspended'), effect }
 }
