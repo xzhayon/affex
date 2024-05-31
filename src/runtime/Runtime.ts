@@ -43,7 +43,7 @@ export class Runtime<R> {
 
         switch (fiber.status[$Type.tag]) {
           case 'Ready':
-            fiber.start()
+            $Fiber.start(fiber)
             this.queue.push(fiber)
 
             break
@@ -58,7 +58,7 @@ export class Runtime<R> {
             break
           case 'Suspended':
             if (fiber.status.effect === undefined) {
-              fiber.resume()
+              $Fiber.resume(fiber)
               this.queue.push(fiber)
 
               break
@@ -66,7 +66,7 @@ export class Runtime<R> {
 
             const exit = this.handle(fiber.status.effect._, fiber)
             if (exit !== undefined) {
-              fiber.resume(exit)
+              $Fiber.resume(fiber, exit)
             }
             this.queue.push(fiber)
 
@@ -120,7 +120,7 @@ export class Runtime<R> {
             return $Exit.success(valueOrChild)
           }
 
-          fiber.supervise(valueOrChild)
+          $Fiber.supervise(fiber, valueOrChild)
           this.queue.push(valueOrChild)
           this.effectFibers.set(effect.id, valueOrChild)
 
@@ -131,7 +131,7 @@ export class Runtime<R> {
         case 'Fork': {
           const child = this.resolve(effect.effector)
           const parent = effect.global ? this.fiber : fiber
-          parent.supervise(child)
+          $Fiber.supervise(parent, child)
           this.queue.push(child)
 
           return $Exit.success(child)
@@ -139,7 +139,7 @@ export class Runtime<R> {
         case 'Interruption':
           return $Exit.failure($Cause.interrupt())
         case 'Join':
-          fiber.supervise(effect.fiber)
+          $Fiber.supervise(fiber, effect.fiber)
           this.effectFibers.set(effect.id, effect.fiber)
 
           return undefined
@@ -151,7 +151,7 @@ export class Runtime<R> {
             return $Exit.success(valueOrChild)
           }
 
-          fiber.supervise(valueOrChild)
+          $Fiber.supervise(fiber, valueOrChild)
           this.queue.push(valueOrChild)
           this.effectFibers.set(effect.id, valueOrChild)
 
@@ -164,7 +164,7 @@ export class Runtime<R> {
               return $Exit.success(valueOrChild)
             }
 
-            fiber.supervise(valueOrChild)
+            $Fiber.supervise(fiber, valueOrChild)
             this.queue.push(valueOrChild)
             this.effectFibers.set(effect.id, valueOrChild)
             this.multiPassEffects.add(effect.id)
@@ -188,7 +188,7 @@ export class Runtime<R> {
               return $Exit.success(valueOrChild)
             }
 
-            fiber.supervise(valueOrChild)
+            $Fiber.supervise(fiber, valueOrChild)
             this.queue.push(valueOrChild)
             this.effectFibers.set(effect.id, valueOrChild)
           }
@@ -200,7 +200,7 @@ export class Runtime<R> {
             return $Exit.success(valueOrChild)
           }
 
-          fiber.supervise(valueOrChild)
+          $Fiber.supervise(fiber, valueOrChild)
           this.queue.push(valueOrChild)
           this.effectFibers.set(effect.id, valueOrChild)
 

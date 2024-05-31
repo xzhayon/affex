@@ -14,6 +14,7 @@ import * as $Fork from '../effect/Fork'
 import * as $Join from '../effect/Join'
 import { ConcurrencyError } from '../error/ConcurrencyError'
 import { InterruptError } from '../error/InterruptError'
+import * as $Fiber from '../fiber/Fiber'
 
 export function* all<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
@@ -51,7 +52,7 @@ export function* all<G extends AnyEffector<any, any, any>>(
     return values
   } finally {
     yield* $Generator.fromPromise(
-      Promise.all(fibers.map((fiber) => fiber.interrupt())),
+      Promise.all(fibers.map((fiber) => $Fiber.interrupt(fiber))),
     )
   }
 }
@@ -96,7 +97,7 @@ export function* any<G extends AnyEffector<any, any, any>>(
     )
   } finally {
     yield* $Generator.fromPromise(
-      Promise.all(fibers.map((fiber) => fiber.interrupt())),
+      Promise.all(fibers.map((fiber) => $Fiber.interrupt(fiber))),
     )
   }
 }
@@ -124,7 +125,7 @@ export function* race<G extends AnyEffector<any, any, any>>(
     }
   } finally {
     yield* $Generator.fromPromise(
-      Promise.all(fibers.map((fiber) => fiber.interrupt())),
+      Promise.all(fibers.map((fiber) => $Fiber.interrupt(fiber))),
     )
   }
 }

@@ -14,7 +14,9 @@ describe('Fiber', () => {
     test('starting fiber', async () => {
       const fiber = $Fiber.fiber(f)
 
-      await expect(fiber.start()).resolves.toStrictEqual($Status.suspended())
+      await expect($Fiber.start(fiber)).resolves.toStrictEqual(
+        $Status.suspended(),
+      )
     })
 
     test('failing starting fiber', async () => {
@@ -22,26 +24,26 @@ describe('Fiber', () => {
         throw new Error('foo')
       })
 
-      await expect(fiber.start()).resolves.toStrictEqual(
+      await expect($Fiber.start(fiber)).resolves.toStrictEqual(
         $Status.terminated($Exit.failure($Cause.die(new Error('foo')))),
       )
     })
 
     test('failing starting suspended fiber', async () => {
       const fiber = $Fiber.fiber(f)
-      await fiber.start()
+      await $Fiber.start(fiber)
 
-      await expect(fiber.start()).rejects.toThrow(
+      await expect($Fiber.start(fiber)).rejects.toThrow(
         /Cannot start fiber [^ ]+ in status "Suspended"/,
       )
     })
 
     test('failing starting terminated fiber', async () => {
       const fiber = $Fiber.fiber(f)
-      await fiber.start()
-      await fiber.resume($Exit.failure($Cause.die(new Error('foo'))))
+      await $Fiber.start(fiber)
+      await $Fiber.resume(fiber, $Exit.failure($Cause.die(new Error('foo'))))
 
-      await expect(fiber.start()).rejects.toThrow(
+      await expect($Fiber.start(fiber)).rejects.toThrow(
         /Cannot start fiber [^ ]+ in status "Terminated"/,
       )
     })
@@ -50,9 +52,9 @@ describe('Fiber', () => {
   describe('resume', () => {
     test('resuming fiber', async () => {
       const fiber = $Fiber.fiber(f)
-      await fiber.start()
+      await $Fiber.start(fiber)
 
-      await expect(fiber.resume()).resolves.toStrictEqual(
+      await expect($Fiber.resume(fiber)).resolves.toStrictEqual(
         $Status.terminated($Exit.success(42)),
       )
     })
@@ -60,17 +62,17 @@ describe('Fiber', () => {
     test('failing resuming ready fiber', async () => {
       const fiber = $Fiber.fiber(f)
 
-      await expect(fiber.resume()).rejects.toThrow(
+      await expect($Fiber.resume(fiber)).rejects.toThrow(
         /Cannot resume fiber [^ ]+ in status "Ready"/,
       )
     })
 
     test('failing resuming terminated fiber', async () => {
       const fiber = $Fiber.fiber(f)
-      await fiber.start()
-      await fiber.resume($Exit.failure($Cause.die(new Error('foo'))))
+      await $Fiber.start(fiber)
+      await $Fiber.resume(fiber, $Exit.failure($Cause.die(new Error('foo'))))
 
-      await expect(fiber.resume()).rejects.toThrow(
+      await expect($Fiber.resume(fiber)).rejects.toThrow(
         /Cannot resume fiber [^ ]+ in status "Terminated"/,
       )
     })
@@ -80,36 +82,36 @@ describe('Fiber', () => {
     test('interrupting ready fiber', async () => {
       const fiber = $Fiber.fiber(f)
 
-      await expect(fiber.interrupt()).resolves.toStrictEqual(
+      await expect($Fiber.interrupt(fiber)).resolves.toStrictEqual(
         $Status.terminated($Exit.failure($Cause.interrupt())),
       )
     })
 
     test('interrupting suspended fiber', async () => {
       const fiber = $Fiber.fiber(f)
-      await fiber.start()
+      await $Fiber.start(fiber)
 
-      await expect(fiber.interrupt()).resolves.toStrictEqual(
+      await expect($Fiber.interrupt(fiber)).resolves.toStrictEqual(
         $Status.terminated($Exit.failure($Cause.interrupt())),
       )
     })
 
     test('interrupting interrupted fiber', async () => {
       const fiber = $Fiber.fiber(f)
-      await fiber.start()
-      await fiber.interrupt()
+      await $Fiber.start(fiber)
+      await $Fiber.interrupt(fiber)
 
-      await expect(fiber.interrupt()).resolves.toStrictEqual(
+      await expect($Fiber.interrupt(fiber)).resolves.toStrictEqual(
         $Status.terminated($Exit.failure($Cause.interrupt())),
       )
     })
 
     test('interrupting terminated fiber', async () => {
       const fiber = $Fiber.fiber(f)
-      await fiber.start()
-      await fiber.resume($Exit.failure($Cause.die(new Error('foo'))))
+      await $Fiber.start(fiber)
+      await $Fiber.resume(fiber, $Exit.failure($Cause.die(new Error('foo'))))
 
-      await expect(fiber.interrupt()).resolves.toStrictEqual(
+      await expect($Fiber.interrupt(fiber)).resolves.toStrictEqual(
         $Status.terminated($Exit.failure($Cause.die(new Error('foo')))),
       )
     })
@@ -121,7 +123,7 @@ describe('Fiber', () => {
         () => new Promise((resolve) => setTimeout(() => resolve(42), 0)),
       )
 
-      await expect(fiber.start()).resolves.toStrictEqual(
+      await expect($Fiber.start(fiber)).resolves.toStrictEqual(
         $Status.terminated($Exit.success(42)),
       )
     })

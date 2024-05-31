@@ -27,6 +27,21 @@ export class Fiber<out A, out E, out R> {
       $Function.is(effector) ? effector : () => effector,
     )
 
+  static readonly supervise = <A, E, R, _R extends R>(
+    parent: Fiber<A, E, R>,
+    child: Fiber<unknown, unknown, _R>,
+  ) => parent.supervise(child)
+
+  static readonly start = <A, E, R>(fiber: Fiber<A, E, R>) => fiber.start()
+
+  static readonly resume = <A, E, R, _E extends E>(
+    fiber: Fiber<A, E, R>,
+    exit?: Exit<unknown, _E>,
+  ) => fiber.resume(exit)
+
+  static readonly interrupt = <A, E, R>(fiber: Fiber<A, E, R>) =>
+    fiber.interrupt()
+
   private constructor(
     private readonly lazyEffector: () => AnyEffector<A, E, R>,
   ) {}
@@ -35,11 +50,13 @@ export class Fiber<out A, out E, out R> {
     return this._status
   }
 
-  readonly supervise = <_R extends R>(fiber: Fiber<unknown, unknown, _R>) => {
+  private readonly supervise = <_R extends R>(
+    fiber: Fiber<unknown, unknown, _R>,
+  ) => {
     this.children.push(fiber)
   }
 
-  readonly start = async () => {
+  private readonly start = async () => {
     this.assert('Ready', 'start')
 
     try {
@@ -54,13 +71,13 @@ export class Fiber<out A, out E, out R> {
     }
   }
 
-  readonly resume = async <_E extends E>(exit?: Exit<unknown, _E>) => {
+  private readonly resume = async <_E extends E>(exit?: Exit<unknown, _E>) => {
     this.assert('Suspended', 'resume')
 
     return this.next(exit)
   }
 
-  readonly interrupt = async () => {
+  private readonly interrupt = async () => {
     try {
       switch (this._status[$Type.tag]) {
         case 'Running':
@@ -195,3 +212,11 @@ export function fromPromise<A>(promise: OrLazy<Promise<A>>) {
 export function is(u: unknown): u is Fiber<unknown, unknown, unknown> {
   return u instanceof Fiber
 }
+
+export const supervise = Fiber.supervise
+
+export const start = Fiber.start
+
+export const resume = Fiber.resume
+
+export const interrupt = Fiber.interrupt
