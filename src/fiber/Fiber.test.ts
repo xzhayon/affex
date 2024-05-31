@@ -87,6 +87,19 @@ describe('Fiber', () => {
       )
     })
 
+    test('interrupting running fiber', async () => {
+      const fiber = $Fiber.fromPromise(
+        new Promise((resolve) => setTimeout(resolve, 100)),
+      )
+      const start = $Fiber.start(fiber)
+      const interrupt = $Fiber.interrupt(fiber)
+      await Promise.all([start, interrupt])
+
+      expect(fiber.status).toStrictEqual(
+        $Status.terminated($Exit.failure($Cause.interrupt())),
+      )
+    })
+
     test('interrupting suspended fiber', async () => {
       const fiber = $Fiber.fiber(f)
       await $Fiber.start(fiber)

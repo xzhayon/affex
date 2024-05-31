@@ -50,6 +50,14 @@ export class Fiber<out A, out E, out R> {
     return this._status
   }
 
+  private set status(status: Status<A, E, R>) {
+    if ($Status.isTerminated(this._status)) {
+      return
+    }
+
+    this._status = status
+  }
+
   private readonly supervise = <_R extends R>(
     fiber: Fiber<unknown, unknown, _R>,
   ) => {
@@ -60,12 +68,13 @@ export class Fiber<out A, out E, out R> {
     this.assert('Ready', 'start')
 
     try {
-      this._status = $Status.started()
+      this.status = $Status.started()
       this.effector = this.lazyEffector()
 
       return this.next()
     } catch (error) {
-      await this.end($Exit.failure($Cause.die(error)))
+      this.status = $Status.terminated($Exit.failure($Cause.die(error)))
+      await this.dispose()
 
       return this._status
     }
@@ -80,17 +89,21 @@ export class Fiber<out A, out E, out R> {
   private readonly interrupt = async () => {
     try {
       switch (this._status[$Type.tag]) {
-        case 'Running':
-        case 'Suspended':
-          await this.effector.return(undefined as any)
+        case 'Ready':
+          this.status = $Status.terminated($Exit.failure($Cause.interrupt()))
+          await this.dispose()
 
           break
-        case 'Terminated':
-          return this._status
+        case 'Started':
+        case 'Running':
+        case 'Suspended':
+          this.status = $Status.terminated($Exit.failure($Cause.interrupt()))
+          await this.effector.return(undefined as any)
+          await this.dispose()
+
+          break
       }
     } catch {}
-
-    await this.end($Exit.failure($Cause.interrupt()))
 
     return this._status
   }
@@ -110,7 +123,7 @@ export class Fiber<out A, out E, out R> {
 
   private readonly next = async <_E extends E>(exit?: Exit<unknown, _E>) => {
     try {
-      this._status = $Status.running()
+      this.status = $Status.running()
       let result: IteratorResult<YieldOf<typeof this.effector>, A>
       switch (exit?.[$Type.tag]) {
         case undefined:
@@ -130,15 +143,16 @@ export class Fiber<out A, out E, out R> {
       }
 
       if (result.done) {
-        await this.end($Exit.success(result.value))
+        this.status = $Status.terminated($Exit.success(result.value))
+        await this.dispose()
       } else {
-        this._status = $Status.suspended(result.value)
+        this.status = $Status.suspended(result.value)
       }
     } catch (error) {
       switch (this.exit?.[$Type.tag]) {
         case undefined:
         case 'Success':
-          await this.end(
+          this.status = $Status.terminated(
             $Exit.failure(
               $InterruptError.is(error)
                 ? $Cause.interrupt()
@@ -148,7 +162,7 @@ export class Fiber<out A, out E, out R> {
 
           break
         case 'Failure':
-          await this.end(
+          this.status = $Status.terminated(
             $InterruptError.is(error)
               ? $Cause.isInterrupt(this.exit.cause)
                 ? this.exit
@@ -161,15 +175,14 @@ export class Fiber<out A, out E, out R> {
 
           break
       }
+
+      await this.dispose()
     }
 
     return this._status
   }
 
-  private readonly end = async <_A extends A, _E extends E>(
-    exit: Exit<_A, _E>,
-  ) => {
-    this._status = $Status.terminated(exit)
+  private readonly dispose = async () => {
     const children = this.children.filter(
       (fiber) => !$Status.isTerminated(fiber.status),
     )
