@@ -9,7 +9,7 @@ import * as $Type from '../Type'
 import { OrLazy } from '../Type'
 import * as $InterruptError from '../error/InterruptError'
 import { InterruptError } from '../error/InterruptError'
-import * as $FiberId from './FiberId'
+import * as $FiberId from './Id'
 import * as $Status from './Status'
 import { Status } from './Status'
 

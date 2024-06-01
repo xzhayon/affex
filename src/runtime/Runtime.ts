@@ -8,7 +8,7 @@ import * as $Promise from '../Promise'
 import * as $Type from '../Type'
 import { OrLazy } from '../Type'
 import { Effect } from '../effect/Effect'
-import { EffectId } from '../effect/EffectId'
+import { Id } from '../effect/Id'
 import { InterruptError } from '../error/InterruptError'
 import * as $Fiber from '../fiber/Fiber'
 import { Fiber } from '../fiber/Fiber'
@@ -19,11 +19,8 @@ import * as $Engine from './Engine'
 export class Runtime<R> {
   private fiber!: Fiber<any, any, R>
   private readonly queue: Fiber<unknown, unknown, R>[] = []
-  private readonly effectFibers = new Map<
-    EffectId,
-    Fiber<unknown, unknown, R>
-  >()
-  private readonly multiPassEffects = new Set<EffectId>()
+  private readonly effectFibers = new Map<Id, Fiber<unknown, unknown, R>>()
+  private readonly multiPassEffects = new Set<Id>()
 
   static readonly make = <R>(context: Context<R>) => new Runtime<R>(context)
 

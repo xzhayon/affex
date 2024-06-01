@@ -3,10 +3,10 @@ import * as $Struct from '../Struct'
 import * as $Type from '../Type'
 import { Variant } from '../Type'
 import { Backdoor } from './Backdoor'
-import * as $EffectId from './EffectId'
-import { EffectId } from './EffectId'
 import { Exception } from './Exception'
 import { Fork } from './Fork'
+import * as $EffectId from './Id'
+import { Id } from './Id'
 import { Interruption } from './Interruption'
 import { Join } from './Join'
 import { Proxy } from './Proxy'
@@ -26,7 +26,7 @@ export type Effect<A, E = never, R = never> =
   | Suspension
 
 export interface _Effect<T extends string> extends Variant<typeof uri, T> {
-  readonly id: EffectId
+  readonly id: Id
 }
 
 export type EOf<E extends Effect<any, any, any>> = E extends
