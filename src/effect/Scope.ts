@@ -5,7 +5,7 @@ import { OrLazy } from '../Type'
 import * as $Effect from './Effect'
 import { Effect, _Effect, _effect } from './Effect'
 
-export interface Scope<A, E, R> extends _Effect<'Scope'> {
+export interface Scope<out A, out E, out R> extends _Effect<'Scope'> {
   readonly effector: () => AnyEffector<A, E, R>
 }
 

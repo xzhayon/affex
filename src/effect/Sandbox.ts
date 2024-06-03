@@ -5,7 +5,7 @@ import { OrLazy } from '../Type'
 import * as $Effect from './Effect'
 import { Effect, _Effect, _effect } from './Effect'
 
-export interface Sandbox<A, E, R> extends _Effect<'Sandbox'> {
+export interface Sandbox<out A, out E, out R> extends _Effect<'Sandbox'> {
   readonly try: () => AnyEffector<A, any, R>
   readonly catch: (
     error: ErrorOf<ReturnType<this['try']>>,

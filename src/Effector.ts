@@ -2,11 +2,11 @@ import { AnyGenerator, ReturnOf, YieldOf } from './Generator'
 import * as $Type from './Type'
 import { Effect } from './effect/Effect'
 
-export type Effector<A, E = never, R = never> = Generator<
+export type Effector<out A, out E = never, out R = never> = Generator<
   Throw<E> | Use<R> | void,
   A
 >
-export type AsyncEffector<A, E = never, R = never> = AsyncGenerator<
+export type AsyncEffector<out A, out E = never, out R = never> = AsyncGenerator<
   Throw<E> | Use<R> | void,
   A
 >
@@ -14,12 +14,12 @@ export type AnyEffector<A, E = never, R = never> =
   | Effector<A, E, R>
   | AsyncEffector<A, E, R>
 
-interface Throw<E> {
+export interface Throw<out E> {
   readonly [$Type.uri]?: unique symbol
   readonly _: Effect<any, E, any>
 }
 
-interface Use<R> {
+export interface Use<out R> {
   readonly [$Type.uri]?: unique symbol
   readonly _: Effect<any, any, R>
 }

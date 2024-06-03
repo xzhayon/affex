@@ -5,7 +5,7 @@ import { OrLazy } from '../Type'
 import * as $Effect from './Effect'
 import { Effect, _Effect, _effect } from './Effect'
 
-export interface Backdoor<A, E, R> extends _Effect<'Backdoor'> {
+export interface Backdoor<out A, out E, out R> extends _Effect<'Backdoor'> {
   readonly handle: (
     run: <G extends AnyEffector<any, any, R>>(
       effector: OrLazy<G>,

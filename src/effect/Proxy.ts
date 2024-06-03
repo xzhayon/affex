@@ -6,12 +6,15 @@ import * as $Result from '../Result'
 import { Result, Resulted } from '../Result'
 import { Struct } from '../Struct'
 import { Tag } from '../Tag'
+import { Handler } from '../runtime/Handler'
 import * as $Effect from './Effect'
 import { Effect, _Effect, _effect } from './Effect'
 
-export interface Proxy<A, E, R> extends _Effect<'Proxy'> {
-  readonly tag: Tag<R>
-  readonly handle: (handler: unknown) => A | Promise<A> | AnyEffector<A, E, R>
+export interface Proxy<out A, out E, out R> extends _Effect<'Proxy'> {
+  readonly tag: Tag<any>
+  readonly handle: <_R extends R>(
+    handler: Handler<_R>,
+  ) => A | Promise<A> | AnyEffector<A, E, R>
 }
 
 type Unwrapped<A> = Resulted<Awaited<Generated<Resulted<A>>>>

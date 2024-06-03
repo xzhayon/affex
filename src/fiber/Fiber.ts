@@ -27,9 +27,9 @@ export class Fiber<out A, out E, out R> {
       $Function.is(effector) ? effector : () => effector,
     )
 
-  static readonly supervise = <A, E, R, _R extends R>(
-    parent: Fiber<A, E, R>,
-    child: Fiber<unknown, unknown, _R>,
+  static readonly supervise = <R>(
+    parent: Fiber<unknown, unknown, R>,
+    child: Fiber<unknown, unknown, R>,
   ) => parent.supervise(child)
 
   static readonly start = <A, E, R>(fiber: Fiber<A, E, R>) => fiber.start()

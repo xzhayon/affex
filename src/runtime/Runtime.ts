@@ -16,10 +16,10 @@ import * as $Status from '../fiber/Status'
 import { Context } from './Context'
 import * as $Engine from './Engine'
 
-export class Runtime<R> {
-  private fiber!: Fiber<any, any, R>
-  private readonly queue: Fiber<unknown, unknown, R>[] = []
-  private readonly effectFibers = new Map<Id, Fiber<unknown, unknown, R>>()
+export class Runtime<in R> {
+  private fiber!: Fiber<any, any, any>
+  private readonly queue: Fiber<any, any, any>[] = []
+  private readonly effectFibers = new Map<Id, Fiber<any, any, any>>()
   private readonly multiPassEffects = new Set<Id>()
 
   static readonly make = <R>(context: Context<R>) => new Runtime<R>(context)
@@ -211,8 +211,8 @@ export class Runtime<R> {
     }
   }
 
-  private readonly resolve = <A, E, _R extends R>(
-    value: A | Promise<A> | OrLazy<AnyEffector<A, E, _R>>,
+  private readonly resolve = <A, E>(
+    value: A | Promise<A> | OrLazy<AnyEffector<A, E, R>>,
   ) => {
     if ($Function.is(value) || $Generator.is(value)) {
       return $Fiber.fiber(value)

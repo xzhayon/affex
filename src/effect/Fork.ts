@@ -6,12 +6,10 @@ import { Fiber } from '../fiber/Fiber'
 import * as $Effect from './Effect'
 import { Effect, _Effect, _effect } from './Effect'
 
-export interface Fork<A, R> extends _Effect<'Fork'> {
-  readonly effector: () => AnyEffector<
-    A extends Fiber<any, any, R> ? $Fiber.AOf<A> : never,
-    A extends Fiber<any, any, R> ? $Fiber.EOf<A> : never,
-    A extends Fiber<any, any, R> ? $Fiber.ROf<A> : never
-  >
+export interface Fork<out A, out R> extends _Effect<'Fork'> {
+  readonly effector: <_R extends R>() => A extends Fiber<any, any, _R>
+    ? AnyEffector<$Fiber.AOf<A>, $Fiber.EOf<A>, $Fiber.ROf<A>>
+    : never
   readonly global: boolean
 }
 
