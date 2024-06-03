@@ -36,7 +36,7 @@ describe('Fork', () => {
           })
         })
 
-        yield* sleep(1000)
+        yield* sleep(200)
       }, context)
 
       expect(a).toStrictEqual(0)
@@ -54,7 +54,7 @@ describe('Fork', () => {
           })
         })
 
-        yield* sleep(1000)
+        yield* sleep(200)
       }, context)
 
       expect(a).toStrictEqual(1)
