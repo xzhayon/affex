@@ -135,7 +135,7 @@ export class Fiber<out A, out E, out R> {
           this.exit = exit
           result = await this.effector.throw(
             $Cause.isInterrupt(exit.cause)
-              ? new InterruptError()
+              ? new InterruptError(this.id)
               : exit.cause.error,
           )
 

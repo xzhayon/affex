@@ -79,7 +79,7 @@ export function* any<G extends AnyEffector<any, any, any>>(
             case 'Failure':
               delete fibers[index]
               errors[index] = $Cause.isInterrupt(fiber.status.exit.cause)
-                ? new InterruptError()
+                ? new InterruptError(fiber.id)
                 : fiber.status.exit.cause.error
               done++
 
