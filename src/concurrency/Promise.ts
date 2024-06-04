@@ -1,4 +1,10 @@
-import { AnyEffector, ContextOf, ErrorOf } from '../Effector'
+import {
+  AnyEffector,
+  ContextOf,
+  Effector,
+  ErrorOf,
+  OutputOf,
+} from '../Effector'
 import * as $Exit from '../Exit'
 import * as $Type from '../Type'
 import { OrLazy } from '../Type'
@@ -12,7 +18,7 @@ import { InterruptError } from '../error/InterruptError'
 
 export function all<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
-) {
+): Effector<OutputOf<G>[], ErrorOf<G>, ContextOf<G>> {
   return $Backdoor.exploit<ContextOf<G>>()(async function* (run) {
     try {
       return await Promise.all(
@@ -45,7 +51,7 @@ export function all<G extends AnyEffector<any, any, any>>(
 
 export function any<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
-) {
+): Effector<OutputOf<G>, ConcurrencyError, ContextOf<G>> {
   return $Backdoor.exploit<ContextOf<G>>()(async function* (run) {
     try {
       return await Promise.any(
@@ -92,7 +98,7 @@ export function any<G extends AnyEffector<any, any, any>>(
 
 export function race<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
-) {
+): Effector<OutputOf<G>, ErrorOf<G>, ContextOf<G>> {
   return $Backdoor.exploit<ContextOf<G>>()(async function* (run) {
     try {
       return await Promise.race(

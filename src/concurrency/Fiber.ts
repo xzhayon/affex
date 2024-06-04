@@ -15,6 +15,7 @@ import * as $Join from '../effect/Join'
 import { ConcurrencyError } from '../error/ConcurrencyError'
 import { InterruptError } from '../error/InterruptError'
 import * as $Fiber from '../fiber/Fiber'
+import { Fiber } from '../fiber/Fiber'
 
 export function* all<G extends AnyEffector<any, any, any>>(
   effectors: ReadonlyArray<OrLazy<G>>,
@@ -40,7 +41,9 @@ export function* all<G extends AnyEffector<any, any, any>>(
 
               break
             case 'Failure':
-              return yield* $Join.join(fiber)
+              return yield* $Join.join(
+                fiber as Fiber<never, ErrorOf<G>, ContextOf<G>>,
+              )
           }
         default:
           yield
@@ -51,9 +54,7 @@ export function* all<G extends AnyEffector<any, any, any>>(
 
     return values
   } finally {
-    yield* $Generator.fromPromise(
-      Promise.all(fibers.map((fiber) => $Fiber.interrupt(fiber))),
-    )
+    yield* $Generator.fromPromise(Promise.all(fibers.map($Fiber.interrupt)))
   }
 }
 
@@ -96,9 +97,7 @@ export function* any<G extends AnyEffector<any, any, any>>(
       new ConcurrencyError(errors, 'All fibers failed'),
     )
   } finally {
-    yield* $Generator.fromPromise(
-      Promise.all(fibers.map((fiber) => $Fiber.interrupt(fiber))),
-    )
+    yield* $Generator.fromPromise(Promise.all(fibers.map($Fiber.interrupt)))
   }
 }
 
@@ -115,7 +114,9 @@ export function* race<G extends AnyEffector<any, any, any>>(
             case 'Success':
               return fiber.status.exit.value
             case 'Failure':
-              return yield* $Join.join(fiber)
+              return yield* $Join.join(
+                fiber as Fiber<never, ErrorOf<G>, ContextOf<G>>,
+              )
           }
         default:
           yield
@@ -124,8 +125,6 @@ export function* race<G extends AnyEffector<any, any, any>>(
       }
     }
   } finally {
-    yield* $Generator.fromPromise(
-      Promise.all(fibers.map((fiber) => $Fiber.interrupt(fiber))),
-    )
+    yield* $Generator.fromPromise(Promise.all(fibers.map($Fiber.interrupt)))
   }
 }

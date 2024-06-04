@@ -6,10 +6,10 @@ import * as $Effect from './Effect'
 import { Effect, _Effect, _effect } from './Effect'
 
 export interface Sandbox<out A, out E, out R> extends _Effect<'Sandbox'> {
-  readonly try: () => AnyEffector<A, any, R>
-  readonly catch: (
+  readonly try: <_R extends R>() => AnyEffector<A, any, _R>
+  readonly catch: <_R extends R>(
     error: ErrorOf<ReturnType<this['try']>>,
-  ) => A | Promise<A> | AnyEffector<A, E, R>
+  ) => A | Promise<A> | AnyEffector<A, E, _R>
 }
 
 function sandbox<

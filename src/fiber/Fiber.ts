@@ -4,7 +4,7 @@ import * as $Exit from '../Exit'
 import { Exit } from '../Exit'
 import * as $Function from '../Function'
 import * as $Generator from '../Generator'
-import { AnyGenerator, YieldOf } from '../Generator'
+import { YieldOf } from '../Generator'
 import * as $Type from '../Type'
 import { OrLazy } from '../Type'
 import * as $InterruptError from '../error/InterruptError'
@@ -20,7 +20,7 @@ export class Fiber<out A, out E, out R> {
   private readonly children: Fiber<unknown, unknown, R>[] = []
   private exit!: Exit<A, E>
 
-  static readonly make = <G extends AnyGenerator<any, any>>(
+  static readonly make = <G extends AnyEffector<any, any, any>>(
     effector: OrLazy<G>,
   ) =>
     new Fiber<OutputOf<G>, ErrorOf<G>, ContextOf<G>>(
@@ -34,9 +34,9 @@ export class Fiber<out A, out E, out R> {
 
   static readonly start = <A, E, R>(fiber: Fiber<A, E, R>) => fiber.start()
 
-  static readonly resume = <A, E, R, _E extends E>(
+  static readonly resume = <A, E, R>(
     fiber: Fiber<A, E, R>,
-    exit?: Exit<unknown, _E>,
+    exit?: Exit<unknown, E>,
   ) => fiber.resume(exit)
 
   static readonly interrupt = <A, E, R>(fiber: Fiber<A, E, R>) =>
