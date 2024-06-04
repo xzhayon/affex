@@ -1,6 +1,6 @@
 import * as $Cause from '../Cause'
+import { Result } from '../Effector'
 import * as $Exit from '../Exit'
-import { Result } from '../Result'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
 import * as $Exception from '../effect/Exception'

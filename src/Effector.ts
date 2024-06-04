@@ -24,6 +24,8 @@ export interface Use<out R> {
   readonly _: Effect<any, any, R>
 }
 
+export type Result<A, E> = AnyEffector<A, E>
+
 export type OutputOf<G extends AnyGenerator> = ReturnOf<G>
 export type ErrorOf<G extends AnyGenerator> = YieldOf<G> extends infer Y
   ? Y extends Throw<infer E>

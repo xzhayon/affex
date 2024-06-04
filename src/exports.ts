@@ -9,6 +9,7 @@ export {
   Effector,
   ErrorOf,
   OutputOf,
+  Result,
 } from './Effector'
 export { is as isExit, isFailure, isSuccess } from './Exit'
 export {
@@ -21,7 +22,6 @@ export {
   traverse,
   traverseAsync,
 } from './Generator'
-export { Result } from './Result'
 export { tag } from './Tag'
 export { uri } from './Type'
 export { all, any, race } from './concurrency/Concurrency'

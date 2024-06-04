@@ -2,8 +2,6 @@ import { AnyEffector, ContextOf, Effector, ErrorOf } from '../Effector'
 import { Function } from '../Function'
 import { AnyGenerator, Generated } from '../Generator'
 import { NonEmptyArray } from '../NonEmptyArray'
-import * as $Result from '../Result'
-import { Result, Resulted } from '../Result'
 import { Struct } from '../Struct'
 import { Tag } from '../Tag'
 import { Handler } from '../runtime/Handler'
@@ -17,17 +15,14 @@ export interface Proxy<out A, out E, out R> extends _Effect<'Proxy'> {
   ) => A | Promise<A> | AnyEffector<A, E, R>
 }
 
-type Unwrapped<A> = Resulted<Awaited<Generated<Resulted<A>>>>
+type Unwrapped<A> = Awaited<Generated<A>>
 
 function proxy<R, F extends (handler: any) => any>(
   tag: Tag<R>,
   handle: F,
 ): Effect<
   Unwrapped<ReturnType<F>>,
-  | (ReturnType<F> extends infer G extends AnyGenerator ? ErrorOf<G> : never)
-  | (Awaited<Generated<ReturnType<F>>> extends infer _R extends Result<any, any>
-      ? $Result.EOf<_R>
-      : never),
+  ReturnType<F> extends infer G extends AnyGenerator ? ErrorOf<G> : never,
   | R
   | (ReturnType<F> extends infer G extends AnyGenerator ? ContextOf<G> : never)
 > {
@@ -39,10 +34,7 @@ export function functionA<R extends Function>(tag: Tag<R>) {
     handle: (handler: R) => A,
   ): Effector<
     Unwrapped<A>,
-    | (A extends AnyGenerator ? ErrorOf<A> : never)
-    | (Awaited<Generated<A>> extends infer _R extends Result<any, any>
-        ? $Result.EOf<_R>
-        : never),
+    A extends AnyGenerator ? ErrorOf<A> : never,
     R | (A extends AnyGenerator ? ContextOf<A> : never)
   > => $Effect.perform(proxy(tag, handle))
 }
@@ -71,10 +63,7 @@ export function structA<R extends Struct>(tag: Tag<R>) {
         handle: (r: R[_K]) => A,
       ) => Effector<
         Unwrapped<A>,
-        | (A extends AnyGenerator ? ErrorOf<A> : never)
-        | (Awaited<Generated<A>> extends infer _R extends Result<any, any>
-            ? $Result.EOf<_R>
-            : never),
+        A extends AnyGenerator ? ErrorOf<A> : never,
         R | (A extends AnyGenerator ? ContextOf<A> : never)
       >
     }
@@ -99,14 +88,9 @@ export function struct<R extends Struct>(tag: Tag<R>) {
             ...args: Parameters<R[_K]>
           ) => Effector<
             Unwrapped<ReturnType<R[_K]>>,
-            | (ReturnType<R[_K]> extends infer G extends AnyGenerator
+            | ReturnType<R[_K]> extends infer G extends AnyGenerator
                 ? ErrorOf<G>
-                : never)
-            | (Awaited<
-                Generated<ReturnType<R[_K]>>
-              > extends infer _R extends Result<any, any>
-                ? $Result.EOf<_R>
-                : never),
+                : never,
             | R
             | (ReturnType<R[_K]> extends infer G extends AnyGenerator
                 ? ContextOf<G>

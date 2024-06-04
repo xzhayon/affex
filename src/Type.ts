@@ -1,5 +1,3 @@
-import { Equal } from '@type-challenges/utils'
-
 export type Covariant<A> = (_: never) => A
 export type Contravariant<A> = (_: A) => never
 export type Invariant<A> = (_: A) => A
@@ -11,8 +9,6 @@ export interface Variant<U, T extends string> {
   readonly [_uri]: U
   readonly [_tag]: T
 }
-
-export type Equals<A, B> = Equal<A, B>
 
 const _uri = Symbol('Uri')
 const _tag = Symbol('Tag')
