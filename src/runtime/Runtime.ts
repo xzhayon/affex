@@ -203,8 +203,6 @@ export class Runtime<in R> {
 
           return undefined
         }
-        case 'Suspension':
-          return $Exit.success(undefined)
       }
     } catch (error) {
       return $Exit.failure($Cause.die(error))

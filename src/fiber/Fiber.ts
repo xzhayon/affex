@@ -1,5 +1,11 @@
 import * as $Cause from '../Cause'
-import { AnyEffector, ContextOf, ErrorOf, OutputOf } from '../Effector'
+import {
+  AnyEffector,
+  ContextOf,
+  Effector,
+  ErrorOf,
+  OutputOf,
+} from '../Effector'
 import * as $Exit from '../Exit'
 import { Exit } from '../Exit'
 import * as $Function from '../Function'
@@ -233,3 +239,7 @@ export const start = Fiber.start
 export const resume = Fiber.resume
 
 export const interrupt = Fiber.interrupt
+
+export function* suspend(): Effector<void> {
+  yield
+}

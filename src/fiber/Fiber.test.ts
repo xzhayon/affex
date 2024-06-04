@@ -1,5 +1,11 @@
 import * as $Cause from '../Cause'
 import * as $Exit from '../Exit'
+import * as $Tag from '../Tag'
+import { uri } from '../Type'
+import * as $Proxy from '../effect/Proxy'
+import * as $Context from '../runtime/Context'
+import * as $Layer from '../runtime/Layer'
+import * as $Runtime from '../runtime/Runtime'
 import * as $Fiber from './Fiber'
 import * as $Status from './Status'
 
@@ -139,6 +145,41 @@ describe('Fiber', () => {
       await expect($Fiber.start(fiber)).resolves.toStrictEqual(
         $Status.terminated($Exit.success(42)),
       )
+    })
+  })
+
+  describe('suspend', () => {
+    test('suspending root fiber', async () => {
+      await expect(
+        $Runtime.runPromise(function* () {
+          yield* $Fiber.suspend()
+
+          return 42
+        }, $Context.context()),
+      ).resolves.toStrictEqual(42)
+    })
+
+    test('suspending child fiber', async () => {
+      interface Random {
+        readonly [uri]?: unique symbol
+        (): number
+      }
+
+      const tag = $Tag.tag<Random>()
+      const random = $Proxy.function(tag)
+
+      await expect(
+        $Runtime.runPromise(
+          random,
+          $Context.context().with(
+            $Layer.layer(tag, function* () {
+              yield* $Fiber.suspend()
+
+              return 42
+            }),
+          ),
+        ),
+      ).resolves.toStrictEqual(42)
     })
   })
 })
