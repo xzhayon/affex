@@ -17,7 +17,8 @@ export interface StarshipRepository {
 }
 
 export const tag = fx.tag<StarshipRepository>()
-export const StarshipRepository = fx.service(tag)(
+export const StarshipRepository = fx.service(
+  tag,
   'findManyById',
   'findOneById',
   'findOneByExternalId',

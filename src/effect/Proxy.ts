@@ -30,22 +30,21 @@ function proxy<R, F extends (handler: any) => any>(
   return { ..._effect('Proxy'), tag, handle }
 }
 
-export function access<R extends Function>(
+export function access<R extends Function, A>(
   tag: Tag<R>,
-): <A>(
   handle: (handler: R) => A,
-) => Effector<
+): Effector<
   Unwrapped<A>,
   A extends AnyGenerator ? ErrorOf<A> : never,
   R | (A extends AnyGenerator ? ContextOf<A> : never)
 >
-export function access<R extends Struct>(
-  tag: Tag<R>,
-): <
+export function access<
+  R extends Struct,
   K extends { [_K in keyof R]: R[_K] extends Function ? _K : never }[keyof R],
 >(
+  tag: Tag<R>,
   ...keys: NonEmptyArray<K>
-) => {
+): {
   [_K in K]: <A>(
     handle: (r: R[_K]) => A,
   ) => Effector<
@@ -54,53 +53,52 @@ export function access<R extends Struct>(
     R | (A extends AnyGenerator ? ContextOf<A> : never)
   >
 }
-export function access<R extends Function | Struct>(tag: Tag<R>): any {
-  return (...args: Function[] | string[]) => {
-    return $Function.is(args[0])
-      ? $Effect.perform(proxy(tag, args[0]))
-      : (args as string[]).reduce(
-          (effects, key) => ({
-            ...effects,
-            [key]: <A>(handle: (r: R[keyof R]) => A) =>
-              $Effect.perform(proxy(tag, (handler) => handle(handler[key]))),
-          }),
-          {},
-        )
-  }
+export function access<R extends Function | Struct>(
+  tag: Tag<R>,
+  ...handleOrKeys: Function[] | string[]
+) {
+  return $Function.is(handleOrKeys[0])
+    ? $Effect.perform(proxy(tag, handleOrKeys[0]))
+    : (handleOrKeys as string[]).reduce(
+        (effects, key) => ({
+          ...effects,
+          [key]: <A>(handle: (r: R[keyof R]) => A) =>
+            $Effect.perform(proxy(tag, (handler) => handle(handler[key]))),
+        }),
+        {},
+      )
 }
 
 export function operation<R extends Function>(tag: Tag<R>) {
   return (...args: Parameters<R>) =>
-    access(tag)((r): ReturnType<R> => r(...args))
+    access(tag, (r): ReturnType<R> => r(...args))
 }
 
-export function service<R extends Struct>(tag: Tag<R>) {
-  return <
-    K extends { [_K in keyof R]: R[_K] extends Function ? _K : never }[keyof R],
-  >(
-    ...keys: NonEmptyArray<K>
-  ) =>
-    keys.reduce(
-      (effects, key) => ({
-        ...effects,
-        [key]: (...args: any) =>
-          $Effect.perform(proxy(tag, (handler) => handler[key](...args))),
-      }),
-      {},
-    ) as {
-      [_K in K]: R[_K] extends Function
-        ? (
-            ...args: Parameters<R[_K]>
-          ) => Effector<
-            Unwrapped<ReturnType<R[_K]>>,
-            ReturnType<R[_K]> extends infer G extends AnyGenerator
-              ? ErrorOf<G>
-              : never,
-            | R
-            | (ReturnType<R[_K]> extends infer G extends AnyGenerator
-                ? ContextOf<G>
-                : never)
-          >
-        : never
-    }
+export function service<
+  R extends Struct,
+  K extends { [_K in keyof R]: R[_K] extends Function ? _K : never }[keyof R],
+>(tag: Tag<R>, ...keys: NonEmptyArray<K>) {
+  return keys.reduce(
+    (effects, key) => ({
+      ...effects,
+      [key]: (...args: any) =>
+        $Effect.perform(proxy(tag, (handler) => handler[key](...args))),
+    }),
+    {},
+  ) as {
+    [_K in K]: R[_K] extends Function
+      ? (
+          ...args: Parameters<R[_K]>
+        ) => Effector<
+          Unwrapped<ReturnType<R[_K]>>,
+          ReturnType<R[_K]> extends infer G extends AnyGenerator
+            ? ErrorOf<G>
+            : never,
+          | R
+          | (ReturnType<R[_K]> extends infer G extends AnyGenerator
+              ? ContextOf<G>
+              : never)
+        >
+      : never
+  }
 }

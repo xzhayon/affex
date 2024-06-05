@@ -19,10 +19,10 @@ describe('Proxy', () => {
     }
 
     const tagLog = $Tag.tag<Log>()
-    const log = $Proxy.service(tagLog)('trace')
+    const log = $Proxy.service(tagLog, 'trace')
 
     const tagClock = $Tag.tag<Clock>()
-    const clock = $Proxy.service(tagClock)('now')
+    const clock = $Proxy.service(tagClock, 'now')
 
     const date = new Date()
 
@@ -64,10 +64,10 @@ describe('Proxy', () => {
     }
 
     const tagCrypto = $Tag.tag<Crypto>()
-    const crypto = $Proxy.service(tagCrypto)('number')
+    const crypto = $Proxy.service(tagCrypto, 'number')
 
     const tagCache = $Tag.tag<Cache>()
-    const { get } = $Proxy.access(tagCache)('get')
+    const { get } = $Proxy.access(tagCache, 'get')
     const cache = {
       get: <A, G extends AnyEffector<A, any, any>>(
         key: string,
@@ -118,7 +118,7 @@ describe('Proxy', () => {
       }
 
       const tag = $Tag.tag<Identity>()
-      const identity = <A>(a: A) => $Proxy.access(tag)((r) => r(a))
+      const identity = <A>(a: A) => $Proxy.access(tag, (r) => r(a))
 
       await expect(
         $Runtime.runPromise(
@@ -148,7 +148,7 @@ describe('Proxy', () => {
       }
 
       const tag = $Tag.tag<Log>()
-      const { trace } = $Proxy.access(tag)('trace')
+      const { trace } = $Proxy.access(tag, 'trace')
       const log = { trace: <A>(a: A) => trace((r) => r(a)) }
 
       await expect(
@@ -209,7 +209,7 @@ describe('Proxy', () => {
       }
 
       const tag = $Tag.tag<Calculator>()
-      const calculator = $Proxy.service(tag)('add')
+      const calculator = $Proxy.service(tag, 'add')
 
       await expect(
         $Runtime.runPromise(
