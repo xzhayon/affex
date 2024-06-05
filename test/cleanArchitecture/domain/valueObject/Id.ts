@@ -8,4 +8,4 @@ export interface RandomId {
 }
 
 export const tag = fx.tag<RandomId>()
-export const id = fx.function(tag)
+export const id = fx.operation(tag)

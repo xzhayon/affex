@@ -1,6 +1,6 @@
 import * as $Cause from '../Cause'
+import { Result } from '../Effector'
 import * as $Exit from '../Exit'
-import { Result } from '../Result'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
 import * as $Exception from '../effect/Exception'
@@ -19,7 +19,7 @@ describe('Fiber', () => {
   }
 
   const tag = $Tag.tag<Sleep>()
-  const sleep = $Proxy.function(tag)
+  const sleep = $Proxy.operation(tag)
   const context = $Context
     .context()
     .with(
@@ -75,10 +75,10 @@ describe('Fiber', () => {
     if (!success) {
       await expect(
         $Runtime.runExit($Fiber.all(input.map(sleep)), failContext),
-      ).resolves.toMatchObject($Exit.failure($Cause.fail(output, {} as any)))
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(output)))
       await expect(
         $Runtime.runExit($Fiber.all(input.map(sleep)), interruptContext),
-      ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
+      ).resolves.toMatchObject($Exit.failure($Cause.interrupt()))
     }
   })
 
@@ -96,10 +96,7 @@ describe('Fiber', () => {
     } else {
       await expect($Runtime.runExit(f, failContext)).resolves.toMatchObject(
         $Exit.failure(
-          $Cause.fail(
-            new ConcurrencyError([1, 3], 'All fibers failed'),
-            {} as any,
-          ),
+          $Cause.fail(new ConcurrencyError([1, 3], 'All fibers failed')),
         ),
       )
       await expect(
@@ -111,7 +108,6 @@ describe('Fiber', () => {
               [new Error(), new Error()],
               'All fibers failed',
             ),
-            {} as any,
           ),
         ),
       )
@@ -129,10 +125,10 @@ describe('Fiber', () => {
     if (!success) {
       await expect(
         $Runtime.runExit($Fiber.race(input.map(sleep)), failContext),
-      ).resolves.toMatchObject($Exit.failure($Cause.fail(output, {} as any)))
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(output)))
       await expect(
         $Runtime.runExit($Fiber.race(input.map(sleep)), interruptContext),
-      ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
+      ).resolves.toMatchObject($Exit.failure($Cause.interrupt()))
     }
   })
 

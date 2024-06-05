@@ -5,12 +5,12 @@ import { OrLazy } from '../Type'
 import * as $Effect from './Effect'
 import { Effect, _Effect, _effect } from './Effect'
 
-export interface Backdoor<A, E, R> extends _Effect<'Backdoor'> {
-  readonly handle: (
+export interface Backdoor<out A, out E, out R> extends _Effect<'Backdoor'> {
+  readonly handle: <_R extends R>(
     run: <G extends AnyEffector<any, any, R>>(
       effector: OrLazy<G>,
     ) => Promise<Exit<OutputOf<G>, ErrorOf<G>>>,
-  ) => A | Promise<A> | AnyEffector<A, E, R>
+  ) => A | Promise<A> | AnyEffector<A, E, _R>
 }
 
 function backdoor<

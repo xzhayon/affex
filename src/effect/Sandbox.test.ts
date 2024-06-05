@@ -1,6 +1,6 @@
 import * as $Cause from '../Cause'
+import { Result } from '../Effector'
 import * as $Exit from '../Exit'
-import { Result } from '../Result'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
 import * as $Context from '../runtime/Context'
@@ -17,7 +17,7 @@ describe('Sandbox', () => {
   }
 
   const tag = $Tag.tag<Divide>()
-  const divide = $Proxy.function(tag)
+  const divide = $Proxy.operation(tag)
   const context = $Context.context().with(
     $Layer.layer(tag, function* (a, b) {
       if (b === 0) {
@@ -38,9 +38,7 @@ describe('Sandbox', () => {
           context,
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.die(new Error('Cannot divide by zero'), {} as any),
-        ),
+        $Exit.failure($Cause.die(new Error('Cannot divide by zero'))),
       )
     })
 
@@ -53,9 +51,7 @@ describe('Sandbox', () => {
           context,
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.die(new Error('Cannot recover from exception'), {} as any),
-        ),
+        $Exit.failure($Cause.die(new Error('Cannot recover from exception'))),
       )
     })
 
@@ -68,9 +64,7 @@ describe('Sandbox', () => {
           context,
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new Error('Cannot recover from exception'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new Error('Cannot recover from exception'))),
       )
     })
 
@@ -90,7 +84,7 @@ describe('Sandbox', () => {
       }
 
       const tagRandom = $Tag.tag<Random>()
-      const random = $Proxy.function(tagRandom)
+      const random = $Proxy.operation(tagRandom)
 
       await expect(
         $Runtime.runPromise(
@@ -126,10 +120,8 @@ describe('Sandbox', () => {
               }
             },
           )).length
-        }, $Context.context()),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.die(new BarError(), {} as any)),
-      )
+        }),
+      ).resolves.toMatchObject($Exit.failure($Cause.die(new BarError())))
     })
 
     test('handling multiple errors', async () => {
@@ -160,7 +152,6 @@ describe('Sandbox', () => {
               }
             },
           ),
-          $Context.context(),
         ),
       ).resolves.toStrictEqual('bar')
     })
@@ -174,11 +165,8 @@ describe('Sandbox', () => {
             },
             () => 'bar',
           ),
-          $Context.context(),
         ),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.die(new Error('foo'), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('foo'))))
     })
   })
 })

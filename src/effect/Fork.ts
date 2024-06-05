@@ -1,39 +1,22 @@
-import { AnyEffector, ContextOf, Throw, Use } from '../Effector'
+import { AnyEffector, ContextOf, ErrorOf, OutputOf } from '../Effector'
 import * as $Function from '../Function'
-import { ReturnOf, YieldOf } from '../Generator'
 import { OrLazy } from '../Type'
 import * as $Fiber from '../fiber/Fiber'
 import { Fiber } from '../fiber/Fiber'
 import * as $Effect from './Effect'
 import { Effect, _Effect, _effect } from './Effect'
 
-export interface Fork<A, R> extends _Effect<'Fork'> {
-  readonly effector: () => AnyEffector<
-    A extends Fiber<any, Throw<any> | (R extends any ? Use<R> : never)>
-      ? $Fiber.TOf<A>
-      : never,
-    A extends Fiber<any, Throw<any> | (R extends any ? Use<R> : never)>
-      ? $Fiber.SOf<A> extends infer S
-        ? S extends Throw<infer E>
-          ? E
-          : never
-        : never
-      : never,
-    A extends Fiber<any, Throw<any> | (R extends any ? Use<R> : never)>
-      ? $Fiber.SOf<A> extends infer S
-        ? S extends Use<infer R>
-          ? R
-          : never
-        : never
-      : never
-  >
+export interface Fork<out A, out R> extends _Effect<'Fork'> {
+  readonly effector: <_R extends R>() => A extends Fiber<any, any, _R>
+    ? AnyEffector<$Fiber.AOf<A>, $Fiber.EOf<A>, $Fiber.ROf<A>>
+    : never
   readonly global: boolean
 }
 
 function _fork<G extends AnyEffector<any, any, any>>(
   effector: () => G,
   global: boolean,
-): Effect<Fiber<ReturnOf<G>, YieldOf<G>>, never, ContextOf<G>> {
+): Effect<Fiber<OutputOf<G>, ErrorOf<G>, ContextOf<G>>, never, ContextOf<G>> {
   return { ..._effect('Fork'), effector, global }
 }
 

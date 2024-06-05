@@ -22,7 +22,7 @@ async function sleep() {
   }
 
   const tag = $Tag.tag<Sleep>()
-  const affexSleep = $Proxy.function(tag)
+  const affexSleep = $Proxy.operation(tag)
   const context = $Context.context().with($Layer.layer(tag, _sleep))
   const runtime = $Runtime.runtime(context)
 

@@ -1,6 +1,6 @@
 import * as $Cause from '../Cause'
+import { Result } from '../Effector'
 import * as $Exit from '../Exit'
-import { Result } from '../Result'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
 import * as $Exception from '../effect/Exception'
@@ -19,7 +19,7 @@ describe('Promise', () => {
   }
 
   const tag = $Tag.tag<Sleep>()
-  const sleep = $Proxy.function(tag)
+  const sleep = $Proxy.operation(tag)
   const context = $Context
     .context()
     .with(
@@ -75,10 +75,10 @@ describe('Promise', () => {
     if (!success) {
       await expect(
         $Runtime.runExit($Promise.all(input.map(sleep)), failContext),
-      ).resolves.toMatchObject($Exit.failure($Cause.fail(output, {} as any)))
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(output)))
       await expect(
         $Runtime.runExit($Promise.all(input.map(sleep)), interruptContext),
-      ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
+      ).resolves.toMatchObject($Exit.failure($Cause.interrupt()))
     }
   })
 
@@ -98,7 +98,6 @@ describe('Promise', () => {
         $Exit.failure(
           $Cause.fail(
             new ConcurrencyError([1, 3], 'All promises were rejected'),
-            {} as any,
           ),
         ),
       )
@@ -111,7 +110,6 @@ describe('Promise', () => {
               [new Error(), new Error()],
               'All promises were rejected',
             ),
-            {} as any,
           ),
         ),
       )
@@ -129,10 +127,10 @@ describe('Promise', () => {
     if (!success) {
       await expect(
         $Runtime.runExit($Promise.race(input.map(sleep)), failContext),
-      ).resolves.toMatchObject($Exit.failure($Cause.fail(output, {} as any)))
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(output)))
       await expect(
         $Runtime.runExit($Promise.race(input.map(sleep)), interruptContext),
-      ).resolves.toMatchObject($Exit.failure($Cause.interrupt({} as any)))
+      ).resolves.toMatchObject($Exit.failure($Cause.interrupt()))
     }
   })
 

@@ -1,11 +1,11 @@
 import * as $String from './String'
 import * as $Type from './Type'
-import { Covariant } from './Type'
+import { Invariant } from './Type'
 
 declare const A: unique symbol
-export interface Tag<A> {
+export interface Tag<in out A> {
   readonly [$Type.uri]?: unique symbol
-  readonly [A]?: Covariant<A>
+  readonly [A]?: Invariant<A>
   readonly key: symbol
 }
 

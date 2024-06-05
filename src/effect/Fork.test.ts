@@ -15,7 +15,7 @@ describe('Fork', () => {
   }
 
   const tag = $Tag.tag<Sleep>()
-  const sleep = $Proxy.function(tag)
+  const sleep = $Proxy.operation(tag)
   const context = $Context
     .context()
     .with(
@@ -36,7 +36,7 @@ describe('Fork', () => {
           })
         })
 
-        yield* sleep(1000)
+        yield* sleep(200)
       }, context)
 
       expect(a).toStrictEqual(0)
@@ -54,7 +54,7 @@ describe('Fork', () => {
           })
         })
 
-        yield* sleep(1000)
+        yield* sleep(200)
       }, context)
 
       expect(a).toStrictEqual(1)
@@ -62,10 +62,7 @@ describe('Fork', () => {
 
     test('daemonizing non-lazy effector', async () => {
       await expect(
-        $Runtime.runPromise(
-          $Fork.daemonize((function* () {})()),
-          $Context.context(),
-        ),
+        $Runtime.runPromise($Fork.daemonize((function* () {})())),
       ).resolves.toBeInstanceOf(Fiber)
     })
   })

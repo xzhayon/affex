@@ -9,6 +9,7 @@ export {
   Effector,
   ErrorOf,
   OutputOf,
+  Result,
 } from './Effector'
 export { is as isExit, isFailure, isSuccess } from './Exit'
 export {
@@ -21,7 +22,6 @@ export {
   traverse,
   traverseAsync,
 } from './Generator'
-export { Result } from './Result'
 export { tag } from './Tag'
 export { uri } from './Type'
 export { all, any, race } from './concurrency/Concurrency'
@@ -29,10 +29,10 @@ export { wrapAsync as async, raise, wrap as sync } from './effect/Exception'
 export { daemonize, fork } from './effect/Fork'
 export { interrupt } from './effect/Interruption'
 export { join } from './effect/Join'
-export { function, functionA, struct, structA } from './effect/Proxy'
+export { access, operation, service } from './effect/Proxy'
 export { tryCatch } from './effect/Sandbox'
 export { scope } from './effect/Scope'
-export { suspend } from './effect/Suspension'
+export { suspend } from './fiber/Fiber'
 export { context } from './runtime/Context'
 export { layer } from './runtime/Layer'
 export { runExit, runPromise } from './runtime/Runtime'

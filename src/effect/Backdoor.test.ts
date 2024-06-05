@@ -13,10 +13,7 @@ describe('Backdoor', () => {
   describe('exploit', () => {
     test('returning value', async () => {
       await expect(
-        $Runtime.runPromise(
-          $Backdoor.exploit()(() => 42),
-          $Context.context(),
-        ),
+        $Runtime.runPromise($Backdoor.exploit()(() => 42)),
       ).resolves.toStrictEqual(42)
     })
 
@@ -34,7 +31,6 @@ describe('Backdoor', () => {
                 }),
               ] as const,
           ),
-          $Context.context(),
         ),
       ).resolves.toStrictEqual([$Exit.success(42), $Exit.success(1337)])
     })
@@ -47,11 +43,8 @@ describe('Backdoor', () => {
               throw new Error('foo')
             }),
           ),
-          $Context.context(),
         ),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.die(new Error('foo'), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('foo'))))
     })
 
     test('raising error', async () => {
@@ -62,11 +55,8 @@ describe('Backdoor', () => {
               return yield* $Exception.raise(new Error('foo'))
             }),
           ),
-          $Context.context(),
         ),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.fail(new Error('foo'), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(new Error('foo'))))
     })
 
     test('forking generator function', async () => {
@@ -82,7 +72,6 @@ describe('Backdoor', () => {
               }),
             ] as const
           }),
-          $Context.context(),
         ),
       ).resolves.toStrictEqual([$Exit.success(42), $Exit.success(1337)])
     })
@@ -91,11 +80,8 @@ describe('Backdoor', () => {
       await expect(
         $Runtime.runExit(
           $Backdoor.exploit()(() => $Exception.raise(new Error('foo'))),
-          $Context.context(),
         ),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.fail(new Error('foo'), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(new Error('foo'))))
     })
 
     test('forking function with effects', async () => {
@@ -105,7 +91,7 @@ describe('Backdoor', () => {
       }
 
       const tag42 = $Tag.tag<Get42>()
-      const get42 = $Proxy.function(tag42)
+      const get42 = $Proxy.operation(tag42)
 
       interface Get1337 {
         readonly [uri]?: unique symbol
@@ -113,7 +99,7 @@ describe('Backdoor', () => {
       }
 
       const tag1337 = $Tag.tag<Get1337>()
-      const get1337 = $Proxy.function(tag1337)
+      const get1337 = $Proxy.operation(tag1337)
 
       await expect(
         $Runtime.runPromise(
@@ -140,18 +126,15 @@ describe('Backdoor', () => {
       }
 
       const tag = $Tag.tag<Random>()
-      const random = $Proxy.function(tag)
+      const random = $Proxy.operation(tag)
 
       await expect(
         $Runtime.runPromise(
           // @ts-expect-error
           $Backdoor.exploit()((run) => run(random)),
-          $Context.context(),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.die(new Error('Cannot find layer for effect'), {} as any),
-        ),
+        $Exit.failure($Cause.die(new Error('Cannot find layer for effect'))),
       )
     })
 
@@ -162,7 +145,7 @@ describe('Backdoor', () => {
       }
 
       const tag42 = $Tag.tag<Get42>()
-      const get42 = $Proxy.function(tag42)
+      const get42 = $Proxy.operation(tag42)
 
       interface Get1337 {
         readonly [uri]?: unique symbol
@@ -170,7 +153,7 @@ describe('Backdoor', () => {
       }
 
       const tag1337 = $Tag.tag<Get1337>()
-      const get1337 = $Proxy.function(tag1337)
+      const get1337 = $Proxy.operation(tag1337)
 
       await expect(
         $Runtime.runPromise(

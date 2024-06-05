@@ -1,4 +1,3 @@
-import * as $Context from '../runtime/Context'
 import * as $Runtime from '../runtime/Runtime'
 import * as $Scope from './Scope'
 
@@ -12,7 +11,6 @@ describe('Scope', () => {
               return 42
             })(),
           ),
-          $Context.context(),
         ),
       ).resolves.toStrictEqual(42)
     })

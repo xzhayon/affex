@@ -8,7 +8,7 @@ export class MissingLayerError extends Error {
   constructor(readonly tag: Tag<any>) {
     super(
       `Cannot find layer for effect${
-        tag.key.description ? ` "${tag.key.description}"` : ''
+        tag.key.description !== undefined ? ` "${tag.key.description}"` : ''
       }`,
     )
   }

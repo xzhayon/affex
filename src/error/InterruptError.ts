@@ -1,12 +1,12 @@
-import { FiberId } from '../fiber/FiberId'
+import { Id as FiberId } from '../fiber/Id'
 
 export const InterruptErrorUri = Symbol('InterruptError')
 export class InterruptError extends Error {
   readonly [InterruptErrorUri]!: typeof InterruptErrorUri
   readonly name: string = 'InterruptError'
 
-  constructor(readonly fiberId: FiberId) {
-    super(`Fiber "${fiberId}" interrupted`)
+  constructor(fiberId?: FiberId) {
+    super(`Fiber${fiberId !== undefined ? ` "${fiberId}"` : ''} interrupted`)
   }
 }
 

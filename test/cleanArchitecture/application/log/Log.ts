@@ -18,7 +18,8 @@ export type Log = {
 }
 
 export const tag = fx.tag<Log>()
-export const Log = fx.struct(tag)(
+export const Log = fx.service(
+  tag,
   'debug',
   'info',
   'notice',

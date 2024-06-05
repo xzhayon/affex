@@ -12,7 +12,7 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
     (): UserName
   }
   const tagAskName = fx.tag<AskName>()
-  const askName = fx.function(tagAskName)
+  const askName = fx.operation(tagAskName)
 
   type DirName = string
   type FileName = string
@@ -26,21 +26,21 @@ describe('Algebraic Effects for the Rest of Us <https://overreacted.io/algebraic
     (dirName: DirName): DirContents
   }
   const tagOpenDirectory = fx.tag<OpenDirectory>()
-  const openDirectory = fx.function(tagOpenDirectory)
+  const openDirectory = fx.operation(tagOpenDirectory)
 
   interface Log {
     readonly [fx.uri]?: unique symbol
     (message: string): void
   }
   const tagLog = fx.tag<Log>()
-  const log = fx.function(tagLog)
+  const log = fx.operation(tagLog)
 
   interface HandleFile {
     readonly [fx.uri]?: unique symbol
     (fileName: FileName): void
   }
   const tagHandleFile = fx.tag<HandleFile>()
-  const handleFile = fx.function(tagHandleFile)
+  const handleFile = fx.operation(tagHandleFile)
 
   describe('What Does This Have to Do With Algebraic Effects?', () => {
     test('performing effect', async () => {

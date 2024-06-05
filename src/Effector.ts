@@ -1,53 +1,39 @@
 import { AnyGenerator, ReturnOf, YieldOf } from './Generator'
 import * as $Type from './Type'
-import { And, Covariant, Invariant, IsAny } from './Type'
+import { Effect } from './effect/Effect'
 
-export type Effector<A, E = never, R = never> = Generator<
-  And<IsAny<R>, IsAny<E>> extends true
-    ? any
-    :
-        | (R extends any ? Use<R> : never)
-        | (E extends any ? Throw<E> : never)
-        | void,
+export type Effector<out A, out E = never, out R = never> = Generator<
+  Throw<E> | Use<R> | void,
   A
 >
-export type AsyncEffector<A, E = never, R = never> = AsyncGenerator<
-  And<IsAny<R>, IsAny<E>> extends true
-    ? any
-    :
-        | (R extends any ? Use<R> : never)
-        | (E extends any ? Throw<E> : never)
-        | void,
+export type AsyncEffector<out A, out E = never, out R = never> = AsyncGenerator<
+  Throw<E> | Use<R> | void,
   A
 >
 export type AnyEffector<A, E = never, R = never> =
   | Effector<A, E, R>
   | AsyncEffector<A, E, R>
 
-declare const E: unique symbol
-export interface Throw<E> {
+export interface Throw<out E> {
   readonly [$Type.uri]?: unique symbol
-  readonly [E]?: Covariant<E>
+  readonly _: Effect<any, E, any>
 }
 
-declare const R: unique symbol
-export interface Use<R> {
+export interface Use<out R> {
   readonly [$Type.uri]?: unique symbol
-  readonly [R]?: Invariant<R>
+  readonly _: Effect<any, any, R>
 }
+
+export type Result<A, E> = AnyEffector<A, E>
 
 export type OutputOf<G extends AnyGenerator> = ReturnOf<G>
 export type ErrorOf<G extends AnyGenerator> = YieldOf<G> extends infer Y
-  ? IsAny<Y> extends false
-    ? Y extends Throw<infer E>
-      ? E
-      : never
+  ? Y extends Throw<infer E>
+    ? E
     : never
   : never
 export type ContextOf<G extends AnyGenerator> = YieldOf<G> extends infer Y
-  ? IsAny<Y> extends false
-    ? Y extends Use<infer R>
-      ? R
-      : never
+  ? Y extends Use<infer R>
+    ? R
     : never
   : never

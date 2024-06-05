@@ -1,6 +1,6 @@
 import * as $Cause from '../Cause'
+import { Result } from '../Effector'
 import * as $Exit from '../Exit'
-import { Result } from '../Result'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
 import * as $Context from '../runtime/Context'
@@ -20,7 +20,7 @@ describe('Exception', () => {
   }
 
   const tag = $Tag.tag<Divide>()
-  const divide = $Proxy.function(tag)
+  const divide = $Proxy.operation(tag)
 
   describe('raise', () => {
     test('raising unexpected error', async () => {
@@ -30,7 +30,7 @@ describe('Exception', () => {
       }
 
       const tagRandom = $Tag.tag<Random>()
-      const random = $Proxy.function(tagRandom)
+      const random = $Proxy.operation(tagRandom)
 
       await expect(
         $Runtime.runExit(
@@ -45,9 +45,7 @@ describe('Exception', () => {
           ),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new Error('Cannot return random number'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new Error('Cannot return random number'))),
       )
     })
 
@@ -69,9 +67,7 @@ describe('Exception', () => {
           ),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new Error('Cannot divide by zero'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new Error('Cannot divide by zero'))),
       )
     })
 
@@ -92,9 +88,7 @@ describe('Exception', () => {
           ),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new FooError('Cannot divide by zero'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
       )
     })
 
@@ -120,9 +114,7 @@ describe('Exception', () => {
           ),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new BarError('Cannot divide by zero'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new BarError('Cannot divide by zero'))),
       )
     })
 
@@ -149,9 +141,7 @@ describe('Exception', () => {
           ),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new FooError('Cannot divide by zero'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
       )
     })
 
@@ -162,7 +152,7 @@ describe('Exception', () => {
       }
 
       const tagRandom = $Tag.tag<Random>()
-      const random = $Proxy.function(tagRandom)
+      const random = $Proxy.operation(tagRandom)
 
       await expect(
         $Runtime.runExit(
@@ -183,9 +173,7 @@ describe('Exception', () => {
             .with($Layer.layer(tagRandom, () => Math.random())),
         ),
       ).resolves.toMatchObject(
-        $Exit.failure(
-          $Cause.fail(new FooError('Cannot divide by zero'), {} as any),
-        ),
+        $Exit.failure($Cause.fail(new FooError('Cannot divide by zero'))),
       )
     })
 
@@ -199,7 +187,7 @@ describe('Exception', () => {
       }
 
       const tagFooBar = $Tag.tag<FooBar>()
-      const fooBar = $Proxy.function(tagFooBar)
+      const fooBar = $Proxy.operation(tagFooBar)
 
       await expect(
         $Runtime.runExit(
@@ -214,9 +202,7 @@ describe('Exception', () => {
             }),
           ),
         ),
-      ).resolves.toMatchObject(
-        $Exit.failure($Cause.fail(new BarError(), {} as any)),
-      )
+      ).resolves.toMatchObject($Exit.failure($Cause.fail(new BarError())))
     })
   })
 
@@ -228,7 +214,6 @@ describe('Exception', () => {
             () => 42,
             (cause) => new Error('bar', { cause }),
           ),
-          $Context.context(),
         ),
       ).resolves.toStrictEqual(42)
     })
@@ -242,11 +227,10 @@ describe('Exception', () => {
             },
             (cause) => new Error('bar', { cause }),
           ),
-          $Context.context(),
         ),
       ).resolves.toMatchObject(
         $Exit.failure(
-          $Cause.fail(new Error('bar', { cause: new Error('foo') }), {} as any),
+          $Cause.fail(new Error('bar', { cause: new Error('foo') })),
         ),
       )
     })
@@ -260,7 +244,6 @@ describe('Exception', () => {
             async () => 42,
             (cause) => new Error('bar', { cause }),
           ),
-          $Context.context(),
         ),
       ).resolves.toStrictEqual(42)
     })
@@ -272,11 +255,10 @@ describe('Exception', () => {
             () => Promise.reject(new Error('foo')),
             (cause) => new Error('bar', { cause }),
           ),
-          $Context.context(),
         ),
       ).resolves.toMatchObject(
         $Exit.failure(
-          $Cause.fail(new Error('bar', { cause: new Error('foo') }), {} as any),
+          $Cause.fail(new Error('bar', { cause: new Error('foo') })),
         ),
       )
     })

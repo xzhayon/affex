@@ -1,12 +1,5 @@
 import * as $Cause from '../Cause'
-import {
-  AnyEffector,
-  ContextOf,
-  ErrorOf,
-  OutputOf,
-  Throw,
-  Use,
-} from '../Effector'
+import { AnyEffector, ErrorOf, OutputOf } from '../Effector'
 import * as $Exit from '../Exit'
 import { Exit } from '../Exit'
 import * as $Function from '../Function'
@@ -14,23 +7,20 @@ import * as $Generator from '../Generator'
 import * as $Promise from '../Promise'
 import * as $Type from '../Type'
 import { OrLazy } from '../Type'
-import * as $Effect from '../effect/Effect'
 import { Effect } from '../effect/Effect'
-import { EffectId } from '../effect/EffectId'
-import * as $InterruptError from '../error/InterruptError'
+import { Id as EffectId } from '../effect/Id'
 import { InterruptError } from '../error/InterruptError'
 import * as $Fiber from '../fiber/Fiber'
 import { Fiber } from '../fiber/Fiber'
-import { FiberId } from '../fiber/FiberId'
+import * as $Status from '../fiber/Status'
+import * as $Context from './Context'
 import { Context } from './Context'
 import * as $Engine from './Engine'
 
-export class Runtime<R> {
-  private rootFiber!: Fiber<any, any>
-  private readonly queue: Fiber<any, any>[] = []
-  private readonly fiberByEffect = new Map<EffectId, FiberId>()
-  private readonly scopeByFiber = new Map<FiberId, Fiber<any, any>[]>()
-  private readonly exitByFiber = new Map<FiberId, Exit<any, any>>()
+export class Runtime<in R> {
+  private fiber!: Fiber<any, any, any>
+  private readonly queue: Fiber<any, any, any>[] = []
+  private readonly effectFibers = new Map<EffectId, Fiber<any, any, any>>()
   private readonly multiPassEffects = new Set<EffectId>()
 
   static readonly make = <R>(context: Context<R>) => new Runtime<R>(context)
@@ -40,114 +30,71 @@ export class Runtime<R> {
   readonly run = async <G extends AnyEffector<any, any, R>>(
     effector: OrLazy<G>,
   ): Promise<Exit<OutputOf<G>, ErrorOf<G>>> => {
-    this.rootFiber = $Fiber.fiber(effector)
     try {
-      this.queue.push(this.rootFiber)
+      this.fiber = $Fiber.fiber(effector)
+      this.queue.push(this.fiber)
       while (true) {
-        const currentFiber = this.queue.shift()
-        if (currentFiber === undefined) {
+        const fiber = this.queue.shift()
+        if (fiber === undefined) {
           break
         }
 
-        switch (currentFiber.status[$Type.tag]) {
+        switch (fiber.status[$Type.tag]) {
           case 'Ready':
-            await currentFiber.start()
+            $Fiber.start(fiber)
+            this.queue.push(fiber)
+
+            break
           case 'Started':
+            this.queue.push(fiber)
+
+            break
           case 'Running':
-            this.queue.push(currentFiber)
+            await $Engine.skipTick()
+            this.queue.push(fiber)
 
             break
           case 'Suspended':
-            if (currentFiber.id === this.rootFiber.id) {
-              await $Engine.skipTick()
-            }
-
-            if (!$Effect.is(currentFiber.status.value)) {
-              await currentFiber.resume()
-              this.queue.push(currentFiber)
+            if (fiber.status.effect === undefined) {
+              $Fiber.resume(fiber)
+              this.queue.push(fiber)
 
               break
             }
 
-            const exit = this.handleEffect(
-              currentFiber.status.value as Effect<any, any, any>,
-              currentFiber,
-            )
-            this.queue.push(currentFiber)
-            if (exit === undefined) {
-              break
+            const exit = this.handle(fiber.status.effect._, fiber)
+            if (exit !== undefined) {
+              $Fiber.resume(fiber, exit)
             }
-
-            switch (exit[$Type.tag]) {
-              case 'Success':
-                await currentFiber.resume(exit.value)
-
-                break
-              case 'Failure':
-                this.saveFiberExit(currentFiber.id, exit)
-                await currentFiber.throw(
-                  $Cause.isInterrupt(exit.cause)
-                    ? new InterruptError(exit.cause.fiberId)
-                    : exit.cause.error,
-                )
-
-                break
-            }
-
-            break
-          case 'Interrupted':
-            this.saveFiberExit(
-              currentFiber.id,
-              $Exit.failure($Cause.interrupt(currentFiber.id)),
-            )
-            await this.closeScope(currentFiber.id)
-
-            break
-          case 'Failed':
-            this.saveFiberExit(
-              currentFiber.id,
-              $Exit.failure(
-                $Cause.die(currentFiber.status.error, currentFiber.id),
-              ),
-            )
-            await this.closeScope(currentFiber.id)
-
-            break
-          case 'Terminated':
-            this.saveFiberExit(
-              currentFiber.id,
-              $Exit.success(currentFiber.status.value),
-            )
-            await this.closeScope(currentFiber.id)
+            this.queue.push(fiber)
 
             break
         }
       }
 
-      const exit = this.exitByFiber.get(this.rootFiber.id)
+      const exit = $Status.isTerminated(this.fiber.status)
+        ? this.fiber.status.exit
+        : undefined
       if (exit === undefined) {
-        throw new Error(
-          `Cannot resolve effector in fiber "${this.rootFiber.id}"`,
-        )
+        throw new Error(`Cannot resolve effector in fiber "${this.fiber.id}"`)
       }
 
       return exit
     } catch (error) {
-      return $Exit.failure($Cause.die(error, this.rootFiber.id))
+      return $Exit.failure($Cause.die(error))
     }
   }
 
-  private readonly handleEffect = <A, E>(
+  private readonly handle = <A, E>(
     effect: Effect<A, E, R>,
-    currentFiber: Fiber<
-      A,
-      (R extends any ? Use<R> : never) | (E extends any ? Throw<E> : never)
-    >,
+    fiber: Fiber<unknown, unknown, R>,
   ) => {
     try {
-      const fiberId = this.fiberByEffect.get(effect.id)
-      if (fiberId !== undefined) {
-        const exit = this.exitByFiber.get(fiberId)
+      const effectFiber = this.effectFibers.get(effect.id)
+      if (effectFiber !== undefined) {
+        const exit = $Status.isTerminated(effectFiber.status)
+          ? effectFiber.status.exit
+          : undefined
         if (exit === undefined) {
           return undefined
         }
@@ -156,7 +103,7 @@ export class Runtime<R> {
           effect[$Type.tag] !== 'Sandbox' ||
           !this.multiPassEffects.has(effect.id)
         ) {
-          this.fiberByEffect.delete(effect.id)
+          this.effectFibers.delete(effect.id)
 
           return exit
         }
@@ -164,105 +111,107 @@ export class Runtime<R> {
 
       switch (effect[$Type.tag]) {
         case 'Backdoor': {
-          const valueOrFiber = this.resolveEffect(
+          const valueOrChild = this.resolve(
             effect.handle((effector) => runExit(effector, this.context)),
           )
-          if (!$Fiber.is(valueOrFiber)) {
-            return $Exit.success(valueOrFiber)
+          if (!$Fiber.is(valueOrChild)) {
+            return $Exit.success(valueOrChild)
           }
 
-          this.enqueueScopedFiber(currentFiber.id, valueOrFiber)
-          this.fiberByEffect.set(effect.id, valueOrFiber.id)
+          $Fiber.supervise(fiber, valueOrChild)
+          this.queue.push(valueOrChild)
+          this.effectFibers.set(effect.id, valueOrChild)
 
           return undefined
         }
         case 'Exception':
-          return $Exit.failure($Cause.fail(effect.error, currentFiber.id))
+          return $Exit.failure($Cause.fail(effect.error))
         case 'Fork': {
-          const effectFiber = this.resolveEffect(effect.effector)
-          this.enqueueScopedFiber(
-            effect.global ? this.rootFiber.id : currentFiber.id,
-            effectFiber,
-          )
+          const child = this.resolve(effect.effector)
+          const parent = effect.global ? this.fiber : fiber
+          $Fiber.supervise(parent, child)
+          this.queue.push(child)
 
-          return $Exit.success(effectFiber)
+          return $Exit.success(child)
         }
         case 'Interruption':
-          return $Exit.failure($Cause.interrupt(currentFiber.id))
+          return $Exit.failure($Cause.interrupt())
         case 'Join':
-          this.scopeFiber(currentFiber.id, effect.fiber)
-          this.fiberByEffect.set(effect.id, effect.fiber.id)
+          $Fiber.supervise(fiber, effect.fiber)
+          this.effectFibers.set(effect.id, effect.fiber)
 
           return undefined
         case 'Proxy': {
-          const valueOrFiber = this.resolveEffect(
+          const valueOrChild = this.resolve(
             effect.handle(this.context.handler(effect.tag)),
           )
-          if (!$Fiber.is(valueOrFiber)) {
-            return $Exit.success(valueOrFiber)
+          if (!$Fiber.is(valueOrChild)) {
+            return $Exit.success(valueOrChild)
           }
 
-          this.enqueueScopedFiber(currentFiber.id, valueOrFiber)
-          this.fiberByEffect.set(effect.id, valueOrFiber.id)
+          $Fiber.supervise(fiber, valueOrChild)
+          this.queue.push(valueOrChild)
+          this.effectFibers.set(effect.id, valueOrChild)
 
           return undefined
         }
         case 'Sandbox':
-          if (fiberId === undefined) {
-            const valueOrFiber = this.resolveEffect(effect.try)
-            if (!$Fiber.is(valueOrFiber)) {
-              return $Exit.success(valueOrFiber)
+          if (effectFiber === undefined) {
+            const valueOrChild = this.resolve(effect.try)
+            if (!$Fiber.is(valueOrChild)) {
+              return $Exit.success(valueOrChild)
             }
 
-            this.enqueueScopedFiber(currentFiber.id, valueOrFiber)
-            this.fiberByEffect.set(effect.id, valueOrFiber.id)
+            $Fiber.supervise(fiber, valueOrChild)
+            this.queue.push(valueOrChild)
+            this.effectFibers.set(effect.id, valueOrChild)
             this.multiPassEffects.add(effect.id)
           } else {
-            const exit = this.exitByFiber.get(fiberId)
+            const exit = $Status.isTerminated(effectFiber.status)
+              ? effectFiber.status.exit
+              : undefined
             if (exit === undefined) {
               return undefined
             }
 
             this.multiPassEffects.delete(effect.id)
             if (!$Exit.isFailure(exit) || !$Cause.isFail(exit.cause)) {
-              this.fiberByEffect.delete(effect.id)
+              this.effectFibers.delete(effect.id)
 
               return exit
             }
 
-            const valueOrFiber = this.resolveEffect(
-              effect.catch(exit.cause.error),
-            )
-            if (!$Fiber.is(valueOrFiber)) {
-              return $Exit.success(valueOrFiber)
+            const valueOrChild = this.resolve(effect.catch(exit.cause.error))
+            if (!$Fiber.is(valueOrChild)) {
+              return $Exit.success(valueOrChild)
             }
 
-            this.enqueueScopedFiber(currentFiber.id, valueOrFiber)
-            this.fiberByEffect.set(effect.id, valueOrFiber.id)
+            $Fiber.supervise(fiber, valueOrChild)
+            this.queue.push(valueOrChild)
+            this.effectFibers.set(effect.id, valueOrChild)
           }
 
           return undefined
         case 'Scope': {
-          const valueOrFiber = this.resolveEffect(effect.effector)
-          if (!$Fiber.is(valueOrFiber)) {
-            return $Exit.success(valueOrFiber)
+          const valueOrChild = this.resolve(effect.effector)
+          if (!$Fiber.is(valueOrChild)) {
+            return $Exit.success(valueOrChild)
           }
 
-          this.enqueueScopedFiber(currentFiber.id, valueOrFiber)
-          this.fiberByEffect.set(effect.id, valueOrFiber.id)
+          $Fiber.supervise(fiber, valueOrChild)
+          this.queue.push(valueOrChild)
+          this.effectFibers.set(effect.id, valueOrChild)
 
           return undefined
         }
-        case 'Suspension':
-          return $Exit.success(undefined)
       }
     } catch (error) {
-      return $Exit.failure($Cause.die(error, currentFiber.id))
+      return $Exit.failure($Cause.die(error))
     }
   }
 
-  private readonly resolveEffect = <A, E, _R extends R>(
-    value: A | Promise<A> | OrLazy<AnyEffector<A, E, _R>>,
+  private readonly resolve = <A, E>(
+    value: A | Promise<A> | OrLazy<AnyEffector<A, E, R>>,
   ) => {
     if ($Function.is(value) || $Generator.is(value)) {
       return $Fiber.fiber(value)
@@ -274,89 +223,39 @@ export class Runtime<R> {
 
     return value
   }
-
-  private readonly scopeFiber = (scopeId: FiberId, fiber: Fiber<any, any>) => {
-    const scope = this.scopeByFiber.get(scopeId)
-    this.scopeByFiber.set(
-      scopeId,
-      scope !== undefined ? scope.concat(fiber) : [fiber],
-    )
-  }
-
-  private readonly enqueueScopedFiber = (
-    scopeId: FiberId,
-    fiber: Fiber<any, any>,
-  ) => {
-    this.scopeFiber(scopeId, fiber)
-    this.queue.push(fiber)
-  }
-
-  private readonly saveFiberExit = (fiberId: FiberId, exit: Exit<any, any>) => {
-    if ($Exit.isSuccess(exit)) {
-      this.exitByFiber.set(fiberId, exit)
-
-      return
-    }
-
-    const savedExit = this.exitByFiber.get(fiberId)
-    if (
-      savedExit === undefined ||
-      $Exit.isSuccess(savedExit) ||
-      (!$Cause.isDie(exit.cause) && !$Cause.isFail(exit.cause))
-    ) {
-      this.exitByFiber.set(fiberId, exit)
-
-      return
-    }
-
-    switch (savedExit.cause[$Type.tag]) {
-      case 'Die':
-      case 'Fail':
-        if (exit.cause.error !== savedExit.cause.error) {
-          this.exitByFiber.set(fiberId, exit)
-        }
-
-        break
-      case 'Interrupt':
-        if (
-          !$InterruptError.is(exit.cause.error) ||
-          exit.cause.error.fiberId !== savedExit.cause.fiberId
-        ) {
-          this.exitByFiber.set(fiberId, exit)
-        }
-
-        break
-    }
-  }
-
-  private readonly closeScope = (scopeId: FiberId) => {
-    const scope = this.scopeByFiber.get(scopeId)
-    scope?.forEach((fiber) => this.exitByFiber.delete(fiber.id))
-    this.scopeByFiber.delete(scopeId)
-
-    return scope !== undefined
-      ? Promise.all(scope.map((fiber) => fiber.interrupt())).then(() => {})
-      : Promise.resolve(undefined)
-  }
 }
 
 export const runtime = Runtime.make
 
-export function runExit<G extends AnyEffector<any, any, any>>(
+export function runExit<G extends AnyEffector<any, any, never>>(
   effector: OrLazy<G>,
-  context: Context<ContextOf<G>>,
+): Promise<Exit<OutputOf<G>, ErrorOf<G>>>
+export function runExit<R, G extends AnyEffector<any, any, R>>(
+  effector: OrLazy<G>,
+  context: Context<R>,
+): Promise<Exit<OutputOf<G>, ErrorOf<G>>>
+export function runExit<R, G extends AnyEffector<any, any, R>>(
+  effector: OrLazy<G>,
+  context = $Context.context(),
 ) {
   return runtime(context).run(effector)
 }
 
-export async function runPromise<G extends AnyEffector<any, any, any>>(
+export async function runPromise<G extends AnyEffector<any, any, never>>(
   effector: OrLazy<G>,
-  context: Context<ContextOf<G>>,
+): Promise<OutputOf<G>>
+export async function runPromise<R, G extends AnyEffector<any, any, R>>(
+  effector: OrLazy<G>,
+  context: Context<R>,
+): Promise<OutputOf<G>>
+export async function runPromise<R, G extends AnyEffector<any, any, R>>(
+  effector: OrLazy<G>,
+  context = $Context.context(),
 ) {
   const exit = await runExit(effector, context)
   if ($Exit.isFailure(exit)) {
     throw $Cause.isInterrupt(exit.cause)
-      ? new InterruptError(exit.cause.fiberId)
+      ? new InterruptError()
       : exit.cause.error
   }
 

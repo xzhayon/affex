@@ -2,7 +2,7 @@ import { AsyncEffector, Effector } from '../Effector'
 import * as $Effect from './Effect'
 import { Effect, _Effect, _effect } from './Effect'
 
-export interface Exception<E> extends _Effect<'Exception'> {
+export interface Exception<out E> extends _Effect<'Exception'> {
   readonly error: E
 }
 

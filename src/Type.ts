@@ -1,5 +1,3 @@
-import { Equal as _Equal, IsAny as _IsAny } from '@type-challenges/utils'
-
 export type Covariant<A> = (_: never) => A
 export type Contravariant<A> = (_: A) => never
 export type Invariant<A> = (_: A) => A
@@ -7,15 +5,12 @@ export type Invariant<A> = (_: A) => A
 export type Lazy<A> = () => A
 export type OrLazy<A> = A | Lazy<A>
 
+export type IsAny<A> = 0 extends 1 & A ? true : false
+
 export interface Variant<U, T extends string> {
   readonly [_uri]: U
   readonly [_tag]: T
 }
-
-export type And<A, B> = A extends true ? B : false
-export type Equals<A, B> = _Equal<A, B>
-export type IsAny<A> = _IsAny<A>
-export type IsNever<A> = [A] extends [never] ? true : false
 
 const _uri = Symbol('Uri')
 const _tag = Symbol('Tag')
