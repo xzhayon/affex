@@ -62,10 +62,7 @@ describe('Fork', () => {
 
     test('daemonizing non-lazy effector', async () => {
       await expect(
-        $Runtime.runPromise(
-          $Fork.daemonize((function* () {})()),
-          $Context.context(),
-        ),
+        $Runtime.runPromise($Fork.daemonize((function* () {})())),
       ).resolves.toBeInstanceOf(Fiber)
     })
   })

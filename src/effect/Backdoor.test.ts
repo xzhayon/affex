@@ -13,10 +13,7 @@ describe('Backdoor', () => {
   describe('exploit', () => {
     test('returning value', async () => {
       await expect(
-        $Runtime.runPromise(
-          $Backdoor.exploit()(() => 42),
-          $Context.context(),
-        ),
+        $Runtime.runPromise($Backdoor.exploit()(() => 42)),
       ).resolves.toStrictEqual(42)
     })
 
@@ -34,7 +31,6 @@ describe('Backdoor', () => {
                 }),
               ] as const,
           ),
-          $Context.context(),
         ),
       ).resolves.toStrictEqual([$Exit.success(42), $Exit.success(1337)])
     })
@@ -47,7 +43,6 @@ describe('Backdoor', () => {
               throw new Error('foo')
             }),
           ),
-          $Context.context(),
         ),
       ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('foo'))))
     })
@@ -60,7 +55,6 @@ describe('Backdoor', () => {
               return yield* $Exception.raise(new Error('foo'))
             }),
           ),
-          $Context.context(),
         ),
       ).resolves.toMatchObject($Exit.failure($Cause.fail(new Error('foo'))))
     })
@@ -78,7 +72,6 @@ describe('Backdoor', () => {
               }),
             ] as const
           }),
-          $Context.context(),
         ),
       ).resolves.toStrictEqual([$Exit.success(42), $Exit.success(1337)])
     })
@@ -87,7 +80,6 @@ describe('Backdoor', () => {
       await expect(
         $Runtime.runExit(
           $Backdoor.exploit()(() => $Exception.raise(new Error('foo'))),
-          $Context.context(),
         ),
       ).resolves.toMatchObject($Exit.failure($Cause.fail(new Error('foo'))))
     })
@@ -140,7 +132,6 @@ describe('Backdoor', () => {
         $Runtime.runPromise(
           // @ts-expect-error
           $Backdoor.exploit()((run) => run(random)),
-          $Context.context(),
         ),
       ).resolves.toMatchObject(
         $Exit.failure($Cause.die(new Error('Cannot find layer for effect'))),

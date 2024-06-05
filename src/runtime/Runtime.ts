@@ -13,6 +13,7 @@ import { InterruptError } from '../error/InterruptError'
 import * as $Fiber from '../fiber/Fiber'
 import { Fiber } from '../fiber/Fiber'
 import * as $Status from '../fiber/Status'
+import * as $Context from './Context'
 import { Context } from './Context'
 import * as $Engine from './Engine'
 
@@ -226,16 +227,30 @@ export class Runtime<in R> {
 
 export const runtime = Runtime.make
 
+export function runExit<G extends AnyEffector<any, any, never>>(
+  effector: OrLazy<G>,
+): Promise<Exit<OutputOf<G>, ErrorOf<G>>>
 export function runExit<R, G extends AnyEffector<any, any, R>>(
   effector: OrLazy<G>,
   context: Context<R>,
+): Promise<Exit<OutputOf<G>, ErrorOf<G>>>
+export function runExit<R, G extends AnyEffector<any, any, R>>(
+  effector: OrLazy<G>,
+  context = $Context.context(),
 ) {
   return runtime(context).run(effector)
 }
 
+export async function runPromise<G extends AnyEffector<any, any, never>>(
+  effector: OrLazy<G>,
+): Promise<OutputOf<G>>
 export async function runPromise<R, G extends AnyEffector<any, any, R>>(
   effector: OrLazy<G>,
   context: Context<R>,
+): Promise<OutputOf<G>>
+export async function runPromise<R, G extends AnyEffector<any, any, R>>(
+  effector: OrLazy<G>,
+  context = $Context.context(),
 ) {
   const exit = await runExit(effector, context)
   if ($Exit.isFailure(exit)) {

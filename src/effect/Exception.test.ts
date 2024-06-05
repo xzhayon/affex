@@ -214,7 +214,6 @@ describe('Exception', () => {
             () => 42,
             (cause) => new Error('bar', { cause }),
           ),
-          $Context.context(),
         ),
       ).resolves.toStrictEqual(42)
     })
@@ -228,7 +227,6 @@ describe('Exception', () => {
             },
             (cause) => new Error('bar', { cause }),
           ),
-          $Context.context(),
         ),
       ).resolves.toMatchObject(
         $Exit.failure(
@@ -246,7 +244,6 @@ describe('Exception', () => {
             async () => 42,
             (cause) => new Error('bar', { cause }),
           ),
-          $Context.context(),
         ),
       ).resolves.toStrictEqual(42)
     })
@@ -258,7 +255,6 @@ describe('Exception', () => {
             () => Promise.reject(new Error('foo')),
             (cause) => new Error('bar', { cause }),
           ),
-          $Context.context(),
         ),
       ).resolves.toMatchObject(
         $Exit.failure(

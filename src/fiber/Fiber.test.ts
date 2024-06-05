@@ -155,7 +155,7 @@ describe('Fiber', () => {
           yield* $Fiber.suspend()
 
           return 42
-        }, $Context.context()),
+        }),
       ).resolves.toStrictEqual(42)
     })
 

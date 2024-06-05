@@ -120,7 +120,7 @@ describe('Sandbox', () => {
               }
             },
           )).length
-        }, $Context.context()),
+        }),
       ).resolves.toMatchObject($Exit.failure($Cause.die(new BarError())))
     })
 
@@ -152,7 +152,6 @@ describe('Sandbox', () => {
               }
             },
           ),
-          $Context.context(),
         ),
       ).resolves.toStrictEqual('bar')
     })
@@ -166,7 +165,6 @@ describe('Sandbox', () => {
             },
             () => 'bar',
           ),
-          $Context.context(),
         ),
       ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('foo'))))
     })

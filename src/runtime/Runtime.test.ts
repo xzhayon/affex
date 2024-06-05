@@ -20,7 +20,7 @@ describe('Runtime', () => {
           yield
 
           return 42 + 1337
-        }, $Context.context()),
+        }),
       ).resolves.toStrictEqual($Exit.success(42 + 1337))
     })
 
@@ -37,7 +37,7 @@ describe('Runtime', () => {
 
         await expect(
           // @ts-expect-error
-          $Runtime.runExit(add(42, 1337), $Context.context()),
+          $Runtime.runExit(add(42, 1337)),
         ).resolves.toMatchObject(
           $Exit.failure($Cause.die(new MissingLayerError(tag))),
         )
@@ -48,7 +48,7 @@ describe('Runtime', () => {
       await expect(
         $Runtime.runExit(function* () {
           throw new Error('foo')
-        }, $Context.context()),
+        }),
       ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('foo'))))
     })
 
@@ -87,7 +87,7 @@ describe('Runtime', () => {
           } catch {
             throw new Error('bar')
           }
-        }, $Context.context()),
+        }),
       ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('bar'))))
     })
 
@@ -99,7 +99,7 @@ describe('Runtime', () => {
           } catch {
             throw new Error('bar')
           }
-        }, $Context.context()),
+        }),
       ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('bar'))))
     })
 
@@ -113,7 +113,7 @@ describe('Runtime', () => {
           } catch {
             return 'bar'
           }
-        }, $Context.context()),
+        }),
       ).resolves.toStrictEqual($Exit.success('bar'))
     })
 
@@ -127,7 +127,7 @@ describe('Runtime', () => {
           } catch (error) {
             throw error
           }
-        }, $Context.context()),
+        }),
       ).resolves.toMatchObject($Exit.failure($Cause.die(new Error('foo'))))
     })
 
@@ -141,7 +141,7 @@ describe('Runtime', () => {
           } catch (error) {
             throw error
           }
-        }, $Context.context()),
+        }),
       ).resolves.toMatchObject($Exit.failure($Cause.fail(new Error('foo'))))
     })
 
@@ -178,7 +178,7 @@ describe('Runtime', () => {
       await expect(
         $Runtime.runPromise(function* () {
           return yield* $Interruption.interrupt()
-        }, $Context.context()),
+        }),
       ).rejects.toThrow(InterruptError)
     })
   })

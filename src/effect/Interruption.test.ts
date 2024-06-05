@@ -19,7 +19,7 @@ describe('Interruption', () => {
 
   test('interrupting root fiber', async () => {
     await expect(
-      $Runtime.runExit($Interruption.interrupt(), $Context.context()),
+      $Runtime.runExit($Interruption.interrupt()),
     ).resolves.toMatchObject($Exit.failure($Cause.interrupt()))
   })
 
