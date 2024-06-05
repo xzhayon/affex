@@ -15,7 +15,7 @@ export interface CharacterRepository {
 }
 
 export const tag = fx.tag<CharacterRepository>()
-export const CharacterRepository = fx.struct(tag)(
+export const CharacterRepository = fx.service(tag)(
   'findOneById',
   'findOneByExternalId',
   'findOneBySearchTerm',

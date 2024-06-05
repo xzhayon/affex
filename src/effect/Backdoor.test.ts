@@ -91,7 +91,7 @@ describe('Backdoor', () => {
       }
 
       const tag42 = $Tag.tag<Get42>()
-      const get42 = $Proxy.function(tag42)
+      const get42 = $Proxy.operation(tag42)
 
       interface Get1337 {
         readonly [uri]?: unique symbol
@@ -99,7 +99,7 @@ describe('Backdoor', () => {
       }
 
       const tag1337 = $Tag.tag<Get1337>()
-      const get1337 = $Proxy.function(tag1337)
+      const get1337 = $Proxy.operation(tag1337)
 
       await expect(
         $Runtime.runPromise(
@@ -126,7 +126,7 @@ describe('Backdoor', () => {
       }
 
       const tag = $Tag.tag<Random>()
-      const random = $Proxy.function(tag)
+      const random = $Proxy.operation(tag)
 
       await expect(
         $Runtime.runPromise(
@@ -145,7 +145,7 @@ describe('Backdoor', () => {
       }
 
       const tag42 = $Tag.tag<Get42>()
-      const get42 = $Proxy.function(tag42)
+      const get42 = $Proxy.operation(tag42)
 
       interface Get1337 {
         readonly [uri]?: unique symbol
@@ -153,7 +153,7 @@ describe('Backdoor', () => {
       }
 
       const tag1337 = $Tag.tag<Get1337>()
-      const get1337 = $Proxy.function(tag1337)
+      const get1337 = $Proxy.operation(tag1337)
 
       await expect(
         $Runtime.runPromise(

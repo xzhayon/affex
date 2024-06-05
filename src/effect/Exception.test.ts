@@ -20,7 +20,7 @@ describe('Exception', () => {
   }
 
   const tag = $Tag.tag<Divide>()
-  const divide = $Proxy.function(tag)
+  const divide = $Proxy.operation(tag)
 
   describe('raise', () => {
     test('raising unexpected error', async () => {
@@ -30,7 +30,7 @@ describe('Exception', () => {
       }
 
       const tagRandom = $Tag.tag<Random>()
-      const random = $Proxy.function(tagRandom)
+      const random = $Proxy.operation(tagRandom)
 
       await expect(
         $Runtime.runExit(
@@ -152,7 +152,7 @@ describe('Exception', () => {
       }
 
       const tagRandom = $Tag.tag<Random>()
-      const random = $Proxy.function(tagRandom)
+      const random = $Proxy.operation(tagRandom)
 
       await expect(
         $Runtime.runExit(
@@ -187,7 +187,7 @@ describe('Exception', () => {
       }
 
       const tagFooBar = $Tag.tag<FooBar>()
-      const fooBar = $Proxy.function(tagFooBar)
+      const fooBar = $Proxy.operation(tagFooBar)
 
       await expect(
         $Runtime.runExit(

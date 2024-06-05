@@ -17,7 +17,7 @@ describe('Sandbox', () => {
   }
 
   const tag = $Tag.tag<Divide>()
-  const divide = $Proxy.function(tag)
+  const divide = $Proxy.operation(tag)
   const context = $Context.context().with(
     $Layer.layer(tag, function* (a, b) {
       if (b === 0) {
@@ -84,7 +84,7 @@ describe('Sandbox', () => {
       }
 
       const tagRandom = $Tag.tag<Random>()
-      const random = $Proxy.function(tagRandom)
+      const random = $Proxy.operation(tagRandom)
 
       await expect(
         $Runtime.runPromise(

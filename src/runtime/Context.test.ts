@@ -17,7 +17,7 @@ describe('Context', () => {
   }
 
   const tagFoo = $Tag.tag<Foo>()
-  const foo = $Proxy.function(tagFoo)
+  const foo = $Proxy.operation(tagFoo)
   const layerFoo = $Layer.layer(tagFoo, () => 'foo')
   const tagBar = $Tag.tag<Bar>()
   const layerBar = $Layer.layer(tagBar, function* () {

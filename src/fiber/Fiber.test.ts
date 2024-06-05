@@ -166,7 +166,7 @@ describe('Fiber', () => {
       }
 
       const tag = $Tag.tag<Random>()
-      const random = $Proxy.function(tag)
+      const random = $Proxy.operation(tag)
 
       await expect(
         $Runtime.runPromise(

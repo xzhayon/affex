@@ -33,7 +33,7 @@ describe('Runtime', () => {
         }
 
         const tag = $Tag.tag<Add>(description)
-        const add = $Proxy.function(tag)
+        const add = $Proxy.operation(tag)
 
         await expect(
           // @ts-expect-error
@@ -59,7 +59,7 @@ describe('Runtime', () => {
       }
 
       const tag = $Tag.tag<Divide>()
-      const divide = $Proxy.function(tag)
+      const divide = $Proxy.operation(tag)
 
       await expect(
         $Runtime.runExit(
@@ -152,7 +152,7 @@ describe('Runtime', () => {
       }
 
       const tag = $Tag.tag<Foo>()
-      const foo = $Proxy.function(tag)
+      const foo = $Proxy.operation(tag)
 
       await expect(
         $Runtime.runExit(

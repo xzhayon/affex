@@ -15,7 +15,7 @@ describe('Interruption', () => {
   }
 
   const tag = $Tag.tag<Random>()
-  const random = $Proxy.function(tag)
+  const random = $Proxy.operation(tag)
 
   test('interrupting root fiber', async () => {
     await expect(

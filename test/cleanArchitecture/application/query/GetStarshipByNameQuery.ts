@@ -8,4 +8,4 @@ export interface GetStarshipByNameQuery {
 }
 
 export const tag = fx.tag<GetStarshipByNameQuery>()
-export const getStarshipByName = fx.function(tag)
+export const getStarshipByName = fx.operation(tag)

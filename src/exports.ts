@@ -29,7 +29,12 @@ export { wrapAsync as async, raise, wrap as sync } from './effect/Exception'
 export { daemonize, fork } from './effect/Fork'
 export { interrupt } from './effect/Interruption'
 export { join } from './effect/Join'
-export { function, functionA, struct, structA } from './effect/Proxy'
+export {
+  access as functionA,
+  operation,
+  service,
+  access as structA,
+} from './effect/Proxy'
 export { tryCatch } from './effect/Sandbox'
 export { scope } from './effect/Scope'
 export { suspend } from './fiber/Fiber'

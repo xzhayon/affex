@@ -18,17 +18,17 @@ npm install affex
 ```typescript
 import { fx } from 'affex'
 
-// Define effect interface.
+// Define service interface.
 interface Log {
   readonly [fx.uri]?: unique symbol
   (message: string): void
 }
 
-// Create effect tag.
+// Create service tag.
 const tag = fx.tag<Log>()
 
-// Derive effector constructor.
-const log = fx.function(tag)
+// Derive effect constructor.
+const log = fx.operation(tag)
 
 // Perform effect in generator function.
 function* main() {

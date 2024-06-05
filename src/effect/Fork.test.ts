@@ -15,7 +15,7 @@ describe('Fork', () => {
   }
 
   const tag = $Tag.tag<Sleep>()
-  const sleep = $Proxy.function(tag)
+  const sleep = $Proxy.operation(tag)
   const context = $Context
     .context()
     .with(

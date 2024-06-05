@@ -8,4 +8,4 @@ export interface GetCharacterByNameQuery {
 }
 
 export const tag = fx.tag<GetCharacterByNameQuery>()
-export const getCharacterByName = fx.function(tag)
+export const getCharacterByName = fx.operation(tag)
