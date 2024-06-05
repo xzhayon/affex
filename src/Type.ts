@@ -5,6 +5,8 @@ export type Invariant<A> = (_: A) => A
 export type Lazy<A> = () => A
 export type OrLazy<A> = A | Lazy<A>
 
+export type IsAny<A> = 0 extends 1 & A ? true : false
+
 export interface Variant<U, T extends string> {
   readonly [_uri]: U
   readonly [_tag]: T

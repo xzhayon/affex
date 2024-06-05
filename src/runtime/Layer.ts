@@ -4,7 +4,7 @@ import { AnyGenerator } from '../Generator'
 import { Struct } from '../Struct'
 import { Tag } from '../Tag'
 import * as $Type from '../Type'
-import { Covariant } from '../Type'
+import { Covariant, IsAny } from '../Type'
 import { Handler } from './Handler'
 
 declare const R: unique symbol
@@ -22,13 +22,17 @@ export function layer<A, H extends Handler<A>>(
   A,
   H extends Function
     ? ReturnType<H> extends infer G extends AnyGenerator
-      ? ContextOf<G>
+      ? IsAny<ContextOf<G>> extends false
+        ? ContextOf<G>
+        : never
       : never
     : H extends Struct
     ? {
         [K in keyof H]: H[K] extends Function
           ? ReturnType<H[K]> extends infer G extends AnyGenerator
-            ? ContextOf<G>
+            ? IsAny<ContextOf<G>> extends false
+              ? ContextOf<G>
+              : never
             : never
           : never
       }[keyof H]

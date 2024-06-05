@@ -1,5 +1,4 @@
-import { AnyEffector } from '../Effector'
-import { AnyGenerator, YieldOf } from '../Generator'
+import { AnyEffector, ContextOf, ErrorOf } from '../Effector'
 import * as $Tag from '../Tag'
 import { uri } from '../Type'
 import * as $Context from '../runtime/Context'
@@ -61,7 +60,7 @@ describe('Proxy', () => {
         key: string,
         decoder: Decoder<A>,
         onMiss: () => G,
-      ): AnyGenerator<YieldOf<G>, A>
+      ): AnyEffector<A, ErrorOf<G>, ContextOf<G>>
     }
 
     const tagCrypto = $Tag.tag<Crypto>()
