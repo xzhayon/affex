@@ -1,49 +1,35 @@
-# affex
+---
+title: Home
+layout: home
+---
 
-[![GitHub](https://img.shields.io/github/license/xzhayon/affex)](LICENSE.md)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/xzhayon/affex/test.yaml?branch=main)](https://github.com/xzhayon/affex/actions)
-[![Codecov](https://img.shields.io/codecov/c/gh/xzhayon/affex)](https://app.codecov.io/gh/xzhayon/affex)
-[![npm](https://img.shields.io/npm/v/affex)](https://www.npmjs.com/package/affex)
+This is a _bare-minimum_ template to create a Jekyll site that uses the [Just the Docs] theme. You can easily set the created site to be published on [GitHub Pages] – the [README] file explains how to do that, along with other details.
 
-## Installation
+If [Jekyll] is installed on your computer, you can also build and preview the created site _locally_. This lets you test changes before committing them, and avoids waiting for GitHub Pages.[^1] And you will be able to deploy your local build to a different platform than GitHub Pages.
 
-The package is available via [npm](https://www.npmjs.com/package/affex):
+More specifically, the created site:
 
-```sh
-npm install affex
-```
+- uses a gem-based approach, i.e. uses a `Gemfile` and loads the `just-the-docs` gem
+- uses the [GitHub Pages / Actions workflow] to build and publish the site on GitHub Pages
 
-## Usage
+Other than that, you're free to customize sites that you create with this template, however you like. You can easily change the versions of `just-the-docs` and Jekyll it uses, as well as adding further plugins.
 
-```typescript
-import { fx } from 'affex'
+[Browse our documentation][Just the Docs] to learn more about how to use this theme.
 
-// Define service interface.
-interface Log {
-  readonly [fx.uri]?: unique symbol
-  (message: string): void
-}
+To get started with creating a site, simply:
 
-// Create service tag.
-const tag = fx.tag<Log>()
+1. click "[use this template]" to create a GitHub repository
+2. go to Settings > Pages > Build and deployment > Source, and select GitHub Actions
 
-// Derive effect constructor.
-const log = fx.operation(tag)
+If you want to maintain your docs in the `docs` directory of an existing project repo, see [Hosting your docs from an existing project repo](https://github.com/just-the-docs/just-the-docs-template/blob/main/README.md#hosting-your-docs-from-an-existing-project-repo) in the template README.
 
-// Perform effect in generator function.
-function* main() {
-  yield* log('hello, world')
-}
+---
 
-// Create layer with effect handler.
-function ConsoleLog() {
-  return fx.layer(tag, (message) => console.log(message))
-}
+[^1]: [It can take up to 10 minutes for changes to your site to publish after you push the changes to GitHub](https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/creating-a-github-pages-site-with-jekyll#creating-your-site).
 
-// Run program with provided context.
-fx.runPromise(main, fx.context().with(ConsoleLog()))
-```
-
-## License
-
-[MIT](LICENSE.md)
+[Just the Docs]: https://just-the-docs.github.io/just-the-docs/
+[GitHub Pages]: https://docs.github.com/en/pages
+[README]: https://github.com/just-the-docs/just-the-docs-template/blob/main/README.md
+[Jekyll]: https://jekyllrb.com
+[GitHub Pages / Actions workflow]: https://github.blog/changelog/2022-07-27-github-pages-custom-github-actions-workflows-beta/
+[use this template]: https://github.com/just-the-docs/just-the-docs-template/generate
