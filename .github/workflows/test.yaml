@@ -29,6 +29,6 @@ jobs:
           node-version: ${{ matrix.NODEJS_VERSION }}
           cache: npm
       - run: make _test
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
