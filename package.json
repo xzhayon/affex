@@ -33,7 +33,7 @@
     "effect": "^3.1.2",
     "effection": "^3.0.3",
     "jest": "^29.7.0",
-    "tinybench": "^3.1.1",
+    "tinybench": "^4.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.2"
   },
