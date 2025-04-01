@@ -2,11 +2,11 @@ import { AnyGenerator, ReturnOf, YieldOf } from './Generator'
 import * as $Type from './Type'
 import { Effect } from './effect/Effect'
 
-export type Effector<out A, out E = never, out R = never> = Generator<
+export type Effector<A, E = never, R = never> = Generator<
   Throw<E> | Use<R> | void,
   A
 >
-export type AsyncEffector<out A, out E = never, out R = never> = AsyncGenerator<
+export type AsyncEffector<A, E = never, R = never> = AsyncGenerator<
   Throw<E> | Use<R> | void,
   A
 >
