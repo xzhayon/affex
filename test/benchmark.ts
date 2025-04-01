@@ -123,7 +123,6 @@ async function sleep() {
       await runtime.run(affexParFiber(n, ms))
     })
 
-  await bench.warmup()
   await bench.run()
 
   console.table(bench.table())
@@ -263,7 +262,6 @@ async function fibonacci() {
       await runtime.run(affexParFiber(n))
     })
 
-  await bench.warmup()
   await bench.run()
 
   console.table(bench.table())
